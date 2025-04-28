@@ -85,7 +85,8 @@ const user = () => {
       </CButton>
 
       <CCard>
-        <CCardHeader>Tabla de usuarios</CCardHeader>
+      <CCardHeader style={{ backgroundColor: '#3D90D7' }}>
+      <h4>Tabla de Usuarios</h4></CCardHeader>
         <CCardBody>
           <CTable>
             <CTableHead>
