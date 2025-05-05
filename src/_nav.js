@@ -32,22 +32,10 @@ const _nav = [
   },
 
   {
-    component: CNavGroup,
+    component: CNavItem,
     name: 'Registro Estudiantil',
-    items: [
-      {
-        component: CNavItem,
-        name: 'Registro Educacion inicial',
-        to: '/registro',
-      },
-      {
-        component: CNavItem,
-        name: 'Registrar 1er grado',
-        to: '/registro/1er-grado',
-      },
-    ],
+    to: '/registro',
   },
-
   {
     component: CNavItem,
     name: 'Brigada Estudiantil',

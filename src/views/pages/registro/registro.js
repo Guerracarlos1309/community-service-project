@@ -21,7 +21,15 @@ import {
   CFormTextarea, // Fixed: Added import for CFormTextarea
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilSave, cilUser, cilPeople, cilHome, cilPhone, cilMedicalCross, cilNotes } from '@coreui/icons'
+import {
+  cilSave,
+  cilUser,
+  cilPeople,
+  cilHome,
+  cilPhone,
+  cilMedicalCross,
+  cilNotes,
+} from '@coreui/icons'
 
 const InscripcionForm = () => {
   const [validated, setValidated] = useState(false)
@@ -35,15 +43,15 @@ const InscripcionForm = () => {
   const handleSubmit = (event) => {
     const form = event.currentTarget
     event.preventDefault()
-    
+
     if (form.checkValidity() === false) {
       event.stopPropagation()
       setValidated(true)
       return
     }
-    
+
     setLoading(true)
-    
+
     // Simulación de envío de datos
     setTimeout(() => {
       setLoading(false)
@@ -65,16 +73,12 @@ const InscripcionForm = () => {
           Ficha de Inscripción Año Escolar {schoolYear}
         </h4>
         <div>
-          <img 
-            src="/logo-escuela.png" 
-            alt="Logo Escuela" 
-            style={{ height: '40px', marginRight: '10px' }} 
+          <img
+            src="/logo-escuela.png"
+            alt="Logo Escuela"
+            style={{ height: '40px', marginRight: '10px' }}
           />
-          <img 
-            src="/logo-municipio.png" 
-            alt="Logo Municipio" 
-            style={{ height: '40px' }} 
-          />
+          <img src="/logo-municipio.png" alt="Logo Municipio" style={{ height: '40px' }} />
         </div>
       </CCardHeader>
       <CCardBody>
@@ -88,14 +92,13 @@ const InscripcionForm = () => {
             Ha ocurrido un error al procesar la inscripción. Por favor intente nuevamente.
           </CAlert>
         )}
-        
-        <CForm 
+
+        <CForm
           className="needs-validation"
           noValidate
           validated={validated}
           onSubmit={handleSubmit}
         >
-          {/* Información General */}
           <CRow className="mb-4">
             <CCol md={3}>
               <CFormLabel>Tipo de Ingreso</CFormLabel>
@@ -167,7 +170,9 @@ const InscripcionForm = () => {
 
           <CRow className="mb-3">
             <CCol md={6}>
-              <CFormLabel htmlFor="fechaInscripcion">Fecha de Inscripción</CFormLabel>
+              <CFormLabel required htmlFor="fechaInscripcion">
+                Fecha de Inscripción
+              </CFormLabel>
               <CFormInput
                 type="date"
                 id="fechaInscripcion"
@@ -176,7 +181,9 @@ const InscripcionForm = () => {
               />
             </CCol>
             <CCol md={6}>
-              <CFormLabel htmlFor="plantelProcedencia">Plantel de Procedencia</CFormLabel>
+              <CFormLabel required htmlFor="plantelProcedencia">
+                Plantel de Procedencia
+              </CFormLabel>
               <CFormInput
                 type="text"
                 id="plantelProcedencia"
@@ -231,21 +238,11 @@ const InscripcionForm = () => {
               <CRow className="mb-3">
                 <CCol md={3}>
                   <CFormLabel htmlFor="fechaNacimiento">Fecha de Nacimiento</CFormLabel>
-                  <CFormInput
-                    type="date"
-                    id="fechaNacimiento"
-                    required
-                  />
+                  <CFormInput type="date" id="fechaNacimiento" required />
                 </CCol>
                 <CCol md={2}>
                   <CFormLabel htmlFor="edad">Edad</CFormLabel>
-                  <CFormInput
-                    type="number"
-                    id="edad"
-                    min="3"
-                    max="18"
-                    required
-                  />
+                  <CFormInput type="number" id="edad" min="3" max="18" required />
                 </CCol>
                 <CCol md={2}>
                   <CFormLabel htmlFor="sexo">Sexo</CFormLabel>
@@ -269,29 +266,15 @@ const InscripcionForm = () => {
               <CRow className="mb-3">
                 <CCol md={4}>
                   <CFormLabel htmlFor="entidadFederal">Entidad Federal</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="entidadFederal"
-                    placeholder="Ej: Táchira"
-                    required
-                  />
+                  <CFormInput type="text" id="entidadFederal" placeholder="Ej: Táchira" required />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="municipio">Municipio</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="municipio"
-                    placeholder="Ej: San Cristóbal"
-                    required
-                  />
+                  <CFormInput type="text" id="municipio" placeholder="Ej: San Cristóbal" required />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="parroquia">Parroquia</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="parroquia"
-                    placeholder="Ej: Pedro María Morantes"
-                  />
+                  <CFormInput type="text" id="parroquia" placeholder="Ej: Pedro María Morantes" />
                 </CCol>
               </CRow>
 
@@ -364,11 +347,7 @@ const InscripcionForm = () => {
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="cedulaPadre">Cédula</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="cedulaPadre"
-                    placeholder="Ej: V-12345678"
-                  />
+                  <CFormInput type="text" id="cedulaPadre" placeholder="Ej: V-12345678" />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="telefonoPadre">Teléfono</CFormLabel>
@@ -376,11 +355,7 @@ const InscripcionForm = () => {
                     <CInputGroupText>
                       <CIcon icon={cilPhone} />
                     </CInputGroupText>
-                    <CFormInput
-                      type="tel"
-                      id="telefonoPadre"
-                      placeholder="Ej: 0414-1234567"
-                    />
+                    <CFormInput type="tel" id="telefonoPadre" placeholder="Ej: 0414-1234567" />
                   </CInputGroup>
                 </CCol>
               </CRow>
@@ -396,11 +371,7 @@ const InscripcionForm = () => {
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="cedulaMadre">Cédula</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="cedulaMadre"
-                    placeholder="Ej: V-12345678"
-                  />
+                  <CFormInput type="text" id="cedulaMadre" placeholder="Ej: V-12345678" />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="telefonoMadre">Teléfono</CFormLabel>
@@ -408,11 +379,7 @@ const InscripcionForm = () => {
                     <CInputGroupText>
                       <CIcon icon={cilPhone} />
                     </CInputGroupText>
-                    <CFormInput
-                      type="tel"
-                      id="telefonoMadre"
-                      placeholder="Ej: 0414-1234567"
-                    />
+                    <CFormInput type="tel" id="telefonoMadre" placeholder="Ej: 0414-1234567" />
                   </CInputGroup>
                 </CCol>
               </CRow>
@@ -499,24 +466,16 @@ const InscripcionForm = () => {
                 </CCol>
                 <CCol md={2}>
                   <CFormLabel htmlFor="edadRepresentante">Edad</CFormLabel>
-                  <CFormInput
-                    type="number"
-                    id="edadRepresentante"
-                    min="18"
-                    max="99"
-                    required
-                  />
+                  <CFormInput type="number" id="edadRepresentante" min="18" max="99" required />
                 </CCol>
               </CRow>
 
               <CRow className="mb-3">
                 <CCol md={4}>
-                  <CFormLabel htmlFor="fechaNacimientoRepresentante">Fecha de Nacimiento</CFormLabel>
-                  <CFormInput
-                    type="date"
-                    id="fechaNacimientoRepresentante"
-                    required
-                  />
+                  <CFormLabel htmlFor="fechaNacimientoRepresentante">
+                    Fecha de Nacimiento
+                  </CFormLabel>
+                  <CFormInput type="date" id="fechaNacimientoRepresentante" required />
                 </CCol>
                 <CCol md={4}>
                   <CFormLabel htmlFor="estadoCivilRepresentante">Estado Civil</CFormLabel>
@@ -564,11 +523,7 @@ const InscripcionForm = () => {
                     <CInputGroupText>
                       <CIcon icon={cilPhone} />
                     </CInputGroupText>
-                    <CFormInput
-                      type="tel"
-                      id="telefonoCasa"
-                      placeholder="Ej: 0276-1234567"
-                    />
+                    <CFormInput type="tel" id="telefonoCasa" placeholder="Ej: 0276-1234567" />
                   </CInputGroup>
                 </CCol>
                 <CCol md={3}>
@@ -611,11 +566,7 @@ const InscripcionForm = () => {
                     <CInputGroupText>
                       <CIcon icon={cilPhone} />
                     </CInputGroupText>
-                    <CFormInput
-                      type="tel"
-                      id="telefonoTrabajo"
-                      placeholder="Ej: 0276-1234567"
-                    />
+                    <CFormInput type="tel" id="telefonoTrabajo" placeholder="Ej: 0276-1234567" />
                   </CInputGroup>
                 </CCol>
               </CRow>
@@ -634,21 +585,11 @@ const InscripcionForm = () => {
               <CRow className="mb-3">
                 <CCol md={2}>
                   <CFormLabel htmlFor="peso">Peso (Kg)</CFormLabel>
-                  <CFormInput
-                    type="number"
-                    id="peso"
-                    step="0.01"
-                    required
-                  />
+                  <CFormInput type="number" id="peso" step="0.01" required />
                 </CCol>
                 <CCol md={2}>
                   <CFormLabel htmlFor="estatura">Estatura (m)</CFormLabel>
-                  <CFormInput
-                    type="number"
-                    id="estatura"
-                    step="0.01"
-                    required
-                  />
+                  <CFormInput type="number" id="estatura" step="0.01" required />
                 </CCol>
                 <CCol md={2}>
                   <CFormLabel htmlFor="tallaCamisa">Talla Camisa</CFormLabel>
@@ -756,11 +697,7 @@ const InscripcionForm = () => {
               <CRow className="mb-3">
                 <CCol md={4}>
                   <CFormLabel htmlFor="gradosHermanos">En cuáles Grados</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="gradosHermanos"
-                    placeholder="Ej: 3° y 5° grado"
-                  />
+                  <CFormInput type="text" id="gradosHermanos" placeholder="Ej: 3° y 5° grado" />
                 </CCol>
               </CRow>
 
@@ -803,19 +740,11 @@ const InscripcionForm = () => {
               <CRow className="mb-3">
                 <CCol md={4}>
                   <CFormLabel htmlFor="personaAutorizada2">Nombre y Apellido</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="personaAutorizada2"
-                    placeholder="Nombre completo"
-                  />
+                  <CFormInput type="text" id="personaAutorizada2" placeholder="Nombre completo" />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="cedulaAutorizada2">Cédula</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="cedulaAutorizada2"
-                    placeholder="Ej: V-12345678"
-                  />
+                  <CFormInput type="text" id="cedulaAutorizada2" placeholder="Ej: V-12345678" />
                 </CCol>
                 <CCol md={3}>
                   <CFormLabel htmlFor="parentescoAutorizada2">Parentesco</CFormLabel>
