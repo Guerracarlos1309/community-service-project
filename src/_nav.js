@@ -52,8 +52,8 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Representantes',
-    to: '/representantes ',
+    name: 'Docentes',
+    to: '/docentes ',
   },
 
   {

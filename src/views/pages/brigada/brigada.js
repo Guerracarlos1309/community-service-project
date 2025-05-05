@@ -147,7 +147,7 @@ const brigada = () => {
         onClose={handleCloseModal}
       >
         <CModalHeader>
-          <CModalTitle id="OptionalSizesExample2">Nueva Birgada</CModalTitle>
+          <CModalTitle id="OptionalSizesExample2">Nueva Brigada</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>

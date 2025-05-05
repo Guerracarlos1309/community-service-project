@@ -17,7 +17,6 @@ import {
   CRow,
   CAlert,
   CSpinner,
-  CFormFloating,
   CFormTextarea, // Fixed: Added import for CFormTextarea
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
