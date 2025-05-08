@@ -71,7 +71,7 @@ const user = () => {
           className="text-center position-relative pb-3"
           style={{
             fontFamily: 'Arial, sans-serif',
-            color: '#4a4a4a',
+            color: '#4a4a4a}}',
             borderBottom: '3px solid',
             borderImage: 'linear-gradient(to right, transparent, #4a4a4a, transparent) 1',
           }}
@@ -80,12 +80,12 @@ const user = () => {
         </h2>
       </div>
 
-      <CButton color="primary" className="mb-3" onClick={handleOpen}>
+      <CButton color="warning" className="mb-3" onClick={handleOpen}>
         Crear Usuario
       </CButton>
 
       <CCard>
-      <CCardHeader style={{ backgroundColor: '#3D90D7' }}>
+      <CCardHeader style={{ backgroundColor: 'danger' }}>
       <h4>Tabla de Usuarios</h4></CCardHeader>
         <CCardBody>
           <CTable>

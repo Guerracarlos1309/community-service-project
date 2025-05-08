@@ -95,15 +95,14 @@ const registroEstudiantil = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <h4>
               <CIcon icon={cilUser} className="me-2" />
-              Ficha de Inscripción Año Escolar {schoolYear}
+              FICHA DE INSCRIPCION ESCOLAR {schoolYear}
             </h4>
             <div>
               <img
-                src="/logo-escuela.png"
+                src="/src/assets/brand/logojgm.png"
                 alt="Logo Escuela"
                 style={{ height: '40px', marginRight: '10px' }}
               />
-              <img src="/logo-municipio.png" alt="Logo Municipio" style={{ height: '40px' }} />
             </div>
           </CCardHeader>
           <CCardBody>
@@ -162,12 +161,12 @@ const registroEstudiantil = () => {
                   <CFormLabel htmlFor="grado">Grado</CFormLabel>
                   <CFormSelect id="grado" required>
                     <option value="">Seleccionar...</option>
-                    <option value="1">1° Grado</option>
-                    <option value="2">2° Grado</option>
-                    <option value="3">3° Grado</option>
-                    <option value="4">4° Grado</option>
-                    <option value="5">5° Grado</option>
-                    <option value="6">6° Grado</option>
+                    <option value="1">1°er Grado</option>
+                    <option value="2">2°do Grado</option>
+                    <option value="3">3°er Grado</option>
+                    <option value="4">4°to Grado</option>
+                    <option value="5">5°to Grado</option>
+                    <option value="6">6°to Grado</option>
                   </CFormSelect>
                 </CCol>
                 <CCol md={3}>
@@ -522,7 +521,7 @@ const registroEstudiantil = () => {
                 </CFormSelect>
               </CCol>
               <CCol md={4}>
-                <CFormLabel htmlFor="nexoEstudiante">Nexo con el Estudiante</CFormLabel>
+                <CFormLabel htmlFor="nexoEstudiante">Parentesco con el Estudiante</CFormLabel>
                 <CFormSelect id="nexoEstudiante" required>
                   <option value="">Seleccionar...</option>
                   <option value="padre">Padre</option>
@@ -882,10 +881,10 @@ const registroEstudiantil = () => {
                 <CButton color="warning" onClick={prevStep}>
                   Atrás
                 </CButton>
-                <CButton color="secondary" type="button">
+                <CButton color="danger" type="button">
                   Cancelar
                 </CButton>
-                <CButton color="primary" type="submit" disabled={loading}>
+                <CButton color="" type="submit" disabled={loading}>
                   {loading ? (
                     <>
                       <CSpinner size="sm" className="me-2" />

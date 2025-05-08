@@ -73,7 +73,7 @@ const Docente = () => {
           className="text-center position-relative pb-3"
           style={{
             fontFamily: 'Arial, sans-serif',
-            color: '#4a4a4a',
+            color: '',
             borderBottom: '3px solid',
             borderImage: 'linear-gradient(to right, transparent, #4a4a4a, transparent) 1',
           }}
@@ -87,7 +87,7 @@ const Docente = () => {
       </CButton>
 
       <CCard>
-        <CCardHeader style={{ backgroundColor: '#3D90D7' }}>
+        <CCardHeader style={{ backgroundColor: '' }}>
           <h4>Tabla de Docentes</h4>
         </CCardHeader>
         <CCardBody>
