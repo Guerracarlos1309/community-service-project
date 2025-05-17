@@ -1,4 +1,5 @@
-import classNames from "classnames"
+import classNames from 'classnames'
+import { useState } from 'react'
 
 import {
   CAvatar,
@@ -9,18 +10,13 @@ import {
   CCardFooter,
   CCardHeader,
   CCol,
+  CModal,
   CProgress,
   CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-} from "@coreui/react"
+} from '@coreui/react'
 // Importar CChart desde el paquete correcto
-import { CChart } from "@coreui/react-chartjs"
-import CIcon from "@coreui/icons-react"
+import { CChart } from '@coreui/react-chartjs'
+import CIcon from '@coreui/icons-react'
 import {
   cilBook,
   cilPeople,
@@ -30,66 +26,65 @@ import {
   cilPencil,
   cilEducation,
   cilNotes,
-} from "@coreui/icons"
+} from '@coreui/icons'
 
-import avatar1 from "src/assets/images/avatars/1.jpg"
-import avatar2 from "src/assets/images/avatars/2.jpg"
-import avatar3 from "src/assets/images/avatars/3.jpg"
-import avatar4 from "src/assets/images/avatars/4.jpg"
-import avatar5 from "src/assets/images/avatars/5.jpg"
-import avatar6 from "src/assets/images/avatars/6.jpg"
-import WidgetsDropdown from "../widgets/WidgetsDropdown"
-import MainChart from "./MainChart"
+import avatar1 from 'src/assets/images/avatars/1.jpg'
+import avatar2 from 'src/assets/images/avatars/2.jpg'
+import avatar3 from 'src/assets/images/avatars/3.jpg'
+import avatar4 from 'src/assets/images/avatars/4.jpg'
+import avatar5 from 'src/assets/images/avatars/5.jpg'
+import avatar6 from 'src/assets/images/avatars/6.jpg'
+import MainChart from './MainChart'
 
 const Dashboard = () => {
   const progressExample = [
-    { title: "Asistencia", value: "450 Estudiantes", percent: 92, color: "success" },
-    { title: "Promedio Académico", value: "8.5/10", percent: 85, color: "info" },
-    { title: "Participación de Padres", value: "320 Padres", percent: 75, color: "warning" },
-    { title: "Nuevos Estudiantes", value: "45 Estudiantes", percent: 10, color: "danger" },
-    { title: "Tasa de Graduación", value: "Promedio", percent: 95.5, color: "primary" },
+    { title: 'Asistencia', value: '450 Estudiantes', percent: 92, color: 'success' },
+    { title: 'Promedio Académico', value: '8.5/10', percent: 85, color: 'info' },
+    { title: 'Participación de Padres', value: '320 Padres', percent: 75, color: 'warning' },
+    { title: 'Nuevos Estudiantes', value: '45 Estudiantes', percent: 10, color: 'danger' },
+    { title: 'Tasa de Graduación', value: 'Promedio', percent: 95.5, color: 'primary' },
   ]
 
   const progressGroupExample1 = [
-    { title: "Lunes", value1: 92, value2: 88 },
-    { title: "Martes", value1: 94, value2: 90 },
-    { title: "Miércoles", value1: 91, value2: 87 },
-    { title: "Jueves", value1: 93, value2: 89 },
-    { title: "Viernes", value1: 90, value2: 85 },
+    { title: 'Lunes', value1: 92, value2: 88 },
+    { title: 'Martes', value1: 94, value2: 90 },
+    { title: 'Miércoles', value1: 91, value2: 87 },
+    { title: 'Jueves', value1: 93, value2: 89 },
+    { title: 'Viernes', value1: 90, value2: 85 },
   ]
 
   const progressGroupExample2 = [
-    { title: "Niños", icon: cilUser, value: 52 },
-    { title: "Niñas", icon: cilUserFemale, value: 48 },
+    { title: 'Niños', icon: cilUser, value: 52 },
+    { title: 'Niñas', icon: cilUserFemale, value: 48 },
   ]
 
   // Nuevas gráficas educativas en lugar de redes sociales
   const academicPerformanceByGrade = [
-    { title: "Preescolar", icon: cilPencil, percent: 88, value: "8.8/10" },
-    { title: "1° - 2° Primaria", icon: cilBook, percent: 85, value: "8.5/10" },
-    { title: "3° - 4° Primaria", icon: cilNotes, percent: 82, value: "8.2/10" },
-    { title: "5° - 6° Primaria", icon: cilEducation, percent: 87, value: "8.7/10" },
+    { title: 'Preescolar', icon: cilPencil, percent: 88, value: '8.8/10' },
+    { title: '1° - 2° Primaria', icon: cilBook, percent: 85, value: '8.5/10' },
+    { title: '3° - 4° Primaria', icon: cilNotes, percent: 82, value: '8.2/10' },
+    { title: '5° - 6° Primaria', icon: cilEducation, percent: 87, value: '8.7/10' },
   ]
 
   // Datos para gráfica de pastel - Distribución de estudiantes
   const studentDistributionData = {
-    labels: ["Preescolar", "1° - 2° Primaria", "3° - 4° Primaria", "5° - 6° Primaria"],
+    labels: ['Preescolar', '1° - 2° Primaria', '3° - 4° Primaria', '5° - 6° Primaria'],
     datasets: [
       {
         data: [135, 120, 105, 90],
-        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
-        hoverBackgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+        hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
       },
     ],
   }
 
   // Datos para gráfica de barras - Actividades extracurriculares
   const extracurricularActivitiesData = {
-    labels: ["Deportes", "Arte", "Música", "Ciencias", "Idiomas"],
+    labels: ['Deportes', 'Arte', 'Música', 'Ciencias', 'Idiomas'],
     datasets: [
       {
-        label: "Participación de estudiantes",
-        backgroundColor: "#4BC0C0",
+        label: 'Participación de estudiantes',
+        backgroundColor: '#4BC0C0',
         data: [120, 85, 70, 65, 95],
       },
     ],
@@ -97,113 +92,29 @@ const Dashboard = () => {
 
   // Datos para gráfica de líneas - Asistencia mensual
   const monthlyAttendanceData = {
-    labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
+    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
     datasets: [
       {
-        label: "Asistencia (%)",
-        backgroundColor: "rgba(54, 162, 235, 0.2)",
-        borderColor: "rgba(54, 162, 235, 1)",
-        pointBackgroundColor: "rgba(54, 162, 235, 1)",
-        pointBorderColor: "#fff",
+        label: 'Asistencia (%)',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+        pointBorderColor: '#fff',
         data: [93, 91, 94, 92, 95, 94],
       },
     ],
   }
 
-  const tableExample = [
-    {
-      avatar: { src: avatar1, status: "success" },
-      user: {
-        name: "Ana García",
-        new: true,
-        registered: "Ene 15, 2023",
-      },
-      grade: "1° Primaria",
-      attendance: {
-        value: 98,
-        period: "Ene 1, 2023 - Mar 31, 2023",
-        color: "success",
-      },
-      performance: "Excelente",
-      activity: "Hoy",
-    },
-    {
-      avatar: { src: avatar2, status: "success" },
-      user: {
-        name: "Carlos Pérez",
-        new: false,
-        registered: "Sep 1, 2022",
-      },
-      grade: "Preescolar",
-      attendance: {
-        value: 85,
-        period: "Ene 1, 2023 - Mar 31, 2023",
-        color: "info",
-      },
-      performance: "Bueno",
-      activity: "Ayer",
-    },
-    {
-      avatar: { src: avatar3, status: "warning" },
-      user: { name: "Sofía Martínez", new: true, registered: "Ene 1, 2023" },
-      grade: "3° Primaria",
-      attendance: {
-        value: 92,
-        period: "Ene 1, 2023 - Mar 31, 2023",
-        color: "warning",
-      },
-      performance: "Muy Bueno",
-      activity: "Hace 2 días",
-    },
-    {
-      avatar: { src: avatar4, status: "secondary" },
-      user: { name: "Luis Rodríguez", new: true, registered: "Ene 1, 2023" },
-      grade: "5° Primaria",
-      attendance: {
-        value: 95,
-        period: "Ene 1, 2023 - Mar 31, 2023",
-        color: "danger",
-      },
-      performance: "Excelente",
-      activity: "La semana pasada",
-    },
-    {
-      avatar: { src: avatar5, status: "success" },
-      user: {
-        name: "María López",
-        new: true,
-        registered: "Ene 1, 2023",
-      },
-      grade: "2° Primaria",
-      attendance: {
-        value: 88,
-        period: "Ene 1, 2023 - Mar 31, 2023",
-        color: "primary",
-      },
-      performance: "Bueno",
-      activity: "Hace 2 semanas",
-    },
-    {
-      avatar: { src: avatar6, status: "danger" },
-      user: {
-        name: "Pedro Sánchez",
-        new: true,
-        registered: "Ene 1, 2023",
-      },
-      grade: "6° Primaria",
-      attendance: {
-        value: 79,
-        period: "Ene 1, 2023 - Mar 31, 2023",
-        color: "success",
-      },
-      performance: "Regular",
-      activity: "El mes pasado",
-    },
-  ]
+  const [visible, setVisible] = useState(false)
 
+  const abrirModal = () => {
+    setVisible(true)
+  }
+  const cerrarModal = () => {
+    setVisible(false)
+  }
   return (
     <>
-      <WidgetsDropdown className="mb-4" />
       <CCard className="mb-4">
         <CCardBody>
           <CRow>
@@ -218,8 +129,13 @@ const Dashboard = () => {
                 <CIcon icon={cilCloudDownload} />
               </CButton>
               <CButtonGroup className="float-end me-3">
-                {["Día", "Mes", "Año"].map((value) => (
-                  <CButton color="outline-secondary" key={value} className="mx-0" active={value === "Mes"}>
+                {['Día', 'Mes', 'Año'].map((value) => (
+                  <CButton
+                    color="outline-secondary"
+                    key={value}
+                    className="mx-0"
+                    active={value === 'Mes'}
+                  >
                     {value}
                   </CButton>
                 ))}
@@ -239,7 +155,7 @@ const Dashboard = () => {
             {progressExample.map((item, index, items) => (
               <CCol
                 className={classNames({
-                  "d-none d-xl-block": index + 1 === items.length,
+                  'd-none d-xl-block': index + 1 === items.length,
                 })}
                 key={index}
               >
@@ -251,6 +167,13 @@ const Dashboard = () => {
               </CCol>
             ))}
           </CRow>
+
+          {/* 
+           Boton para la asistencia semanal
+          <CButton color="warning" className="float-end me-2" onClick={abrirModal}>
+            <CIcon icon={cilCloudDownload} />
+            Asistencia Estudiantil
+          </CButton> */}
         </CCardFooter>
       </CCard>
 
@@ -266,12 +189,12 @@ const Dashboard = () => {
                 options={{
                   plugins: {
                     legend: {
-                      position: "bottom",
+                      position: 'bottom',
                     },
                     tooltip: {
                       callbacks: {
                         label: (context) => {
-                          const label = context.label || ""
+                          const label = context.label || ''
                           const value = context.raw || 0
                           const total = context.dataset.data.reduce((acc, val) => acc + val, 0)
                           const percentage = Math.round((value / total) * 100)
@@ -299,7 +222,7 @@ const Dashboard = () => {
                       beginAtZero: true,
                       title: {
                         display: true,
-                        text: "Número de estudiantes",
+                        text: 'Número de estudiantes',
                       },
                     },
                   },
@@ -332,7 +255,7 @@ const Dashboard = () => {
                       max: 100,
                       title: {
                         display: true,
-                        text: "Porcentaje (%)",
+                        text: 'Porcentaje (%)',
                       },
                     },
                   },
@@ -357,7 +280,8 @@ const Dashboard = () => {
                     <CIcon className="me-2" icon={item.icon} size="lg" />
                     <span>{item.title}</span>
                     <span className="ms-auto fw-semibold">
-                      {item.value} <span className="text-body-secondary small">({item.percent}%)</span>
+                      {item.value}{' '}
+                      <span className="text-body-secondary small">({item.percent}%)</span>
                     </span>
                   </div>
                   <div className="progress-group-bars">
@@ -380,13 +304,17 @@ const Dashboard = () => {
                   <CRow>
                     <CCol xs={6}>
                       <div className="border-start border-start-4 border-start-info py-1 px-3">
-                        <div className="text-body-secondary text-truncate small">Estudiantes Nuevos</div>
+                        <div className="text-body-secondary text-truncate small">
+                          Estudiantes Nuevos
+                        </div>
                         <div className="fs-5 fw-semibold">45</div>
                       </div>
                     </CCol>
                     <CCol xs={6}>
                       <div className="border-start border-start-4 border-start-danger py-1 px-3 mb-3">
-                        <div className="text-body-secondary text-truncate small">Estudiantes Regulares</div>
+                        <div className="text-body-secondary text-truncate small">
+                          Estudiantes Regulares
+                        </div>
                         <div className="fs-5 fw-semibold">405</div>
                       </div>
                     </CCol>
@@ -408,13 +336,17 @@ const Dashboard = () => {
                   <CRow>
                     <CCol xs={6}>
                       <div className="border-start border-start-4 border-start-warning py-1 px-3 mb-3">
-                        <div className="text-body-secondary text-truncate small">Total Estudiantes</div>
+                        <div className="text-body-secondary text-truncate small">
+                          Total Estudiantes
+                        </div>
                         <div className="fs-5 fw-semibold">450</div>
                       </div>
                     </CCol>
                     <CCol xs={6}>
                       <div className="border-start border-start-4 border-start-success py-1 px-3 mb-3">
-                        <div className="text-body-secondary text-truncate small">Promedio Académico</div>
+                        <div className="text-body-secondary text-truncate small">
+                          Promedio Académico
+                        </div>
                         <div className="fs-5 fw-semibold">8.5/10</div>
                       </div>
                     </CCol>
@@ -438,59 +370,12 @@ const Dashboard = () => {
               </CRow>
 
               <br />
-
-              <CTable align="middle" className="mb-0 border" hover responsive>
-                <CTableHead className="text-nowrap">
-                  <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Estudiante</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">Grado</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Asistencia</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">Rendimiento</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Última Actividad</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {tableExample.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar size="md" src={item.avatar.src} status={item.avatar.status} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div>{item.user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{item.user.new ? "Nuevo" : "Regular"}</span> | Registrado: {item.user.registered}
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div className="fw-semibold">{item.grade}</div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.attendance.value}%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">{item.attendance.period}</small>
-                          </div>
-                        </div>
-                        <CProgress thin color={item.attendance.color} value={item.attendance.value} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <div className="fw-semibold">{item.performance}</div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Última actividad</div>
-                        <div className="fw-semibold text-nowrap">{item.activity}</div>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
             </CCardBody>
           </CCard>
         </CCol>
       </CRow>
+
+      <CModal visible={visible}></CModal>
     </>
   )
 }
