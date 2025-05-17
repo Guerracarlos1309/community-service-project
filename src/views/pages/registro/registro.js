@@ -283,7 +283,7 @@ const registroEstudiantil = () => {
 
             <CRow className="mb-3">
               <CCol md={4}>
-                <CFormLabel htmlFor="entidadFederal">Entidad Federal</CFormLabel>
+                <CFormLabel htmlFor="entidadFederal">Entidad Federal</CFormLabel> CAMBIARLO A ESTADO Y NORMALIZAR CON EL API
                 <CFormInput type="text" id="entidadFederal" placeholder="Ej: Táchira" required />
               </CCol>
               <CCol md={4}>
