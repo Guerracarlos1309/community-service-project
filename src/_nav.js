@@ -35,11 +35,13 @@ const _nav = [
     component: CNavItem,
     name: 'Registro Estudiantil',
     to: '/registro',
+    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Brigada Estudiantil',
     to: '/brigadas',
+    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
   {
     component: CNavTitle,
@@ -49,11 +51,13 @@ const _nav = [
     component: CNavItem,
     name: 'Matricula Estudiantil',
     to: '/matricula',
+    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Docentes',
     to: '/docentes ',
+    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
 
   {
@@ -64,6 +68,7 @@ const _nav = [
     component: CNavItem,
     name: 'Usuarios',
     to: '/users',
+    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
 ]
 

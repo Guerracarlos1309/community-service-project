@@ -127,7 +127,18 @@ const user = () => {
         </CModalHeader>
         <CModalBody>
           <CForm>
-            <CFormInput label="Nombre" name="name" className="mb-3" />
+            <CFormInput
+              label="Nombre"
+              name="name"
+              className="mb-3"
+              placeholder="Ingrese el nombre"
+            />
+            <CFormInput
+              label="Apellido"
+              name="apellido"
+              className="mb-3"
+              placeholder="Ingrese el Apellido"
+            />
             <CFormInput type="email" label="Email" name="email" className="mb-3" />
             <CFormSelect
               label="Rol"
