@@ -87,7 +87,7 @@ const Docente = () => {
       </CButton>
 
       <CCard>
-        <CCardHeader style={{ backgroundColor: '' }}>
+        <CCardHeader className="bg-primary text-white">
           <h4>Tabla de Docentes</h4>
         </CCardHeader>
         <CCardBody>
