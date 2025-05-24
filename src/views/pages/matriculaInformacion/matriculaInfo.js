@@ -167,12 +167,30 @@ const matriculaInfo = () => {
         <CTabPane visible={activeTab === 'datosGenerales'}>
           <CTable striped bordered hover>
             <CTableBody>
-              {Object.entries(datosGenerales).map(([label, val]) => (
-                <CTableRow key={label}>
-                  <CTableHeaderCell style={{ width: '40%' }}>{label}</CTableHeaderCell>
-                  <CTableDataCell>{val || '-'}</CTableDataCell>
-                </CTableRow>
-              ))}
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>Tipo de Ingreso</CTableHeaderCell>
+                <CTableDataCell>{datosGenerales.tipoIngreso || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>Nivel: </CTableHeaderCell>
+                <CTableDataCell>{datosGenerales.nivel || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>Grado</CTableHeaderCell>
+                <CTableDataCell>{datosGenerales.grado || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>seccion</CTableHeaderCell>
+                <CTableDataCell>{datosGenerales.seccion || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>Fecha de inscripcion </CTableHeaderCell>
+                <CTableDataCell>{datosGenerales.fechaInscripcion || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>Plantel de Procedencia</CTableHeaderCell>
+                <CTableDataCell>{datosGenerales.plantelProcedencia || '-'}</CTableDataCell>
+              </CTableRow>
             </CTableBody>
           </CTable>
         </CTabPane>
@@ -180,12 +198,54 @@ const matriculaInfo = () => {
         <CTabPane visible={activeTab === 'datosPersonales'}>
           <CTable striped bordered hover>
             <CTableBody>
-              {Object.entries(datosPersonales).map(([label, val]) => (
-                <CTableRow key={label}>
-                  <CTableHeaderCell style={{ width: '40%' }}>{label}</CTableHeaderCell>
-                  <CTableDataCell>{val || '-'}</CTableDataCell>
-                </CTableRow>
-              ))}
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>Cédula Escolar</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.cedulaEscolar || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Apellidos</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.apellidos || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Nombres</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.nombres || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Fecha de Nacimiento</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.fechaNacimiento || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Edad</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.edad || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Sexo</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.sexo || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Lugar de Nacimiento</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.lugarNacimiento || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Entidad Federal</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.entidadFederal || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Municipio</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.municipio || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Parroquia</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.parroquia || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Apreciación Cualitativa</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.apreciacionCualitativa || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Repitiente</CTableHeaderCell>
+                <CTableDataCell>{datosPersonales.repitiente || '-'}</CTableDataCell>
+              </CTableRow>
             </CTableBody>
           </CTable>
         </CTabPane>
@@ -230,12 +290,64 @@ const matriculaInfo = () => {
         <CTabPane visible={activeTab === 'datosRepresentante'}>
           <CTable striped bordered hover>
             <CTableBody>
-              {Object.entries(datosRepresentante).map(([label, val]) => (
-                <CTableRow key={label}>
-                  <CTableHeaderCell style={{ width: '40%' }}>{label}</CTableHeaderCell>
-                  <CTableDataCell>{val || '-'}</CTableDataCell>
-                </CTableRow>
-              ))}
+              <CTableRow>
+                <CTableHeaderCell style={{ width: '40%' }}>
+                  Apellidos Representante
+                </CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.apellidosRepresentante || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Nombres Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.nombresRepresentante || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Cédula Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.cedulaRepresentante || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Edad Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.edadRepresentante || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Fecha Nacimiento Representante</CTableHeaderCell>
+                <CTableDataCell>
+                  {datosRepresentante.fechaNacimientoRepresentante || '-'}
+                </CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Estado Civil Representante</CTableHeaderCell>
+                <CTableDataCell>
+                  {datosRepresentante.estadoCivilRepresentante || '-'}
+                </CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Nexo del Estdiante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.nexoEstudiante || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Direccion de habitacion del Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.direccionHabitacion || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Telefono de casa del Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.telefonoCasa || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Telefono celular del Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.telefonoCelular || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Profesion del Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.profesion || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Lugar de trabajo del Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.lugarTrabajo || '-'}</CTableDataCell>
+              </CTableRow>
+              <CTableRow>
+                <CTableHeaderCell>Telefono del trabajo del Representante</CTableHeaderCell>
+                <CTableDataCell>{datosRepresentante.telefonoTrabajo || '-'}</CTableDataCell>
+              </CTableRow>
             </CTableBody>
           </CTable>
         </CTabPane>
@@ -252,15 +364,15 @@ const matriculaInfo = () => {
                 <CTableDataCell>{datosFisicos.estatura}</CTableDataCell>
               </CTableRow>
               <CTableRow>
-                <CTableHeaderCell>Talla Camisa</CTableHeaderCell>
+                <CTableHeaderCell>Talla de Camisa</CTableHeaderCell>
                 <CTableDataCell>{datosFisicos.tallaCamisa}</CTableDataCell>
               </CTableRow>
               <CTableRow>
-                <CTableHeaderCell>Talla Pantalón</CTableHeaderCell>
+                <CTableHeaderCell>Talla de Pantalón</CTableHeaderCell>
                 <CTableDataCell>{datosFisicos.tallaPantalon}</CTableDataCell>
               </CTableRow>
               <CTableRow>
-                <CTableHeaderCell>Talla Zapato</CTableHeaderCell>
+                <CTableHeaderCell>Talla de Zapato</CTableHeaderCell>
                 <CTableDataCell>{datosFisicos.tallaZapato}</CTableDataCell>
               </CTableRow>
               <CTableRow>
