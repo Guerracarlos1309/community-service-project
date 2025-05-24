@@ -9,6 +9,9 @@ const docente = React.lazy(() => import('./views/pages/docente/docente.js'))
 const login = React.lazy(() => import('./views/pages/login/Login.js'))
 const register = React.lazy(() => import('./views/pages/register/Register.js'))
 const profile = React.lazy(() => import('./views/pages/profile/profile.js'))
+const infoMatricula = React.lazy(
+  () => import('./views/pages/matriculaInformacion/matriculaInfo.js'),
+)
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -20,7 +23,8 @@ const routes = [
   { path: '/docentes', name: 'Docentes', element: docente },
   { path: '/login', name: 'Login', element: login },
   { path: '/register', name: 'Register', element: register },
-  { path: '/profile', name: 'Perfil', element: profile },
+  { path: '/profile', name: 'Profile', element: profile },
+  { path: '/infoMatricula/:id', name: 'Información de estudiante', element: infoMatricula },
 ]
 
 export default routes

@@ -18,6 +18,7 @@ import {
   CTableDataCell,
   CButton,
 } from '@coreui/react'
+import { useNavigate } from 'react-router-dom'
 
 const datosEstudiantes = {
   Preescolar: [
@@ -61,6 +62,8 @@ const matricula = () => {
   const [activeKey, setActiveKey] = useState(Object.keys(datosEstudiantes)[0])
   const [estudiantes, setEstudiantes] = useState([])
   const [totalEstudiantes, setTotalEstudiantes] = useState(0)
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     setEstudiantes(datosEstudiantes[activeKey] || [])
@@ -148,7 +151,12 @@ const matricula = () => {
                       <CTableDataCell>{estudiante.nombre}</CTableDataCell>
                       <CTableDataCell>{estudiante.edad} años</CTableDataCell>
                       <CTableDataCell>
-                        <CButton color="warning" className="me-2" size="sm">
+                        <CButton
+                          color="warning"
+                          className="me-2"
+                          size="sm"
+                          onClick={() => navigate(`/infoMatricula/${estudiante.id}`)}
+                        >
                           Ver Más
                         </CButton>
 
