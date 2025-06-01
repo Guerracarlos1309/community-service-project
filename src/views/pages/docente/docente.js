@@ -24,6 +24,7 @@ import {
 
 const Docente = () => {
   const [VisibleNewDocente, setVisibleNewDocente] = useState(false)
+  const [VisibleEditDocente, setVisibleEditDocente] = useState(false)
 
   const docentes = [
     {
@@ -64,6 +65,14 @@ const Docente = () => {
 
   const handleClose = () => {
     setVisibleNewDocente(false)
+  }
+
+  const editOpen = () => {
+    setVisibleEditDocente(true)
+  }
+
+  const editClose = () => {
+    setVisibleEditDocente(false)
   }
 
   return (
@@ -111,7 +120,7 @@ const Docente = () => {
                   <CTableDataCell>{docente.cedula}</CTableDataCell>
                   <CTableDataCell>{docente.cargo}</CTableDataCell>
                   <CTableDataCell>
-                    <CButton size="sm" color="info" className="me-2">
+                    <CButton size="sm" color="info" className="me-2" onClick={editOpen}>
                       Editar
                     </CButton>
                     <CButton size="sm" color="danger">
@@ -177,6 +186,64 @@ const Docente = () => {
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={handleClose}>
+            Cerrar
+          </CButton>
+          <CButton color="primary">Guardar</CButton>
+        </CModalFooter>
+      </CModal>
+
+      <CModal size="lg" visible={VisibleEditDocente} onClose={editClose}>
+        <CModalHeader>
+          <CModalTitle>Editar Usuario</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CForm>
+            <CRow>
+              <CCol md={6} className="mb-3">
+                <CFormInput label="Nombre" name="name" className="mb-3" />
+                <CFormInput label="Apellido" name="Apellido" className="mb-3" />
+              </CCol>
+
+              <CCol md={6} className="mb-3">
+                <CFormInput type="email" label="Email" name="email" className="mb-3" />
+                <CFormInput type="Cedula" label="Cedula" name="cedula" className="mb-3" />
+              </CCol>
+              <CCol md={5} xs={7} className="flex-grow-1 mb-3">
+                <CFormSelect
+                  label="Cargo"
+                  name="cargo"
+                  className="mb-3"
+                  options={[
+                    { label: 'Seleccione', value: '' },
+                    { label: 'Docente', value: 'docente' },
+                    { label: 'Personal Apoyo', value: 'personalApoyo' },
+                  ]}
+                />
+              </CCol>
+              <CCol md={5} xs={7} className="flex-grow-1 mb-3">
+                <CFormSelect
+                  label="Rol"
+                  name="role"
+                  className="mb-3"
+                  options={[
+                    { label: 'Seleccione', value: '' },
+                    { label: 'Educacion Inicial', value: 'educacionInicial' },
+                    { label: '1er Grado', value: '1erGrado' },
+                    { label: '2do Grado', value: '2doGrado' },
+                    { label: '3er Grado', value: '3erGrado' },
+                    { label: '4to Grado', value: '4toGrado' },
+                    { label: '5to Grado', value: '5toGrado' },
+                    { label: '6to Grado', value: '6toGrado' },
+                    { label: 'Computación', value: 'computacion' },
+                    { label: 'Biblioteca', value: 'biblioteca' },
+                  ]}
+                />
+              </CCol>
+            </CRow>
+          </CForm>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={editClose}>
             Cerrar
           </CButton>
           <CButton color="primary">Guardar</CButton>

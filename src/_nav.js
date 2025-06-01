@@ -1,17 +1,13 @@
 import React from 'react'
 import CIcon from '@coreui/icons-react'
 import {
-  cilBell,
-  cilCalculator,
-  cilChartPie,
-  cilCursor,
-  cilDescription,
-  cilDrop,
-  cilNotes,
-  cilPencil,
-  cilPuzzle,
   cilSpeedometer,
-  cilStar,
+  cibMyspace,
+  cibVerizon,
+  cilBook,
+  cilEducation,
+  cilMedicalCross,
+  cilNotes,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -35,13 +31,13 @@ const _nav = [
     component: CNavItem,
     name: 'Registro Estudiantil',
     to: '/registro',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    icon: <CIcon icon={cibVerizon} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Brigada Estudiantil',
     to: '/brigadas',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   },
   {
     component: CNavTitle,
@@ -51,13 +47,13 @@ const _nav = [
     component: CNavItem,
     name: 'Matricula Estudiantil',
     to: '/matricula',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilBook} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Docentes',
     to: '/docentes ',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilEducation} customClassName="nav-icon" />,
   },
 
   {
@@ -68,7 +64,7 @@ const _nav = [
     component: CNavItem,
     name: 'Usuarios',
     to: '/users',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    icon: <CIcon icon={cibMyspace} customClassName="nav-icon" />,
   },
 ]
 

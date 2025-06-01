@@ -884,7 +884,7 @@ const registroEstudiantil = () => {
                 <CButton color="danger" type="button">
                   Cancelar
                 </CButton>
-                <CButton color="" type="submit" disabled={loading}>
+                <CButton color="success" type="submit" disabled={loading}>
                   {loading ? (
                     <>
                       <CSpinner size="sm" className="me-2" />

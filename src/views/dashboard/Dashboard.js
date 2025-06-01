@@ -13,6 +13,13 @@ import {
   CModal,
   CProgress,
   CRow,
+  CModalHeader,
+  CModalFooter,
+  CModalTitle,
+  CModalBody,
+  CForm,
+  CFormInput,
+  CFormLabel,
 } from '@coreui/react'
 // Importar CChart desde el paquete correcto
 import { CChart } from '@coreui/react-chartjs'
@@ -28,12 +35,6 @@ import {
   cilNotes,
 } from '@coreui/icons'
 
-import avatar1 from 'src/assets/images/avatars/1.jpg'
-import avatar2 from 'src/assets/images/avatars/2.jpg'
-import avatar3 from 'src/assets/images/avatars/3.jpg'
-import avatar4 from 'src/assets/images/avatars/4.jpg'
-import avatar5 from 'src/assets/images/avatars/5.jpg'
-import avatar6 from 'src/assets/images/avatars/6.jpg'
 import MainChart from './MainChart'
 
 const Dashboard = () => {
@@ -105,6 +106,17 @@ const Dashboard = () => {
     ],
   }
 
+  const grades = [
+    'Educacion Inicail',
+    '1er Grado',
+    '2do Grado',
+    '3er Grado',
+    '4to Grado',
+    '5to Grado',
+    '6to Grado',
+  ]
+  const weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+
   const [visible, setVisible] = useState(false)
 
   const abrirModal = () => {
@@ -112,6 +124,23 @@ const Dashboard = () => {
   }
   const cerrarModal = () => {
     setVisible(false)
+  }
+
+  const [asistencia, setAsistencia] = useState({})
+
+  const handleChange = (grado, dia, value) => {
+    setAsistencia((prev) => ({
+      ...prev,
+      [grado]: {
+        ...prev[grado],
+        [dia]: value,
+      },
+    }))
+  }
+
+  const handleGuardar = () => {
+    console.log('Asistencia registrada:', asistencia)
+    onClose()
   }
   return (
     <>
@@ -125,9 +154,14 @@ const Dashboard = () => {
               <div className="small text-body-secondary">Enero - Julio 2023</div>
             </CCol>
             <CCol sm={7} className="d-none d-md-block">
-              <CButton color="primary" className="float-end">
+              <CButton color="warning" className="float-end me-3" onClick={abrirModal}>
+                <CIcon icon={cilCloudDownload} />
+                Asistencia Estudiantil
+              </CButton>
+              <CButton color="primary" className="float-end me-3">
                 <CIcon icon={cilCloudDownload} />
               </CButton>
+
               <CButtonGroup className="float-end me-3">
                 {['Día', 'Mes', 'Año'].map((value) => (
                   <CButton
@@ -167,13 +201,6 @@ const Dashboard = () => {
               </CCol>
             ))}
           </CRow>
-
-          {/* 
-           Boton para la asistencia semanal
-          <CButton color="warning" className="float-end me-2" onClick={abrirModal}>
-            <CIcon icon={cilCloudDownload} />
-            Asistencia Estudiantil
-          </CButton> */}
         </CCardFooter>
       </CCard>
 
@@ -375,7 +402,44 @@ const Dashboard = () => {
         </CCol>
       </CRow>
 
-      <CModal visible={visible}></CModal>
+      <CModal visible={visible} size="xl">
+        <CModalHeader closeButton>
+          <CModalTitle>Registro de Asistencia Semanal</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CForm>
+            {grades.map((grado) => (
+              <CCard className="mb-3" key={grado}>
+                <CCardBody>
+                  <h5>{grado}</h5>
+                  <CRow>
+                    {weekdays.map((dia) => (
+                      <CCol md={2} key={dia}>
+                        <CFormLabel>{dia}</CFormLabel>
+                        <CFormInput
+                          type="number"
+                          min={0}
+                          value={asistencia[grado]?.[dia] || ''}
+                          onChange={(e) => handleChange(grado, dia, e.target.value)}
+                          placeholder="Asistencia"
+                        />
+                      </CCol>
+                    ))}
+                  </CRow>
+                </CCardBody>
+              </CCard>
+            ))}
+          </CForm>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={cerrarModal}>
+            Cancelar
+          </CButton>
+          <CButton color="primary" onClick={handleGuardar}>
+            Guardar
+          </CButton>
+        </CModalFooter>
+      </CModal>
     </>
   )
 }
