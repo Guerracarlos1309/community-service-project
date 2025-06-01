@@ -182,17 +182,50 @@ const user = () => {
         </CModalHeader>
         <CModalBody>
           <CForm>
-            <CFormInput label="Nombre" name="name" className="mb-3" />
-            <CFormInput type="email" label="Email" name="email" className="mb-3" />
-            <CFormSelect
-              label="Rol"
-              name="role"
+            <CFormInput
+              type="text"
+              id="nombre"
+              label="Nombre"
+              placeholder="Ingrese el nombre del usuario"
               className="mb-3"
+            />
+            <CFormInput
+              type="text"
+              id="apellido"
+              label="Apellido"
+              placeholder="Ingrese el apellido del usuario"
+              className="mb-3"
+            />
+            <CFormInput
+              type="text"
+              id="cedula"
+              label="Cedula"
+              placeholder="Ingrese el documento de identidad"
+              className="mb-3"
+            />
+            <CFormSelect
+              aria-label="DefaultSelect"
+              className="mb-3"
+              label="Cargo"
               options={[
-                { label: 'Usuario', value: 'Usuario' },
-                { label: 'Administrador', value: 'Administrador' },
-                { label: 'Administrador', value: 'Administrador' },
+                { label: 'Selecciona el cargo: ' },
+                { label: 'Administrador', value: '1' },
+                { label: 'Usuario', value: '2' },
               ]}
+            />
+            <CFormInput
+              type="text"
+              id="telefono"
+              label="Numero telefonico"
+              placeholder="Ingrese el numero telefonico"
+              className="mb-3"
+            />
+            <CFormInput
+              type="email"
+              id="email"
+              label="Correo electronico"
+              placeholder="Ingrese el correo electronico"
+              className="mb-3"
             />
           </CForm>
         </CModalBody>
