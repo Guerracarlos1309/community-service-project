@@ -5,14 +5,26 @@ const users = React.lazy(() => import('./views/pages/user/user.js'))
 const registro = React.lazy(() => import('./views/pages/registro/registro.js'))
 const matricula = React.lazy(() => import('./views/pages/matricula/matricula.js'))
 const brigadas = React.lazy(() => import('./views/pages/brigada/brigada.js'))
+const docente = React.lazy(() => import('./views/pages/docente/docente.js'))
+const login = React.lazy(() => import('./views/pages/login/Login.js'))
+const register = React.lazy(() => import('./views/pages/register/Register.js'))
+const profile = React.lazy(() => import('./views/pages/profile/profile.js'))
+const infoMatricula = React.lazy(
+  () => import('./views/pages/matriculaInformacion/matriculaInfo.js'),
+)
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: dashboard },
   { path: '/users', name: 'Usuarios', element: users },
-  { path: '/registro', name: 'Register', element: registro },
+  { path: '/registro', name: 'Registro', element: registro },
   { path: '/matricula', name: 'Matricula', element: matricula },
   { path: '/brigadas', name: 'Brigadas', element: brigadas },
+  { path: '/docentes', name: 'Docentes', element: docente },
+  { path: '/login', name: 'Login', element: login },
+  { path: '/register', name: 'Register', element: register },
+  { path: '/profile', name: 'Profile', element: profile },
+  { path: '/infoMatricula/:id', name: 'Información de estudiante', element: infoMatricula },
 ]
 
 export default routes
