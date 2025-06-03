@@ -25,6 +25,18 @@ import { CFormLabel, CFormInput, CFormTextarea, CFormSelect, CInputGroup, CInput
 import angular from "../../../assets/images/angular.jpg"
 import rea from "../../../assets/images/react.jpg"
 import vue from "../../../assets/images/vue.jpg"
+import bripatesc from "../../../assets/images/bripatesc.jpg"
+import bripriaux from "../../../assets/images/bripriaux.jpg"
+import brigesrie from "../../../assets/images/brigesrie.jpg"
+import briconpaz from "../../../assets/images/briconpaz.jpg"
+import brieco from "../../../assets/images/brieco.jpg"
+import bribosbic from "../../../assets/images/bribosbic.jpg"
+import bribio from "../../../assets/images/bribio.jpg"
+import bricalglo from "../../../assets/images/bricalglo.jpg"
+import bripreint from "../../../assets/images/bripreint.jpg"
+import briguasem from "../../../assets/images/briguasem.jpg"
+import briagusan from "../../../assets/images/briagusan.jpg"
+import brisocbol from "../../../assets/images/brisocbol.jpg"
 
 const Brigade = () => {
   // State to control the modal
@@ -68,9 +80,9 @@ const Brigade = () => {
   const [brigades, setBrigades] = useState([
     {
       id: 1,
-      name: "Brigada de Primeros Auxilios",
-      description: "Encargada de brindar asistencia en situaciones de emergencia.",
-      image: angular,
+      name: "Brigada de Patrulla Escolar",
+      description: "Responsables de mantener el orden y la seguridad de los estudiantes.",
+      image: bripatesc,
       teacher: {
         name: "Dra. Ana Pérez",
         subject: "Biología",
@@ -83,9 +95,9 @@ const Brigade = () => {
     },
     {
       id: 2,
-      name: "Brigada de Evacuación",
-      description: "Responsable de dirigir y asegurar la evacuación en caso de siniestros.",
-      image: rea,
+      name: "Brigada de Primeros Auxilios",
+      description: "Ayuda a atender a quienes se sienten mal o se lastiman.",
+      image: bripriaux,
       teacher: {
         name: "Ing. Carlos López",
         subject: "Física",
@@ -98,9 +110,9 @@ const Brigade = () => {
     },
     {
       id: 3,
-      name: "Brigada de Incendios",
-      description: "Dedicada a la prevención y combate de incendios dentro de la institución.",
-      image: vue,
+      name: "Brigada de Gestión de Riesgos",
+      description: "Se encarga de prevenir y responder ante emergencias.",
+      image: brigesrie,
       teacher: {
         name: "Sra. Marta Gómez",
         subject: "Química",
@@ -109,6 +121,141 @@ const Brigade = () => {
       students: [
         { id: 301, name: "Mariana González", grade: "3°D", age: 16, role: "Coordinadora" },
         { id: 302, name: "Alejandro Vargas", grade: "3°D", age: 16, role: "Auxiliar" },
+      ],
+    },
+     {
+      id: 4,
+      name: "Brigada de Convivencia y Paz",
+      description: "Promueve un ambiente de respeto, armonía y resolución pacífica de conflictos.",
+      image: briconpaz,
+      teacher: {
+        name: "Lic. Andrea Soto",
+        subject: "Psicología",
+        contact: "andrea.soto@escuela.edu",
+      },
+      students: [
+        { id: 103, name: "Sofía López", grade: "3°B", age: 16, role: "Coordinadora" },
+        { id: 104, name: "Diego Hernández", grade: "2°C", age: 14, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 5,
+      name: "Brigada Ecológica",
+      description: "Dedicada a la conservación del medio ambiente escolar y la promoción de prácticas sostenibles.",
+      image: brieco,
+      teacher: {
+        name: "Biól. Ricardo Fuentes",
+        subject: "Ciencias Naturales",
+        contact: "ricardo.fuentes@escuela.edu",
+      },
+      students: [
+        { id: 203, name: "Javier Torres", grade: "2°A", age: 14, role: "Coordinador" },
+        { id: 204, name: "Valentina Díaz", grade: "2°B", age: 14, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 6,
+      name: "Brigada de Bosque Bicentenario",
+      description: "Encargada del cuidado y mantenimiento de las áreas verdes y el bosque escolar.",
+      image: bribosbic,
+      teacher: {
+        name: "Agrón. Laura Pardo",
+        subject: "Educación Ambiental",
+        contact: "laura.pardo@escuela.edu",
+      },
+      students: [
+        { id: 303, name: "Camila Reyes", grade: "2°D", age: 14, role: "Coordinadora" },
+        { id: 304, name: "Sebastián Morales", grade: "2°C", age: 14, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 7,
+      name: "Brigada de Bioseguridad",
+      description: "Garantiza el cumplimiento de las normas sanitarias y de higiene en la institución.",
+      image: bribio,
+      teacher: {
+        name: "Enf. Gloria Castro",
+        subject: "Salud Escolar",
+        contact: "gloria.castro@escuela.edu",
+      },
+      students: [
+        { id: 401, name: "Daniel Castro", grade: "3°B", age: 15, role: "Coordinador" },
+        { id: 402, name: "Isabella Ramos", grade: "3°A", age: 15, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 8,
+      name: "Brigada de Calentamiento Global",
+      description: "Concientiza sobre el cambio climático y promueve acciones para mitigar sus efectos.",
+      image: bricalglo,
+      teacher: {
+        name: "Dr. Ernesto Rojas",
+        subject: "Geografía",
+        contact: "ernesto.rojas@escuela.edu",
+      },
+      students: [
+        { id: 403, name: "Mateo Flores", grade: "2°B", age: 14, role: "Coordinador" },
+        { id: 404, name: "Valeria Campos", grade: "2°A", age: 14, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 9,
+      name: "Brigada de Prevención Integral",
+      description: "Aborda la prevención de riesgos, adicciones y situaciones que afecten el bienestar estudiantil.",
+      image: bripreint,
+      teacher: {
+        name: "Lic. Patricia Ruiz",
+        subject: "Orientación",
+        contact: "patricia.ruiz@escuela.edu",
+      },
+      students: [
+        { id: 101, name: "Ana García", grade: "3°A", age: 15, role: "Coordinadora" }, // Reutilizando estudiantes
+        { id: 201, name: "Carlos Ramírez", grade: "3°C", age: 16, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 10,
+      name: "Brigada de Guardián de la Semilla",
+      description: "Fomenta la agricultura sostenible y el cuidado de las plantas y huertos escolares.",
+      image: briguasem,
+      teacher: {
+        name: "Téc. Juan Bravo",
+        subject: "Agroecología",
+        contact: "juan.bravo@escuela.edu",
+      },
+      students: [
+        { id: 301, name: "Mariana González", grade: "3°D", age: 16, role: "Coordinadora" },
+        { id: 401, name: "Daniel Castro", grade: "3°B", age: 15, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 11,
+      name: "Brigada de Agua y Saneamiento",
+      description: "Promueve el uso consciente del agua y el mantenimiento de la higiene en las instalaciones.",
+      image: briagusan,
+      teacher: {
+        name: "Ing. Sofia Delgado",
+        subject: "Educación Sanitaria",
+        contact: "sofia.delgado@escuela.edu",
+      },
+      students: [
+        { id: 102, name: "Pedro Martínez", grade: "3°A", age: 15, role: "Coordinador" },
+        { id: 202, name: "Lucía Fernández", grade: "3°C", age: 16, role: "Auxiliar" },
+      ],
+    },
+    {
+      id: 12,
+      name: "Brigada de Sociedad Bolivariana",
+      description: "Estudia y difunde el pensamiento y legado de Simón Bolívar y los valores patrios.",
+      image: brisocbol,
+      teacher: {
+        name: "Hist. Gabriela Rojas",
+        subject: "Historia de Venezuela",
+        contact: "gabriela.rojas@escuela.edu",
+      },
+      students: [
+        { id: 303, name: "Camila Reyes", grade: "2°D", age: 14, role: "Coordinadora" },
+        { id: 403, name: "Mateo Flores", grade: "2°B", age: 14, role: "Auxiliar" },
       ],
     },
   ])
@@ -230,7 +377,7 @@ const Brigade = () => {
         </h2>
       </div>
       <div className="d-flex justify-content-end mb-4">
-        <CButton color="primary" onClick={openAddModal}>
+        <CButton color="info" className="text-white" onClick={openAddModal}>
           Añadir Brigada
         </CButton>
       </div>
@@ -247,7 +394,7 @@ const Brigade = () => {
                   <img
                     src={brigade.image || "/placeholder.svg"}
                     alt={`Foto de ${brigade.name}`}
-                    style={{ width: "100%", height: "160px", objectFit: "cover", borderRadius: "8px" }}
+                    style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }}
                   />
                 </div>
                 <div className="mb-2">
@@ -261,10 +408,10 @@ const Brigade = () => {
                 </div>
                 <div>
                   <div className="mt-3 d-flex justify-content-between">
-                    <CButton color="info" onClick={() => openModal(brigade)}>
+                    <CButton color="warning" className="text-black" onClick={() => openModal(brigade)}>
                       Ver detalles
                     </CButton>
-                    <CButton color="danger">Eliminar</CButton>
+                    <CButton color="danger" className="text-white">Eliminar</CButton>
                   </div>
                 </div>
               </CCardBody>
