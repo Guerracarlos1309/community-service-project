@@ -120,7 +120,7 @@ const Docente = () => {
                   <CTableDataCell>{docente.cedula}</CTableDataCell>
                   <CTableDataCell>{docente.cargo}</CTableDataCell>
                   <CTableDataCell>
-                    <CButton size="sm" color="info" className="me-2">
+                    <CButton size="sm" color="info" className="me-2" onClick={editOpen}>
                       Editar
                     </CButton>
                     <CButton size="sm" color="danger" className="text-white">

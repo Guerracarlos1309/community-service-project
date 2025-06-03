@@ -161,10 +161,6 @@ const matricula = () => {
                           Ver Más
                         </CButton>
 
-                        <CButton color="warning" className="me-2 text-black" size="sm">
-                          Ver Más
-                        </CButton>
-
                         <CButton color="danger" className="me-2 text-white" size="sm">
                           Eliminar
                         </CButton>
