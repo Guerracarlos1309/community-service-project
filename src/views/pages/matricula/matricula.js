@@ -90,9 +90,9 @@ const matricula = () => {
       <CRow>
         <CCol md={4}>
           <CCard className="mb-4">
-            <CCardHeader className="bg-primary text-white">
+            <CCardHeader className="bg-info text-white">
               <strong>Grados Académicos</strong>
-              <CBadge color="light" className="text-dark float-end">
+              <CBadge color="warning" className="text-dark float-end">
                 {totalEstudiantes} estudiantes
               </CBadge>
             </CCardHeader>
@@ -110,7 +110,7 @@ const matricula = () => {
                       className="d-flex justify-content-between align-items-center"
                     >
                       {grado}
-                      <CBadge color="info" shape="rounded-pill">
+                      <CBadge color="warning" shape="rounded-pill">
                         {datosEstudiantes[grado].length}
                       </CBadge>
                     </CNavLink>
@@ -123,10 +123,10 @@ const matricula = () => {
 
         <CCol md={8}>
           <CCard>
-            <CCardHeader className="bg-primary text-white d-flex justify-content-between align-items-center">
+            <CCardHeader className="bg-info text-white d-flex justify-content-between align-items-center">
               {' '}
               <h4>Tabla de estudiantes Matriculados</h4>
-              <CBadge color="light" className="text-dark float-end">
+              <CBadge color="warning" className="text-dark float-end">
                 {estudiantes.length} estudiantes
               </CBadge>
             </CCardHeader>
@@ -148,11 +148,11 @@ const matricula = () => {
                       <CTableDataCell>{estudiante.nombre}</CTableDataCell>
                       <CTableDataCell>{estudiante.edad} años</CTableDataCell>
                       <CTableDataCell>
-                        <CButton color="warning" className="me-2" size="sm">
+                        <CButton color="warning" className="me-2 text-black" size="sm">
                           Ver Más
                         </CButton>
 
-                        <CButton color="danger" className="me-2" size="sm">
+                        <CButton color="danger" className="me-2 text-white" size="sm">
                           Eliminar
                         </CButton>
                       </CTableDataCell>

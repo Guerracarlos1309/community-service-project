@@ -80,12 +80,12 @@ const user = () => {
         </h2>
       </div>
 
-      <CButton color="warning" className="mb-3" onClick={handleOpen}>
+      <CButton color="info text-white" className="mb-3" onClick={handleOpen}>
         Crear Usuario
       </CButton>
 
       <CCard>
-        <CCardHeader className="bg-primary text-white">
+        <CCardHeader className="bg-info text-white">
           <h4>Tabla de Usuarios</h4>
         </CCardHeader>
         <CCardBody>
@@ -107,10 +107,10 @@ const user = () => {
                   <CTableDataCell>{user.email}</CTableDataCell>
                   <CTableDataCell>{user.role}</CTableDataCell>
                   <CTableDataCell>
-                    <CButton size="sm" color="info" className="me-2" onClick={openEdit}>
+                    <CButton size="sm" color="info" className="me-2 text-white" onClick={openEdit}>
                       Editar
                     </CButton>
-                    <CButton size="sm" color="danger">
+                    <CButton size="sm" color="danger" className="text-white">
                       Eliminar
                     </CButton>
                   </CTableDataCell>
@@ -152,10 +152,10 @@ const user = () => {
           </CForm>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={handleClose}>
+          <CButton color="danger" className="text-white" onClick={handleClose}>
             Cerrar
           </CButton>
-          <CButton color="primary" onClick={handleOpenConfirm}>
+          <CButton color="success" className="text-white" onClick={handleOpenConfirm}>
             Guardar
           </CButton>
         </CModalFooter>
@@ -167,10 +167,10 @@ const user = () => {
         </CModalHeader>
         <CModalBody>Añadir nuevo usuario</CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={handleCloseConfirm}>
+          <CButton color="danger" className="text-white" onClick={handleCloseConfirm}>
             Cerrar
           </CButton>
-          <CButton color="warning" onClick={handleCloseConfirm}>
+          <CButton color="success" className="text-white" onClick={handleCloseConfirm}>
             Guardar cambios
           </CButton>
         </CModalFooter>
@@ -197,10 +197,10 @@ const user = () => {
           </CForm>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={closeEdit}>
+          <CButton color="danger" className="text-white" onClick={closeEdit}>
             Cerrar
           </CButton>
-          <CButton color="primary" onClick={saveEditOpen}>
+          <CButton color="success" className="text-white" onClick={saveEditOpen}>
             Guardar
           </CButton>
         </CModalFooter>
@@ -212,7 +212,7 @@ const user = () => {
         </CModalHeader>
         <CModalBody> Usuario actualizado correctamente</CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={saveEditClose}>
+          <CButton color="danger" className="text-white" onClick={saveEditClose}>
             Cerrar
           </CButton>
         </CModalFooter>

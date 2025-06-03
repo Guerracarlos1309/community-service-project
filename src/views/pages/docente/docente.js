@@ -82,12 +82,12 @@ const Docente = () => {
         </h2>
       </div>
 
-      <CButton color="warning" className="mb-3" onClick={handleOpen}>
+      <CButton color="info text-white" className="mb-3" onClick={handleOpen}>
         Crear docente
       </CButton>
 
       <CCard>
-        <CCardHeader className="bg-primary text-white">
+        <CCardHeader className="bg-info text-white">
           <h4>Tabla de Docentes</h4>
         </CCardHeader>
         <CCardBody>
@@ -111,10 +111,10 @@ const Docente = () => {
                   <CTableDataCell>{docente.cedula}</CTableDataCell>
                   <CTableDataCell>{docente.cargo}</CTableDataCell>
                   <CTableDataCell>
-                    <CButton size="sm" color="info" className="me-2">
+                    <CButton size="sm" color="info" className="me-2 text-white">
                       Editar
                     </CButton>
-                    <CButton size="sm" color="danger">
+                    <CButton size="sm" color="danger" className="text-white">
                       Eliminar
                     </CButton>
                   </CTableDataCell>
@@ -176,10 +176,10 @@ const Docente = () => {
           </CForm>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={handleClose}>
+          <CButton color="danger" className="text-white" onClick={handleClose}>
             Cerrar
           </CButton>
-          <CButton color="primary">Guardar</CButton>
+          <CButton color="success" className="text-white" >Guardar</CButton>
         </CModalFooter>
       </CModal>
     </div>
