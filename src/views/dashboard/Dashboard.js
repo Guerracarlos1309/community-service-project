@@ -158,9 +158,6 @@ const Dashboard = () => {
                 <CIcon icon={cilCloudDownload} />
                 Asistencia Estudiantil
               </CButton>
-              <CButton color="primary" className="float-end me-3">
-                <CIcon icon={cilCloudDownload} />
-              </CButton>
 
               <CButtonGroup className="float-end me-3">
                 {['Día', 'Mes', 'Año'].map((value) => (

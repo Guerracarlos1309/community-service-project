@@ -19,6 +19,7 @@ import {
   CButton,
 } from '@coreui/react'
 import { useNavigate } from 'react-router-dom'
+import { cilAirplay } from '@coreui/icons'
 
 const datosEstudiantes = {
   Preescolar: [
@@ -163,6 +164,9 @@ const matricula = () => {
 
                         <CButton color="danger" className="me-2 text-white" size="sm">
                           Eliminar
+                        </CButton>
+                        <CButton color="success" className="me-2 text-white" size="sm">
+                          Imprimir
                         </CButton>
                       </CTableDataCell>
                     </CTableRow>
