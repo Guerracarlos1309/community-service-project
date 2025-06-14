@@ -140,6 +140,10 @@ const registroEstudiantil = () => {
                   <CFormLabel htmlFor="grado">Grado</CFormLabel>
                   <CFormSelect id="grado" required>
                     <option value="">Seleccionar...</option>
+                    <option value="">1°er Nivel preescolar</option>
+                    <option value="">2°do Nivel preescolar</option>
+                    <option value="">3°er Nivel preescolar</option>
+                    <option value="">Seleccionar...</option>
                     <option value="1">1°er Grado</option>
                     <option value="2">2°do Grado</option>
                     <option value="3">3°er Grado</option>
@@ -262,8 +266,7 @@ const registroEstudiantil = () => {
 
             <CRow className="mb-3">
               <CCol md={4}>
-                <CFormLabel htmlFor="entidadFederal">Entidad Federal</CFormLabel> CAMBIARLO A ESTADO
-                Y NORMALIZAR CON EL API
+                <CFormLabel htmlFor="entidadFederal">Entidad Federal</CFormLabel>
                 <CFormInput type="text" id="entidadFederal" placeholder="Ej: Táchira" required />
               </CCol>
               <CCol md={4}>
