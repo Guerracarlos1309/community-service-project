@@ -1,11 +1,12 @@
 export const helpFetch = () => {
-  //const URL = 'https://json-dise-o-2.onrender.com'
-  const URL = 'http://localhost:3004'
+  const URL = 'http://localhost:3001'
 
   const customFetch = (endpoint, options = {}) => {
     options.method = options.method || 'GET'
+
     options.headers = {
       'content-type': 'application/json',
+      authorization: 'Bearer token',
     }
 
     if (options.body) {
@@ -14,14 +15,14 @@ export const helpFetch = () => {
     console.log(options)
 
     return fetch(`${URL}${endpoint}`, options)
-      .then((response) => {
-        return response.ok
-          ? response.json()
-          : Promise.reject({
-              error: true,
-              status: response.status,
-              statusText: response.statusText,
-            })
+      .then(async (response) => {
+        const data = await response.json() // Leer JSON siempre
+        if (response.ok) {
+          return data // OK, devolver data directamente
+        } else {
+          // Rechazar con data para que contenga el msg del backend
+          return Promise.reject(data)
+        }
       })
       .catch((error) => error)
   }

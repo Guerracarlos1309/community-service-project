@@ -20,6 +20,9 @@ import {
   CModalFooter,
   CCardGroup,
 } from '@coreui/react'
+import { helpFetch } from '../../../api/helpFetch.js'
+
+const api = helpFetch()
 
 const user = () => {
   const [visible, setVisible] = useState(false)
@@ -59,10 +62,27 @@ const user = () => {
     setSaveEdit(false)
   }
 
-  const users = [
-    { id: 1, name: 'Juan Pérez', email: 'juan@example.com', role: 'Administrador' },
-    { id: 2, name: 'Ana García', email: 'ana@example.com', role: 'Usuario' },
-  ]
+  const [data, setData] = useState([])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  useEffect(() => {}, [data])
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/api/users/list')
+
+      if (!response.error) {
+        setData(response.users)
+      } else {
+        console.error('Error fetching users:', response)
+      }
+    } catch (error) {
+      console.error('Fetch error:', error)
+    }
+  }
 
   return (
     <div className="p-4">
@@ -93,19 +113,19 @@ const user = () => {
             <CTableHead>
               <CTableRow>
                 <CTableHeaderCell scope="col">Id</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Nombre</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Usuario</CTableHeaderCell>
                 <CTableHeaderCell scope="col">Correo electronico</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Rol</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Permiso</CTableHeaderCell>
                 <CTableHeaderCell scope="col">Función</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {users.map((user) => (
+              {data.map((user) => (
                 <CTableRow key={user.id}>
                   <CTableDataCell>{user.id}</CTableDataCell>
-                  <CTableDataCell>{user.name}</CTableDataCell>
+                  <CTableDataCell>{user.username}</CTableDataCell>
                   <CTableDataCell>{user.email}</CTableDataCell>
-                  <CTableDataCell>{user.role}</CTableDataCell>
+                  <CTableDataCell>{user.permiso_id}</CTableDataCell>
                   <CTableDataCell>
                     <CButton size="sm" color="info" className="me-2 text-white" onClick={openEdit}>
                       Editar

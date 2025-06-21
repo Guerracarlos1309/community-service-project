@@ -1,4 +1,4 @@
-import react, { useState } from 'react'
+import react, { useEffect, useState } from 'react'
 import {
   CCard,
   CCardHeader,
@@ -21,43 +21,35 @@ import {
   CRow,
   CCol,
 } from '@coreui/react'
+import { helpFetch } from '../../../api/helpFetch.js'
+
+const api = helpFetch()
 
 const Docente = () => {
   const [VisibleNewDocente, setVisibleNewDocente] = useState(false)
   const [VisibleEditDocente, setVisibleEditDocente] = useState(false)
 
-  const docentes = [
-    {
-      id: 1,
-      nombre: 'Juan Daniel',
-      apellido: 'Guevara chacon',
-      email: 'JuanGuevara@gmail.com',
-      telefono: '04241542452',
-      telefonoResidencia: '04241542452',
-      cargo: 'Docente de Educacion Inicial',
-      cedula: '31419488',
-    },
-    {
-      id: 2,
-      nombre: 'Pedro Gustavo',
-      apellido: 'Guevara abreu',
-      email: 'PedroGuevara@gmail.com',
-      telefono: '04247842454',
-      telefonoResidencia: '04247842454',
-      cargo: 'Docente 2do Grado',
-      cedula: '31419488',
-    },
-    {
-      id: 3,
-      nombre: 'Luis Daniel',
-      apellido: 'Guevara lozada',
-      email: 'LuisGuevara@gmail.com',
-      telefono: '04247842454',
-      telefonoResidencia: '04247842454',
-      cargo: 'Docente 3er grado',
-      cedula: '31419488',
-    },
-  ]
+  const [data, setData] = useState([])
+
+  useEffect(() => {
+    fetchDocentes()
+  }, [])
+
+  useEffect(() => {}, [data])
+
+  const fetchDocentes = async () => {
+    try {
+      const response = await api.get('/api/personal')
+      console.log('Respuesta API:', response)
+      if (!response.error) {
+        setData(response.personal)
+      } else {
+        console.error('Error al obtener docentes:', response)
+      }
+    } catch (error) {
+      console.error('Error en fetch:', error)
+    }
+  }
 
   const handleOpen = () => {
     setVisibleNewDocente(true)
@@ -107,31 +99,35 @@ const Docente = () => {
                 <CTableHeaderCell scope="col">Apellido</CTableHeaderCell>
                 <CTableHeaderCell scope="col">Correo electronico</CTableHeaderCell>
                 <CTableHeaderCell scope="col">Cedula</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Cargo</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Rol</CTableHeaderCell>
                 <CTableHeaderCell scope="col">Función</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {docentes.map((docente) => (
-                <CTableRow key={docente.id}>
-                  <CTableDataCell>{docente.nombre}</CTableDataCell>
-                  <CTableDataCell>{docente.apellido}</CTableDataCell>
-                  <CTableDataCell>{docente.email}</CTableDataCell>
-                  <CTableDataCell>{docente.cedula}</CTableDataCell>
-                  <CTableDataCell>{docente.cargo}</CTableDataCell>
-                  <CTableDataCell>
-                    <CButton size="sm" color="warning" className="me-2">
-                      Ver más
-                    </CButton>
-                    <CButton size="sm" color="info" className="me-2" onClick={editOpen}>
-                      Editar
-                    </CButton>
-                    <CButton size="sm" color="danger">
-                      Eliminar
-                    </CButton>
-                  </CTableDataCell>
-                </CTableRow>
-              ))}
+              {Array.isArray(data) &&
+                data.map((docente) => {
+                  console.log('Docente:', docente)
+                  return (
+                    <CTableRow key={docente.id}>
+                      <CTableDataCell>{docente.nombre}</CTableDataCell>
+                      <CTableDataCell>{docente.apellido}</CTableDataCell>
+                      <CTableDataCell>{docente.email}</CTableDataCell>
+                      <CTableDataCell>{docente.cedula}</CTableDataCell>
+                      <CTableDataCell>{docente.idrole}</CTableDataCell>
+                      <CTableDataCell>
+                        <CButton size="sm" color="warning" className="me-2">
+                          Ver más
+                        </CButton>
+                        <CButton size="sm" color="info" className="me-2" onClick={editOpen}>
+                          Editar
+                        </CButton>
+                        <CButton size="sm" color="danger">
+                          Eliminar
+                        </CButton>
+                      </CTableDataCell>
+                    </CTableRow>
+                  )
+                })}
             </CTableBody>
           </CTable>
         </CCardBody>
