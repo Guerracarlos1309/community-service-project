@@ -5,8 +5,9 @@ export const helpFetch = () => {
     options.method = options.method || 'GET'
 
     options.headers = {
+      ...(options.headers || {}),
       'content-type': 'application/json',
-      authorization: 'Bearer token',
+      authorization: `Bearer ${localStorage.getItem('accessToken')}`,
     }
 
     if (options.body) {
@@ -34,9 +35,10 @@ export const helpFetch = () => {
     return customFetch(endpoint, options)
   }
 
-  const put = (endpoint, options, id) => {
+  const put = (endpoint, options = {}, id = '') => {
     options.method = 'PUT'
-    return customFetch(`${endpoint}/${id}`, options)
+    const url = id ? `${endpoint}/${id}` : endpoint
+    return customFetch(url, options)
   }
 
   const delet = (endpoint, id) => {

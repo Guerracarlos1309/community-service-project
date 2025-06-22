@@ -30,8 +30,36 @@ const user = () => {
   const [visibleEdit, setVisibleEdit] = useState(false)
   const [saveEdit, setSaveEdit] = useState(false)
 
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [editForm, setEditForm] = useState({
+    email: '',
+    username: '',
+    permisos_id: '',
+  })
+
+  const [visibleDeleteConfirm, setVisibleDeleteConfirm] = useState(false)
+  const [userToDelete, setUserToDelete] = useState(null)
+
+  const [newUser, setNewUser] = useState({
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    security_word: '',
+    respuesta_de_seguridad: '',
+    permiso_id: '',
+  })
+
   const handleOpen = () => {
     setVisible(true)
+  }
+
+  const handleNewUserChange = (e) => {
+    const { name, value } = e.target
+    setNewUser((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
   const handleOpenConfirm = () => {
@@ -46,20 +74,14 @@ const user = () => {
     setVisible(false)
   }
 
-  const openEdit = () => {
-    setVisibleEdit(true)
+  const openDeleteConfirm = (user) => {
+    setUserToDelete(user)
+    setVisibleDeleteConfirm(true)
   }
 
-  const closeEdit = () => {
-    setVisibleEdit(false)
-  }
-
-  const saveEditOpen = () => {
-    setSaveEdit(true)
-    setVisibleEdit(false)
-  }
-  const saveEditClose = () => {
-    setSaveEdit(false)
+  const closeDeleteConfirm = () => {
+    setVisibleDeleteConfirm(false)
+    setUserToDelete(null)
   }
 
   const [data, setData] = useState([])
@@ -81,6 +103,83 @@ const user = () => {
       }
     } catch (error) {
       console.error('Fetch error:', error)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedUser) {
+      setEditForm({
+        email: selectedUser.email,
+        username: selectedUser.username,
+        permiso_id: selectedUser.permiso_id.toString(),
+      })
+    }
+  }, [selectedUser])
+
+  const deleteUser = async () => {
+    if (!userToDelete) return
+
+    try {
+      const response = await api.delet('/api/users', userToDelete.id)
+
+      if (!response.error) {
+        fetchUsers()
+        closeDeleteConfirm()
+      } else {
+        console.error('Error eliminando usuario:', response)
+      }
+    } catch (error) {
+      console.error('Error en deleteUser:', error)
+    }
+  }
+
+  const handleCreateUser = async () => {
+    if (newUser.password !== newUser.confirmPassword) {
+      alert('Las contraseñas no coinciden')
+      return
+    }
+    if (
+      !newUser.email ||
+      !newUser.username ||
+      !newUser.password ||
+      !newUser.security_word ||
+      !newUser.respuesta_de_seguridad ||
+      !newUser.permiso_id
+    ) {
+      alert('Por favor completa todos los campos')
+      return
+    }
+
+    try {
+      const response = await api.post('/api/users/register', {
+        body: {
+          email: newUser.email,
+          username: newUser.username,
+          password: newUser.password,
+          security_word: newUser.security_word,
+          respuesta_de_seguridad: newUser.respuesta_de_seguridad,
+          permiso_id: Number(newUser.permiso_id),
+        },
+      })
+
+      if (!response.error) {
+        setVisibleConfirm(false)
+        setVisible(false)
+        fetchUsers()
+        setNewUser({
+          email: '',
+          username: '',
+          password: '',
+          confirmPassword: '',
+          security_word: '',
+          respuesta_de_seguridad: '',
+          permiso_id: '',
+        })
+      } else {
+        console.error('Error creando usuario:', response)
+      }
+    } catch (error) {
+      console.error('Error en handleCreateUser:', error)
     }
   }
 
@@ -127,10 +226,12 @@ const user = () => {
                   <CTableDataCell>{user.email}</CTableDataCell>
                   <CTableDataCell>{user.permiso_id}</CTableDataCell>
                   <CTableDataCell>
-                    <CButton size="sm" color="info" className="me-2 text-white" onClick={openEdit}>
-                      Editar
-                    </CButton>
-                    <CButton size="sm" color="danger" className="text-white">
+                    <CButton
+                      size="sm"
+                      color="danger"
+                      className="text-white"
+                      onClick={() => openDeleteConfirm(user)}
+                    >
                       Eliminar
                     </CButton>
                   </CTableDataCell>
@@ -148,26 +249,72 @@ const user = () => {
         <CModalBody>
           <CForm>
             <CFormInput
-              label="Nombre"
-              name="name"
+              type="email"
+              label="Email"
+              name="email"
               className="mb-3"
-              placeholder="Ingrese el nombre"
+              placeholder="Ingrese su correo electrónico"
+              value={newUser.email}
+              onChange={handleNewUserChange}
             />
             <CFormInput
-              label="Apellido"
-              name="apellido"
+              type="text"
+              label="Usuario"
+              name="username"
               className="mb-3"
-              placeholder="Ingrese el Apellido"
+              placeholder="Ingrese su nombre de usuario"
+              value={newUser.username}
+              onChange={handleNewUserChange}
             />
-            <CFormInput type="email" label="Email" name="email" className="mb-3" />
+            <CFormInput
+              type="password"
+              label="Contraseña"
+              name="password"
+              className="mb-3"
+              placeholder="Ingrese su contraseña"
+              value={newUser.password}
+              onChange={handleNewUserChange}
+            />
+            <CFormInput
+              type="password"
+              label="Confirmar Contraseña"
+              name="confirmPassword"
+              placeholder="Confirma tu contraseña"
+              className="mb-3"
+              value={newUser.confirmPassword}
+              onChange={handleNewUserChange}
+            />
+            <CFormInput
+              type="security_word"
+              label="Pregunta de seguridad"
+              name="security_word"
+              placeholder="Ingrese su pregunta de seguridad"
+              className="mb-3"
+              value={newUser.security_word}
+              onChange={handleNewUserChange}
+            />
+            <CFormInput
+              type="respuesta_de_seguridad"
+              label="Respuesta de seguridad"
+              name="respuesta_de_seguridad"
+              placeholder="Ingrese su respuesta de seguridad"
+              className="mb-3"
+              value={newUser.respuesta_de_seguridad}
+              onChange={handleNewUserChange}
+            />
+
             <CFormSelect
               label="Rol"
-              name="role"
+              name="permiso_id"
               className="mb-3"
+              placeholder="Seleccione un rol"
               options={[
-                { label: 'Usuario', value: 'Usuario' },
-                { label: 'Administrador', value: 'Administrador' },
+                { label: 'Seleccione un rol', value: '' },
+                { label: 'Administrador', value: '1' },
+                { label: 'Usuario', value: '2' },
               ]}
+              value={newUser.permiso_id}
+              onChange={handleNewUserChange}
             />
           </CForm>
         </CModalBody>
@@ -190,83 +337,25 @@ const user = () => {
           <CButton color="danger" className="text-white" onClick={handleCloseConfirm}>
             Cerrar
           </CButton>
-          <CButton color="success" className="text-white" onClick={handleCloseConfirm}>
+          <CButton color="success" className="text-white" onClick={handleCreateUser}>
             Guardar cambios
           </CButton>
         </CModalFooter>
       </CModal>
 
-      <CModal visible={visibleEdit}>
+      <CModal visible={visibleDeleteConfirm} onClose={closeDeleteConfirm}>
         <CModalHeader>
-          <CModalTitle>Editar usuario</CModalTitle>
+          <CModalTitle>Confirmar eliminación</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
-            <CFormInput
-              type="text"
-              id="nombre"
-              label="Nombre"
-              placeholder="Ingrese el nombre del usuario"
-              className="mb-3"
-            />
-            <CFormInput
-              type="text"
-              id="apellido"
-              label="Apellido"
-              placeholder="Ingrese el apellido del usuario"
-              className="mb-3"
-            />
-            <CFormInput
-              type="text"
-              id="cedula"
-              label="Cedula"
-              placeholder="Ingrese el documento de identidad"
-              className="mb-3"
-            />
-            <CFormSelect
-              aria-label="DefaultSelect"
-              className="mb-3"
-              label="Cargo"
-              options={[
-                { label: 'Selecciona el cargo: ' },
-                { label: 'Administrador', value: '1' },
-                { label: 'Usuario', value: '2' },
-              ]}
-            />
-            <CFormInput
-              type="text"
-              id="telefono"
-              label="Numero telefonico"
-              placeholder="Ingrese el numero telefonico"
-              className="mb-3"
-            />
-            <CFormInput
-              type="email"
-              id="email"
-              label="Correo electronico"
-              placeholder="Ingrese el correo electronico"
-              className="mb-3"
-            />
-          </CForm>
+          ¿Estás seguro que quieres eliminar al usuario <strong>{userToDelete?.username}</strong>?
         </CModalBody>
         <CModalFooter>
-          <CButton color="danger" className="text-white" onClick={closeEdit}>
-            Cerrar
+          <CButton color="secondary" onClick={closeDeleteConfirm}>
+            Cancelar
           </CButton>
-          <CButton color="success" className="text-white" onClick={saveEditOpen}>
-            Guardar
-          </CButton>
-        </CModalFooter>
-      </CModal>
-
-      <CModal visible={saveEdit}>
-        <CModalHeader>
-          <CModalTitle>Actualizacion exitosa</CModalTitle>
-        </CModalHeader>
-        <CModalBody> Usuario actualizado correctamente</CModalBody>
-        <CModalFooter>
-          <CButton color="danger" className="text-white" onClick={saveEditClose}>
-            Cerrar
+          <CButton color="danger" onClick={deleteUser}>
+            Eliminar
           </CButton>
         </CModalFooter>
       </CModal>
