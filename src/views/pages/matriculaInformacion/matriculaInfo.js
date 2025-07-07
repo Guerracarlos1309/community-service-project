@@ -21,12 +21,12 @@ const matriculaInfo = () => {
   const [activeTab, setActiveTab] = useState('datosGenerales')
 
   const datosGenerales = {
-    tipoIngreso: 'nuevo',
-    nivel: 'primaria',
+    tipoIngreso: 'Nuevo',
+    nivel: 'Primaria',
     grado: '3',
     seccion: 'B',
     fechaInscripcion: '2025-05-01',
-    plantelProcedencia: 'Escuela ABC',
+    plantelProcedencia: 'Escuela Andres Bello Colon',
   }
 
   const datosPersonales = {
@@ -53,7 +53,7 @@ const matriculaInfo = () => {
     cedulaMadre: 'V-56781234',
     telefonoMadre: '0424-7654321',
 
-    viveCon: ['padre', 'madre'],
+    viveCon: ['Padre', 'Madre'],
   }
 
   const datosRepresentante = {
@@ -62,8 +62,8 @@ const matriculaInfo = () => {
     cedulaRepresentante: 'V-87654321',
     edadRepresentante: 45,
     fechaNacimientoRepresentante: '1980-03-20',
-    estadoCivilRepresentante: 'casado',
-    nexoEstudiante: 'padre',
+    estadoCivilRepresentante: 'Casado',
+    nexoEstudiante: 'Padre',
     direccionHabitacion: 'Av. Principal, Caracas',
     telefonoCasa: null,
     telefonoCelular: '0414-1234567',
@@ -79,7 +79,7 @@ const matriculaInfo = () => {
     tallaPantalon: '12',
     tallaZapato: '36',
     enfermedad: '',
-    tieneHermanos: 'si',
+    tieneHermanos: 'Si',
     cuantosHermanos: 2,
     gradosHermanos: '1° y 4° grado',
     personasAutorizadas: [

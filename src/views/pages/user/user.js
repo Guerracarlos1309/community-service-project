@@ -183,6 +183,12 @@ const user = () => {
     }
   }
 
+  const permisosMap = {
+    1: 'Administrador',
+    2: 'Usuario',
+    // agrega los que necesites
+  }
+
   return (
     <div className="p-4">
       <div className="mb-4 position-relative">
@@ -224,7 +230,7 @@ const user = () => {
                   <CTableDataCell>{user.id}</CTableDataCell>
                   <CTableDataCell>{user.username}</CTableDataCell>
                   <CTableDataCell>{user.email}</CTableDataCell>
-                  <CTableDataCell>{user.permiso_id}</CTableDataCell>
+                  <CTableDataCell>{permisosMap[user.permiso_id] || 'Desconocido'}</CTableDataCell>
                   <CTableDataCell>
                     <CButton
                       size="sm"
@@ -256,6 +262,7 @@ const user = () => {
               placeholder="Ingrese su correo electrónico"
               value={newUser.email}
               onChange={handleNewUserChange}
+              required
             />
             <CFormInput
               type="text"
@@ -265,6 +272,7 @@ const user = () => {
               placeholder="Ingrese su nombre de usuario"
               value={newUser.username}
               onChange={handleNewUserChange}
+              required
             />
             <CFormInput
               type="password"
@@ -274,6 +282,7 @@ const user = () => {
               placeholder="Ingrese su contraseña"
               value={newUser.password}
               onChange={handleNewUserChange}
+              required
             />
             <CFormInput
               type="password"
@@ -283,6 +292,7 @@ const user = () => {
               className="mb-3"
               value={newUser.confirmPassword}
               onChange={handleNewUserChange}
+              required
             />
             <CFormInput
               type="security_word"
@@ -292,6 +302,7 @@ const user = () => {
               className="mb-3"
               value={newUser.security_word}
               onChange={handleNewUserChange}
+              required
             />
             <CFormInput
               type="respuesta_de_seguridad"
@@ -301,6 +312,7 @@ const user = () => {
               className="mb-3"
               value={newUser.respuesta_de_seguridad}
               onChange={handleNewUserChange}
+              required
             />
 
             <CFormSelect
@@ -315,6 +327,7 @@ const user = () => {
               ]}
               value={newUser.permiso_id}
               onChange={handleNewUserChange}
+              required
             />
           </CForm>
         </CModalBody>
