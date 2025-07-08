@@ -1,6 +1,17 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CButton, CForm, CFormInput, CInputGroup, CInputGroupText } from '@coreui/react'
+import {
+  CButton,
+  CForm,
+  CFormInput,
+  CInputGroup,
+  CInputGroupText,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
+} from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
 import { helpFetch } from '../../../api/helpFetch'
@@ -13,7 +24,6 @@ const Login = () => {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [isRegistering, setIsRegistering] = useState(false)
   const [newUser, setNewUser] = useState({
@@ -24,13 +34,16 @@ const Login = () => {
     role: 'admin',
   })
 
+  const [visiblePassError, setVisiblePassError] = useState(false)
+  const [visibleEmailError, setVisibleEmailError] = useState(false)
+  const [visibleGenericError, setVisibleGenericError] = useState(false)
+
   const passwordMismatch = isRegistering && newUser.password !== newUser.confirm
   const isPasswordInvalid = (isRegistering ? newUser.password : password).length < 6
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
-    setError('')
 
     try {
       const response = await api.post('/api/users/login', {
@@ -43,11 +56,19 @@ const Login = () => {
         localStorage.setItem('user', JSON.stringify(response.user))
         navigate('/dashboard')
       } else {
-        setError(response.msg || 'Error al iniciar sesión.')
+        const msg = response.msg?.toLowerCase() || ''
+
+        if (msg.includes('contraseña')) {
+          setVisiblePassError(true)
+        } else if (msg.includes('correo') || msg.includes('email')) {
+          setVisibleEmailError(true)
+        } else {
+          setVisibleGenericError(true)
+        }
       }
     } catch (err) {
       console.error('Error de conexión', err)
-      setError('Error al iniciar sesión.')
+      setVisibleGenericError(true)
     } finally {
       setLoading(false)
     }
@@ -56,10 +77,9 @@ const Login = () => {
   const handleRegister = async (e) => {
     e.preventDefault()
     setLoading(true)
-    setError('')
 
     if (passwordMismatch || isPasswordInvalid) {
-      setError('Por favor revisa los campos de contraseña.')
+      setVisibleGenericError(true)
       setLoading(false)
       return
     }
@@ -73,11 +93,11 @@ const Login = () => {
         setIsRegistering(false)
         setNewUser({ name: '', email: '', password: '', confirm: '', role: 'admin' })
       } else {
-        setError(response.msg || 'Error al crear la cuenta.')
+        setVisibleGenericError(true)
       }
     } catch (err) {
       console.error('Error en el registro', err)
-      setError('Error al crear la cuenta.')
+      setVisibleGenericError(true)
     } finally {
       setLoading(false)
     }
@@ -238,6 +258,51 @@ const Login = () => {
           </p>
         </CForm>
       </div>
+
+      {/* Modal Contraseña Incorrecta */}
+      <CModal visible={visiblePassError} onClose={() => setVisiblePassError(false)}>
+        <CModalHeader className="bg-warning text-white">
+          <CModalTitle>Error de contraseña</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <p>La contraseña ingresada es incorrecta.</p>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="danger" onClick={() => setVisiblePassError(false)}>
+            Cerrar
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      {/* Modal Correo Incorrecto */}
+      <CModal visible={visibleEmailError} onClose={() => setVisibleEmailError(false)}>
+        <CModalHeader className="bg-danger text-white">
+          <CModalTitle>Error de correo</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <p>El correo electrónico no está registrado.</p>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="danger" onClick={() => setVisibleEmailError(false)}>
+            Cerrar
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      {/* Modal Error Genérico */}
+      <CModal visible={visibleGenericError} onClose={() => setVisibleGenericError(false)}>
+        <CModalHeader className="bg-secondary text-white">
+          <CModalTitle>Error</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <p>Ocurrió un error al procesar la solicitud. Inténtalo nuevamente.</p>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="dark" onClick={() => setVisibleGenericError(false)}>
+            Cerrar
+          </CButton>
+        </CModalFooter>
+      </CModal>
     </div>
   )
 }
