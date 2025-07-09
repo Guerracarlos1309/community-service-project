@@ -38,6 +38,9 @@ const Docente = () => {
   const [visibleDeleteConfirm, setVisibleDeleteConfirm] = useState(false)
   const [data, setData] = useState([])
 
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [downloadingPersonalPdf, setDownloadingPersonalPdf] = useState({})
+
   // Estados para parroquias y cargos
   const [parroquias, setParroquias] = useState([])
   const [cargos, setCargos] = useState([])
@@ -420,6 +423,38 @@ const Docente = () => {
     )
   }
 
+  const handleDownloadPdf = async () => {
+    try {
+      const blob = await api.downloadFile('/api/pdf/personal/teachers/list') // <- tu endpoint
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'Listado_Docentes.pdf')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF:', error)
+    }
+  }
+
+  const handleDownloadDocentePdf = async (id, nombre) => {
+    try {
+      const blob = await api.downloadFile(`/api/pdf/personal/teacher/${id}/details`)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Docente_${docenteToView.name}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF del docente:', error)
+    }
+  }
+
   return (
     <div className="mp-4">
       {error && (
@@ -444,7 +479,7 @@ const Docente = () => {
       <CButton color="info text-white" className="mb-3" onClick={() => setVisibleNewDocente(true)}>
         Crear docente
       </CButton>
-      <CButton color="success text-white" className="mb-3 ms-2">
+      <CButton color="success text-white" className="mb-3 ms-2" onClick={handleDownloadPdf}>
         Imprimir Lista docentes
       </CButton>
 
@@ -848,7 +883,12 @@ const Docente = () => {
           )}
         </CModalBody>
         <CModalFooter>
-          <CButton color="success" className="text-white">
+          <CButton
+            color="success"
+            className="text-white"
+            onClick={() => handleDownloadDocentePdf(docenteToView.id, docenteToView.lastname)}
+          >
+            {' '}
             Imprimir
           </CButton>
           <CButton color="warning" className="text-white" onClick={viewClose}>

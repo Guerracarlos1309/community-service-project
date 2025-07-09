@@ -48,5 +48,26 @@ export const helpFetch = () => {
     return customFetch(`${endpoint}/${id}`, options)
   }
 
-  return { get, post, put, delet }
+  const downloadFile = async (endpoint) => {
+    const token = localStorage.getItem('accessToken')
+
+    try {
+      const response = await fetch(`${URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) throw new Error('Error al descargar el archivo')
+
+      const blob = await response.blob()
+      return blob
+    } catch (error) {
+      console.error('Error al descargar archivo:', error)
+      throw error
+    }
+  }
+
+  return { get, post, put, delet, downloadFile }
 }
