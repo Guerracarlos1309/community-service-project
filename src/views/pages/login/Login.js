@@ -58,7 +58,7 @@ const Login = () => {
       } else {
         const msg = response.msg?.toLowerCase() || ''
 
-        if (msg.includes('contraseña')) {
+        if (msg.includes('contraseña') || msg.includes('password')) {
           setVisiblePassError(true)
         } else if (msg.includes('correo') || msg.includes('email')) {
           setVisibleEmailError(true)
