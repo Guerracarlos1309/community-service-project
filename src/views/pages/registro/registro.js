@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from 'react'
 import {
   CCard,
   CCardBody,
@@ -18,26 +18,18 @@ import {
   CAlert,
   CInputGroup,
   CInputGroupText,
-  CProgress,
-  CBadge,
-  CToast,
-  CToastBody,
-  CToastHeader,
-  CToaster,
-} from "@coreui/react"
-import CIcon from "@coreui/icons-react"
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
 import {
   cilUser,
   cilPeople,
   cilPhone,
   cilHome,
   cilNotes,
+  cilMedicalCross,
   cilSave,
-  cilCheckCircle,
-  cilWarning,
-  cilReload,
-} from "@coreui/icons"
-import { helpFetch } from "../../../api/helpFetch.js"
+} from '@coreui/icons'
+import { helpFetch } from '../../../api/helpFetch.js'
 
 const api = helpFetch()
 
@@ -48,78 +40,69 @@ const RegistroEstudiantil = () => {
   const [error, setError] = useState(null)
   const [validated, setValidated] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [toast, addToast] = useState(0)
 
   // Estados para datos de la API
   const [grados, setGrados] = useState([])
-  const [secciones, setSecciones] = useState([])
   const [loadingGrados, setLoadingGrados] = useState(false)
-  const [loadingSecciones, setLoadingSecciones] = useState(false)
 
   const [formData, setFormData] = useState({
     // Paso 1: Información básica
-    tipoIngreso: "regular",
-    grado: "",
-    seccion: "",
-    fechaInscripcion: new Date().toISOString().split("T")[0],
-    plantelProcedencia: "",
-
+    tipoIngreso: 'regular',
+    grado: '',
+    fechaInscripcion: new Date().toISOString().split('T')[0],
+    plantelProcedencia: '',
     // Paso 2: Datos del estudiante
-    cedulaEscolar: "",
-    nombres: "",
-    apellidos: "",
-    fechaNacimiento: "",
-    sexo: "",
-    lugarNacimiento: "",
-    entidadFederal: "",
-    municipio: "",
-    parroquia: "",
-    apreciacionCualitativa: "no",
-    repitiente: "no",
-
+    cedulaEscolar: '',
+    nombres: '',
+    apellidos: '',
+    fechaNacimiento: '',
+    edad: '',
+    sexo: '',
+    lugarNacimiento: '',
+    entidadFederal: '',
+    municipio: '',
+    parroquia: '',
+    apreciacionCualitativa: 'no',
+    repitiente: 'no',
     // Paso 3: Datos de los padres
-    nombrePadre: "",
-    cedulaPadre: "",
-    telefonoPadre: "",
-    nombreMadre: "",
-    cedulaMadre: "",
-    telefonoMadre: "",
-    viveCon: "ambos",
-
+    nombrePadre: '',
+    cedulaPadre: '',
+    telefonoPadre: '',
+    nombreMadre: '',
+    cedulaMadre: '',
+    telefonoMadre: '',
+    viveCon: 'ambos',
     // Paso 4: Datos del representante
-    apellidosRepresentante: "",
-    nombresRepresentante: "",
-    cedulaRepresentante: "",
-    fechaNacimientoRepresentante: "",
-    estadoCivilRepresentante: "",
-    nexoEstudiante: "",
-    direccionHabitacion: "",
-    telefonoCasa: "",
-    telefonoCelular: "",
-    emailRepresentante: "",
-    profesion: "",
-    lugarTrabajo: "",
-    telefonoTrabajo: "",
-
+    apellidosRepresentante: '',
+    nombresRepresentante: '',
+    cedulaRepresentante: '',
+    edadRepresentante: '',
+    fechaNacimientoRepresentante: '',
+    estadoCivilRepresentante: '',
+    nexoEstudiante: '',
+    direccionHabitacion: '',
+    telefonoCasa: '',
+    telefonoCelular: '',
+    profesion: '',
+    lugarTrabajo: '',
+    telefonoTrabajo: '',
     // Paso 5: Información del estudiante
-    peso: "",
-    estatura: "",
-    tallaCamisa: "",
-    tallaPantalon: "",
-    tallaZapato: "",
-    enfermedad: "",
-    tieneHermanos: "no",
-    cuantosHermanos: "0",
-    gradosHermanos: "",
-
+    peso: '',
+    estatura: '',
+    tallaCamisa: '',
+    tallaPantalon: '',
+    tallaZapato: '',
+    enfermedad: '',
+    tieneHermanos: 'no',
+    cuantosHermanos: '0',
+    gradosHermanos: '',
     // Personas autorizadas
-    personaAutorizada1: "",
-    cedulaAutorizada1: "",
-    parentescoAutorizada1: "",
-    personaAutorizada2: "",
-    cedulaAutorizada2: "",
-    parentescoAutorizada2: "",
-
+    personaAutorizada1: '',
+    cedulaAutorizada1: '',
+    parentescoAutorizada1: '',
+    personaAutorizada2: '',
+    cedulaAutorizada2: '',
+    parentescoAutorizada2: '',
     // Paso 6: Requisitos
     actaNacimiento: false,
     tarjetaVacunas: false,
@@ -128,144 +111,111 @@ const RegistroEstudiantil = () => {
     copiaCedulaRepresentante: false,
     rifRepresentante: false,
     copiaCedulaAutorizados: false,
-    observaciones: "",
+    observaciones: '',
   })
 
-  // Cargar datos iniciales
+  // Cargar grados al montar el componente
   useEffect(() => {
     loadGrados()
-    loadSecciones()
   }, [])
-
-  const showToast = (message, color = "success") => {
-    addToast(
-      <CToast>
-        <CToastHeader closeButton>
-          <CIcon icon={color === "success" ? cilCheckCircle : cilWarning} className="me-2" />
-          <strong className="me-auto">{color === "success" ? "Éxito" : "Error"}</strong>
-        </CToastHeader>
-        <CToastBody>{message}</CToastBody>
-      </CToast>,
-    )
-  }
 
   const loadGrados = async () => {
     try {
       setLoadingGrados(true)
       setError(null)
-      console.log("🔄 Cargando grados...")
-      const response = await api.get("/api/matriculas/utils/grados")
+      console.log('🔄 Cargando grados...')
+      const response = await api.get('/api/matriculas/utils/grados')
       if (!response.error) {
         setGrados(response.grados || [])
-        console.log("✅ Grados cargados:", response.grados?.length || 0)
+        console.log('✅ Grados cargados:', response.grados?.length || 0)
       } else {
-        console.error("Error al obtener grados:", response)
-        setError(response.msg || "Error al cargar grados")
-        showToast("Error al cargar grados", "danger")
+        console.error('Error al obtener grados:', response)
+        setError(response.msg || 'Error al cargar grados')
       }
     } catch (error) {
-      console.error("❌ Error cargando grados:", error)
+      console.error('❌ Error cargando grados:', error)
       setError(`Error al cargar grados: ${error.msg || error.message}`)
-      showToast("Error al cargar grados", "danger")
     } finally {
       setLoadingGrados(false)
     }
   }
 
-  const loadSecciones = async () => {
-    try {
-      setLoadingSecciones(true)
-      console.log("🔄 Cargando secciones...")
-      const response = await api.get("/api/matriculas/utils/docente-grados")
-      if (!response.error) {
-        setSecciones(response.docente_grados || [])
-        console.log("✅ Secciones cargadas:", response.docente_grados?.length || 0)
-      } else {
-        console.error("Error al obtener secciones:", response)
-        showToast("Error al cargar secciones", "danger")
-      }
-    } catch (error) {
-      console.error("❌ Error cargando secciones:", error)
-      showToast("Error al cargar secciones", "danger")
-    } finally {
-      setLoadingSecciones(false)
+  const validateForm = () => {
+    // Validaciones básicas
+    if (!formData.cedulaEscolar.trim()) {
+      setError('La cédula escolar es requerida')
+      return false
     }
-  }
-
-  const validateStep = (currentStep) => {
-    switch (currentStep) {
-      case 1:
-        if (!formData.grado) {
-          setError("Debe seleccionar un grado")
-          return false
-        }
-        if (!formData.fechaInscripcion) {
-          setError("La fecha de inscripción es requerida")
-          return false
-        }
-        break
-      case 2:
-        if (!formData.cedulaEscolar.trim()) {
-          setError("La cédula escolar es requerida")
-          return false
-        }
-        if (!formData.nombres.trim()) {
-          setError("El nombre del estudiante es requerido")
-          return false
-        }
-        if (!formData.apellidos.trim()) {
-          setError("Los apellidos del estudiante son requeridos")
-          return false
-        }
-        if (!formData.fechaNacimiento) {
-          setError("La fecha de nacimiento es requerida")
-          return false
-        }
-        if (!formData.sexo) {
-          setError("Debe seleccionar el sexo del estudiante")
-          return false
-        }
-        break
-      case 4:
-        if (!formData.cedulaRepresentante.trim()) {
-          setError("La cédula del representante es requerida")
-          return false
-        }
-        if (!formData.nombresRepresentante.trim()) {
-          setError("El nombre del representante es requerido")
-          return false
-        }
-        if (!formData.apellidosRepresentante.trim()) {
-          setError("Los apellidos del representante son requeridos")
-          return false
-        }
-        if (!formData.telefonoCelular.trim()) {
-          setError("El teléfono celular del representante es requerido")
-          return false
-        }
-        break
-      case 5:
-        if (formData.peso && (isNaN(formData.peso) || Number.parseFloat(formData.peso) <= 0)) {
-          setError("El peso debe ser un número válido mayor a 0")
-          return false
-        }
-        if (
-          formData.estatura &&
-          (isNaN(formData.estatura) ||
-            Number.parseFloat(formData.estatura) <= 0 ||
-            Number.parseFloat(formData.estatura) > 3)
-        ) {
-          setError("La estatura debe ser un número válido entre 0 y 3 metros")
-          return false
-        }
-        break
+    if (!formData.nombres.trim()) {
+      setError('El nombre del estudiante es requerido')
+      return false
+    }
+    if (!formData.apellidos.trim()) {
+      setError('Los apellidos del estudiante son requeridos')
+      return false
+    }
+    if (!formData.grado) {
+      setError('Debe seleccionar un grado')
+      return false
+    }
+    // Validaciones de medidas - MEJORADAS
+    if (formData.peso && (isNaN(formData.peso) || Number.parseFloat(formData.peso) <= 0)) {
+      setError('El peso debe ser un número válido mayor a 0')
+      return false
+    }
+    if (
+      formData.estatura &&
+      (isNaN(formData.estatura) ||
+        Number.parseFloat(formData.estatura) <= 0 ||
+        Number.parseFloat(formData.estatura) > 3)
+    ) {
+      setError('La estatura debe ser un número válido entre 0 y 3 metros')
+      return false
     }
     return true
   }
 
+  // Función temporal para probar la API de matrículas
+  const testMatriculasAPI = async () => {
+    try {
+      console.log('🧪 === TESTING API MATRICULAS ===')
+
+      // Datos de prueba mínimos
+      const testData = {
+        studentData: {
+          ci: 'V-12345678',
+          name: 'Test',
+          lastName: 'Student',
+          birthday: '2010-01-01',
+          sex: 'M',
+        },
+        registrationDate: new Date().toISOString().split('T')[0],
+        entryType: 'nuevo',
+        gradeID: 1,
+        authorizedPersons: [],
+      }
+
+      console.log('📤 Enviando datos de prueba:', testData)
+
+      const testResponse = await api.post('/api/matriculas', {
+        body: testData,
+      })
+
+      console.log('📥 Respuesta de prueba:', testResponse)
+
+      if (testResponse.error) {
+        console.error('❌ Error en prueba:', testResponse.msg)
+      } else {
+        console.log('✅ Prueba exitosa')
+      }
+    } catch (error) {
+      console.error('❌ Error en test:', error)
+    }
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!validateStep(6)) {
+    if (!validateForm()) {
       return
     }
 
@@ -273,92 +223,135 @@ const RegistroEstudiantil = () => {
       setIsSubmitting(true)
       setError(null)
       setSuccess(null)
-      console.log("📝 Iniciando proceso de matrícula...")
+      console.log('📝 Iniciando proceso de matrícula...')
 
-      // Preparar datos del estudiante
-      const studentData = {
-        ci: formData.cedulaEscolar,
-        name: formData.nombres,
-        lastName: formData.apellidos,
-        sex: formData.sexo === "M" ? "Masculino" : "Femenino",
-        birthday: formData.fechaNacimiento,
-        placeBirth: formData.lugarNacimiento,
-        parishID: 1,
-        quantityBrothers: Number.parseInt(formData.cuantosHermanos) || 0,
-        representativeID: formData.cedulaRepresentante,
-        motherName: formData.nombreMadre,
-        motherCi: formData.cedulaMadre,
-        motherTelephone: formData.telefonoMadre,
-        fatherName: formData.nombrePadre,
-        fatherCi: formData.cedulaPadre,
-        fatherTelephone: formData.telefonoPadre,
-        livesMother: formData.viveCon === "madre" || formData.viveCon === "ambos",
-        livesFather: formData.viveCon === "padre" || formData.viveCon === "ambos",
-        livesBoth: formData.viveCon === "ambos",
-        livesRepresentative: formData.viveCon === "otros",
-        rolRopresentative: formData.nexoEstudiante,
-      }
-
-      // Preparar datos del representante
-      const representativeData = {
-        ci: formData.cedulaRepresentante,
-        name: formData.nombresRepresentante,
-        lastName: formData.apellidosRepresentante,
-        telephoneNumber: formData.telefonoCelular,
-        email: formData.emailRepresentante,
-        maritalStat: formData.estadoCivilRepresentante,
-        profesion: formData.profesion,
-        birthday: formData.fechaNacimientoRepresentante,
-        telephoneHouse: formData.telefonoCasa,
-        roomAdress: formData.direccionHabitacion,
-        workPlace: formData.lugarTrabajo,
-        jobNumber: formData.telefonoTrabajo,
-      }
-
-      // Preparar datos de la matrícula
+      // Preparar datos para la matrícula - ESTRUCTURA CORREGIDA
       const matriculaData = {
-        studentData,
-        representativeData,
-        sectionID: Number.parseInt(formData.seccion) || 1,
+        // El backend espera studentID, no studentData
+        // Necesitamos crear el estudiante primero o enviar los datos de otra forma
+
+        // OPCIÓN 1: Si el backend crea el estudiante automáticamente
+        studentData: {
+          ci: formData.cedulaEscolar,
+          name: formData.nombres,
+          lastName: formData.apellidos,
+          birthday: formData.fechaNacimiento,
+          age: formData.edad ? Number.parseInt(formData.edad) : null,
+          sex: formData.sexo,
+          placeBirth: formData.lugarNacimiento,
+        },
+
+        // Datos básicos de matrícula
         registrationDate: formData.fechaInscripcion,
-        repeater: formData.repitiente === "si",
+        entryType: formData.tipoIngreso,
+        previousSchool: formData.plantelProcedencia,
+        gradeID: Number.parseInt(formData.grado),
+
+        // TEMPORAL: sectionID como null o 1 por defecto hasta que se resuelva
+        sectionID: 1, // O null, dependiendo de lo que acepte tu backend
+
+        // Resto de datos...
+        repeater: formData.repitiente === 'si',
+        qualitativeAppreciation: formData.apreciacionCualitativa === 'si',
+        federalEntity: formData.entidadFederal,
+        municipality: formData.municipio,
+        parish: formData.parroquia,
+
+        // Medidas y salud - CORREGIR VALIDACIÓN DE ESTATURA
         chemiseSize: formData.tallaCamisa,
         pantsSize: formData.tallaPantalon,
         shoesSize: formData.tallaZapato,
         weight: formData.peso ? Number.parseFloat(formData.peso) : null,
-        stature: formData.estatura ? Number.parseFloat(formData.estatura) : null,
+        // Asegurar que la estatura esté en metros y sea válida
+        stature: formData.estatura ? Math.min(Number.parseFloat(formData.estatura), 3.0) : null,
         diseases: formData.enfermedad,
+
+        // Hermanos
+        brothersInSchool: formData.tieneHermanos === 'si',
+        brothersCount: Number.parseInt(formData.cuantosHermanos) || 0,
+        brothersGrades: formData.gradosHermanos,
+
+        // Documentos
+        birthCertificateCheck: formData.actaNacimiento,
+        vaccinationCardCheck: formData.tarjetaVacunas,
+        studentPhotosCheck: formData.fotosEstudiante,
+        representativePhotosCheck: formData.fotosRepresentante,
+        representativeCopyIDCheck: formData.copiaCedulaRepresentante,
+        rifRepresentativeCheck: formData.rifRepresentante,
+        autorizedCopyIDCheck: formData.copiaCedulaAutorizados,
+
+        // Observaciones
         observation: formData.observaciones,
-        documents: {
-          birthCertificate: formData.actaNacimiento,
-          vaccinationCard: formData.tarjetaVacunas,
-          studentPhotos: formData.fotosEstudiante,
-          representativePhotos: formData.fotosRepresentante,
-          representativeCopyID: formData.copiaCedulaRepresentante,
-          representativeRIF: formData.rifRepresentante, // 🔧 CORREGIDO: era representativeRIF
-          autorizedCopyID: formData.copiaCedulaAutorizados,
-        },
+
+        // Personas autorizadas
+        authorizedPersons: [
+          ...(formData.personaAutorizada1 && formData.cedulaAutorizada1
+            ? [
+                {
+                  fullName: formData.personaAutorizada1,
+                  ci: formData.cedulaAutorizada1,
+                  relationship: formData.parentescoAutorizada1,
+                },
+              ]
+            : []),
+          ...(formData.personaAutorizada2 && formData.cedulaAutorizada2
+            ? [
+                {
+                  fullName: formData.personaAutorizada2,
+                  ci: formData.cedulaAutorizada2,
+                  relationship: formData.parentescoAutorizada2,
+                },
+              ]
+            : []),
+        ],
       }
 
-      console.log("📤 Enviando datos de matrícula:", matriculaData)
+      console.log('📤 Enviando datos de matrícula:', matriculaData)
+      console.log('🔍 Estructura detallada:')
+      console.log('- studentData:', matriculaData.studentData)
+      console.log('- gradeID:', matriculaData.gradeID)
+      console.log('- authorizedPersons:', matriculaData.authorizedPersons)
 
       // Crear matrícula
-      const response = await api.post("/api/matriculas", {
+      console.log('🌐 Enviando petición POST a /api/matriculas...')
+      const response = await api.post('/api/matriculas', {
         body: matriculaData,
       })
 
-      console.log("📥 Respuesta del servidor:", response)
+      console.log('📥 Respuesta del servidor (completa):', JSON.stringify(response, null, 2))
+      console.log('🔍 Análisis de respuesta:')
+      console.log('- response.error:', response.error)
+      console.log('- response.ok:', response.ok)
+      console.log('- response.msg:', response.msg)
+      console.log('- response.data:', response.data)
+      console.log('- response.matricula:', response.matricula)
+      console.log('- Todas las propiedades:', Object.keys(response))
 
       if (response.error) {
-        console.error("❌ Error al crear matrícula:", response.msg || response)
-        setError(response.msg || "Ocurrió un error al crear la matrícula")
-        showToast(response.msg || "Error al crear la matrícula", "danger")
+        console.error('❌ Error al crear matrícula:', response.msg || response)
+        console.error('❌ Detalles del error:', response)
+        setError(response.msg || 'Ocurrió un error al crear la matrícula')
         return
       }
 
-      console.log("✅ Matrícula creada exitosamente:", response)
-      setSuccess("¡Matrícula creada exitosamente!")
-      showToast("¡Matrícula creada exitosamente!", "success")
+      // Verificar si realmente se creó
+      if (response.ok === false) {
+        console.error('❌ Respuesta indica fallo:', response)
+
+        // Manejar errores de validación específicos
+        if (response.code === 'VALIDATION_ERROR' && response.errors) {
+          const errorMessages = response.errors
+            .map((err) => `${err.field}: ${err.message}`)
+            .join(', ')
+          setError(`Errores de validación: ${errorMessages}`)
+        } else {
+          setError(response.msg || 'Error desconocido al crear la matrícula')
+        }
+        return
+      }
+
+      console.log('✅ Matrícula creada exitosamente:', response)
+      setSuccess('Matrícula creada exitosamente')
 
       // Resetear formulario después de 3 segundos
       setTimeout(() => {
@@ -368,10 +361,8 @@ const RegistroEstudiantil = () => {
         setValidated(false)
       }, 3000)
     } catch (error) {
-      console.error("❌ Error en el proceso de matrícula:", error)
-      const errorMsg = `Error al procesar la matrícula: ${error.msg || error.message}`
-      setError(errorMsg)
-      showToast(errorMsg, "danger")
+      console.error('❌ Error en el proceso de matrícula:', error)
+      setError(`Error al procesar la matrícula: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -379,57 +370,57 @@ const RegistroEstudiantil = () => {
 
   const resetForm = () => {
     setFormData({
-      tipoIngreso: "regular",
-      grado: "",
-      seccion: "",
-      fechaInscripcion: new Date().toISOString().split("T")[0],
-      plantelProcedencia: "",
-      cedulaEscolar: "",
-      nombres: "",
-      apellidos: "",
-      fechaNacimiento: "",
-      sexo: "",
-      lugarNacimiento: "",
-      entidadFederal: "",
-      municipio: "",
-      parroquia: "",
-      apreciacionCualitativa: "no",
-      repitiente: "no",
-      nombrePadre: "",
-      cedulaPadre: "",
-      telefonoPadre: "",
-      nombreMadre: "",
-      cedulaMadre: "",
-      telefonoMadre: "",
-      viveCon: "ambos",
-      apellidosRepresentante: "",
-      nombresRepresentante: "",
-      cedulaRepresentante: "",
-      fechaNacimientoRepresentante: "",
-      estadoCivilRepresentante: "",
-      nexoEstudiante: "",
-      direccionHabitacion: "",
-      telefonoCasa: "",
-      telefonoCelular: "",
-      emailRepresentante: "",
-      profesion: "",
-      lugarTrabajo: "",
-      telefonoTrabajo: "",
-      peso: "",
-      estatura: "",
-      tallaCamisa: "",
-      tallaPantalon: "",
-      tallaZapato: "",
-      enfermedad: "",
-      tieneHermanos: "no",
-      cuantosHermanos: "0",
-      gradosHermanos: "",
-      personaAutorizada1: "",
-      cedulaAutorizada1: "",
-      parentescoAutorizada1: "",
-      personaAutorizada2: "",
-      cedulaAutorizada2: "",
-      parentescoAutorizada2: "",
+      tipoIngreso: 'regular',
+      grado: '',
+      fechaInscripcion: new Date().toISOString().split('T')[0],
+      plantelProcedencia: '',
+      cedulaEscolar: '',
+      nombres: '',
+      apellidos: '',
+      fechaNacimiento: '',
+      edad: '',
+      sexo: '',
+      lugarNacimiento: '',
+      entidadFederal: '',
+      municipio: '',
+      parroquia: '',
+      apreciacionCualitativa: 'no',
+      repitiente: 'no',
+      nombrePadre: '',
+      cedulaPadre: '',
+      telefonoPadre: '',
+      nombreMadre: '',
+      cedulaMadre: '',
+      telefonoMadre: '',
+      viveCon: 'ambos',
+      apellidosRepresentante: '',
+      nombresRepresentante: '',
+      cedulaRepresentante: '',
+      edadRepresentante: '',
+      fechaNacimientoRepresentante: '',
+      estadoCivilRepresentante: '',
+      nexoEstudiante: '',
+      direccionHabitacion: '',
+      telefonoCasa: '',
+      telefonoCelular: '',
+      profesion: '',
+      lugarTrabajo: '',
+      telefonoTrabajo: '',
+      peso: '',
+      estatura: '',
+      tallaCamisa: '',
+      tallaPantalon: '',
+      tallaZapato: '',
+      enfermedad: '',
+      tieneHermanos: 'no',
+      cuantosHermanos: '0',
+      gradosHermanos: '',
+      personaAutorizada1: '',
+      cedulaAutorizada1: '',
+      parentescoAutorizada1: '',
+      personaAutorizada2: '',
+      cedulaAutorizada2: '',
+      parentescoAutorizada2: '',
       actaNacimiento: false,
       tarjetaVacunas: false,
       fotosEstudiante: false,
@@ -437,13 +428,13 @@ const RegistroEstudiantil = () => {
       copiaCedulaRepresentante: false,
       rifRepresentante: false,
       copiaCedulaAutorizados: false,
-      observaciones: "",
+      observaciones: '',
     })
   }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
-    if (type === "checkbox") {
+    if (type === 'checkbox') {
       setFormData((prev) => ({ ...prev, [name]: checked }))
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }))
@@ -451,14 +442,12 @@ const RegistroEstudiantil = () => {
   }
 
   const nextStep = () => {
-    if (validateStep(step)) {
-      setError(null)
-      setStep((prev) => prev + 1)
-    }
+    setError(null) // Limpiar errores al avanzar
+    setStep((prev) => prev + 1)
   }
 
   const prevStep = () => {
-    setError(null)
+    setError(null) // Limpiar errores al retroceder
     setStep((prev) => prev - 1)
   }
 
@@ -466,19 +455,10 @@ const RegistroEstudiantil = () => {
   const nextYear = currentYear + 1
   const schoolYear = `${currentYear}-${nextYear}`
 
-  // Filtrar secciones por grado seleccionado
-  const seccionesFiltradas = secciones.filter(
-    (seccion) => seccion.grade_name === grados.find((g) => g.id == formData.grado)?.name,
-  )
-
-  // Calcular progreso
-  const progress = (step / 6) * 100
-
   // Mostrar mensaje de éxito
-  if (success && success.includes("exitosamente")) {
+  if (success && success.includes('exitosamente')) {
     return (
       <CAlert color="success" className="text-center">
-        <CIcon icon={cilCheckCircle} size="xl" className="mb-3" />
         <h4>¡Matrícula guardada exitosamente!</h4>
         <p>La inscripción ha sido registrada correctamente en el sistema.</p>
         <CSpinner size="sm" className="me-2" />
@@ -489,57 +469,18 @@ const RegistroEstudiantil = () => {
 
   return (
     <div className="container py-4">
-      <CToaster ref={(ref) => addToast(ref)} push={toast} placement="top-end" />
-
-      {/* Barra de progreso */}
-      <CCard className="mb-4">
-        <CCardBody>
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <h6 className="mb-0">Progreso del Registro</h6>
-            <div className="d-flex align-items-center gap-2">
-              <CBadge color="info">Paso {step} de 6</CBadge>
-              <CButton
-                color="light"
-                size="sm"
-                onClick={() => {
-                  loadGrados()
-                  loadSecciones()
-                }}
-                disabled={loadingGrados || loadingSecciones}
-              >
-                <CIcon icon={cilReload} className={loadingGrados || loadingSecciones ? "spin" : ""} />
-              </CButton>
-            </div>
-          </div>
-          <CProgress value={progress} className="mb-2" />
-          <small className="text-muted">
-            {step === 1 && "Información básica"}
-            {step === 2 && "Datos del estudiante"}
-            {step === 3 && "Datos de los padres"}
-            {step === 4 && "Datos del representante"}
-            {step === 5 && "Información adicional"}
-            {step === 6 && "Requisitos y finalización"}
-          </small>
-        </CCardBody>
-      </CCard>
-
       {/* Alertas */}
       {error && (
         <CAlert color="danger" dismissible onClose={() => setError(null)}>
-          <CIcon icon={cilWarning} className="me-2" />
           <strong>Error:</strong> {error}
         </CAlert>
       )}
 
-      {success && !success.includes("exitosamente") && (
+      {success && !success.includes('exitosamente') && (
         <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
-          <CIcon icon={cilCheckCircle} className="me-2" />
           <strong>Éxito:</strong> {success}
         </CAlert>
       )}
-
-      {/* Resto del formulario permanece igual... */}
-      {/* Solo incluyo los pasos más importantes para no hacer el código muy largo */}
 
       {/* Paso 1: Información básica */}
       {step === 1 && (
@@ -549,6 +490,13 @@ const RegistroEstudiantil = () => {
               <CIcon icon={cilUser} className="me-2" />
               FICHA DE INSCRIPCION ESCOLAR {schoolYear}
             </h4>
+            <div>
+              <img
+                src="/src/assets/brand/logojgm.png"
+                alt="Logo Escuela"
+                style={{ height: '40px', marginRight: '10px' }}
+              />
+            </div>
           </CCardHeader>
           <CCardBody>
             <CForm className="needs-validation" noValidate validated={validated}>
@@ -563,7 +511,7 @@ const RegistroEstudiantil = () => {
                       id="ingresoNuevo"
                       value="nuevo"
                       label="Nuevo Ingreso"
-                      checked={formData.tipoIngreso === "nuevo"}
+                      checked={formData.tipoIngreso === 'nuevo'}
                       onChange={handleChange}
                     />
                     <CFormCheck
@@ -573,13 +521,13 @@ const RegistroEstudiantil = () => {
                       id="ingresoRegular"
                       value="regular"
                       label="Regular"
-                      checked={formData.tipoIngreso === "regular"}
+                      checked={formData.tipoIngreso === 'regular'}
                       onChange={handleChange}
                     />
                   </div>
                 </CCol>
-                <CCol md={4}>
-                  <CFormLabel htmlFor="grado">Grado *</CFormLabel>
+                <CCol md={3}>
+                  <CFormLabel htmlFor="grado">Grado</CFormLabel>
                   <CFormSelect
                     id="grado"
                     name="grado"
@@ -588,7 +536,8 @@ const RegistroEstudiantil = () => {
                     required
                     disabled={loadingGrados}
                   >
-                    <option value="">{loadingGrados ? "Cargando..." : "Seleccionar..."}</option>
+                    <option value="">{loadingGrados ? 'Cargando...' : 'Seleccionar...'}</option>
+
                     {[...grados]
                       .sort((a, b) => a.id - b.id)
                       .map((grado) => (
@@ -598,28 +547,11 @@ const RegistroEstudiantil = () => {
                       ))}
                   </CFormSelect>
                 </CCol>
-                <CCol md={3}>
-                  <CFormLabel htmlFor="seccion">Sección</CFormLabel>
-                  <CFormSelect
-                    id="seccion"
-                    name="seccion"
-                    value={formData.seccion}
-                    onChange={handleChange}
-                    disabled={!formData.grado || loadingSecciones}
-                  >
-                    <option value="">Seleccionar...</option>
-                    {seccionesFiltradas.map((seccion) => (
-                      <option key={seccion.id} value={seccion.id}>
-                        {seccion.seccion} - {seccion.teacher_name} {seccion.teacher_lastName}
-                      </option>
-                    ))}
-                  </CFormSelect>
-                </CCol>
               </CRow>
 
               <CRow className="mb-3">
                 <CCol md={6}>
-                  <CFormLabel htmlFor="fechaInscripcion">Fecha de Inscripción *</CFormLabel>
+                  <CFormLabel htmlFor="fechaInscripcion">Fecha de Inscripción</CFormLabel>
                   <CFormInput
                     type="date"
                     id="fechaInscripcion"
@@ -652,9 +584,6 @@ const RegistroEstudiantil = () => {
         </CCard>
       )}
 
-      {/* Resto de los pasos del formulario... */}
-      {/* (Mantener los pasos 2-6 como están, solo agregar los campos requeridos marcados con *) */}
-
       {/* Paso 2: Datos del estudiante */}
       {step === 2 && (
         <CCard className="mb-4">
@@ -683,7 +612,7 @@ const RegistroEstudiantil = () => {
               <CCol md={6}>
                 <CRow>
                   <CCol md={6}>
-                    <CFormLabel htmlFor="apellidos">Apellidos *</CFormLabel>
+                    <CFormLabel htmlFor="apellidos">Apellidos</CFormLabel>
                     <CFormInput
                       type="text"
                       id="apellidos"
@@ -695,7 +624,7 @@ const RegistroEstudiantil = () => {
                     />
                   </CCol>
                   <CCol md={6}>
-                    <CFormLabel htmlFor="nombres">Nombres *</CFormLabel>
+                    <CFormLabel htmlFor="nombres">Nombres</CFormLabel>
                     <CFormInput
                       type="text"
                       id="nombres"
@@ -712,7 +641,7 @@ const RegistroEstudiantil = () => {
 
             <CRow className="mb-3">
               <CCol md={3}>
-                <CFormLabel htmlFor="fechaNacimiento">Fecha de Nacimiento *</CFormLabel>
+                <CFormLabel htmlFor="fechaNacimiento">Fecha de Nacimiento</CFormLabel>
                 <CFormInput
                   type="date"
                   id="fechaNacimiento"
@@ -732,11 +661,18 @@ const RegistroEstudiantil = () => {
                   onChange={handleChange}
                   min="3"
                   max="18"
+                  required
                 />
               </CCol>
               <CCol md={2}>
-                <CFormLabel htmlFor="sexo">Sexo *</CFormLabel>
-                <CFormSelect id="sexo" name="sexo" value={formData.sexo} onChange={handleChange} required>
+                <CFormLabel htmlFor="sexo">Sexo</CFormLabel>
+                <CFormSelect
+                  id="sexo"
+                  name="sexo"
+                  value={formData.sexo}
+                  onChange={handleChange}
+                  required
+                >
                   <option value="">Seleccionar...</option>
                   <option value="M">Masculino</option>
                   <option value="F">Femenino</option>
@@ -751,6 +687,7 @@ const RegistroEstudiantil = () => {
                   value={formData.lugarNacimiento}
                   onChange={handleChange}
                   placeholder="Ej: Hospital Central, San Cristóbal"
+                  required
                 />
               </CCol>
             </CRow>
@@ -765,6 +702,7 @@ const RegistroEstudiantil = () => {
                   value={formData.entidadFederal}
                   onChange={handleChange}
                   placeholder="Ej: Táchira"
+                  required
                 />
               </CCol>
               <CCol md={4}>
@@ -776,6 +714,7 @@ const RegistroEstudiantil = () => {
                   value={formData.municipio}
                   onChange={handleChange}
                   placeholder="Ej: San Cristóbal"
+                  required
                 />
               </CCol>
               <CCol md={4}>
@@ -802,7 +741,7 @@ const RegistroEstudiantil = () => {
                     id="apreciacionSi"
                     value="si"
                     label="Si"
-                    checked={formData.apreciacionCualitativa === "si"}
+                    checked={formData.apreciacionCualitativa === 'si'}
                     onChange={handleChange}
                   />
                   <CFormCheck
@@ -812,7 +751,7 @@ const RegistroEstudiantil = () => {
                     id="apreciacionNo"
                     value="no"
                     label="No"
-                    checked={formData.apreciacionCualitativa === "no"}
+                    checked={formData.apreciacionCualitativa === 'no'}
                     onChange={handleChange}
                   />
                 </div>
@@ -827,7 +766,7 @@ const RegistroEstudiantil = () => {
                     id="repitienteSi"
                     value="si"
                     label="Si"
-                    checked={formData.repitiente === "si"}
+                    checked={formData.repitiente === 'si'}
                     onChange={handleChange}
                   />
                   <CFormCheck
@@ -837,7 +776,7 @@ const RegistroEstudiantil = () => {
                     id="repitienteNo"
                     value="no"
                     label="No"
-                    checked={formData.repitiente === "no"}
+                    checked={formData.repitiente === 'no'}
                     onChange={handleChange}
                   />
                 </div>
@@ -856,10 +795,159 @@ const RegistroEstudiantil = () => {
         </CCard>
       )}
 
-      {/* Continuar con los demás pasos... */}
-      {/* Por brevedad, incluyo solo los pasos más importantes. Los demás siguen la misma estructura */}
+      {/* Paso 3: Datos de los padres */}
+      {step === 3 && (
+        <CCard className="mb-4">
+          <CCardHeader className="bg-info text-white">
+            <h5 className="mb-0">
+              <CIcon icon={cilPeople} className="me-2" />
+              B. DATOS DE LOS PADRES
+            </h5>
+          </CCardHeader>
+          <CCardBody>
+            <CRow className="mb-3">
+              <CCol md={5}>
+                <CFormLabel htmlFor="nombrePadre">Nombre del Padre</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="nombrePadre"
+                  name="nombrePadre"
+                  value={formData.nombrePadre}
+                  onChange={handleChange}
+                  placeholder="Nombre completo del padre"
+                />
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel htmlFor="cedulaPadre">Cédula</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="cedulaPadre"
+                  name="cedulaPadre"
+                  value={formData.cedulaPadre}
+                  onChange={handleChange}
+                  placeholder="Ej: V-12345678"
+                />
+              </CCol>
+              <CCol md={4}>
+                <CFormLabel htmlFor="telefonoPadre">Teléfono</CFormLabel>
+                <CInputGroup>
+                  <CInputGroupText>
+                    <CIcon icon={cilPhone} />
+                  </CInputGroupText>
+                  <CFormInput
+                    type="tel"
+                    id="telefonoPadre"
+                    name="telefonoPadre"
+                    value={formData.telefonoPadre}
+                    onChange={handleChange}
+                    placeholder="Ej: 0414-1234567"
+                  />
+                </CInputGroup>
+              </CCol>
+            </CRow>
 
-      {/* Paso 4: Datos del representante - ACTUALIZADO */}
+            <CRow className="mb-3">
+              <CCol md={5}>
+                <CFormLabel htmlFor="nombreMadre">Nombre de la Madre</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="nombreMadre"
+                  name="nombreMadre"
+                  value={formData.nombreMadre}
+                  onChange={handleChange}
+                  placeholder="Nombre completo de la madre"
+                />
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel htmlFor="cedulaMadre">Cédula</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="cedulaMadre"
+                  name="cedulaMadre"
+                  value={formData.cedulaMadre}
+                  onChange={handleChange}
+                  placeholder="Ej: V-12345678"
+                />
+              </CCol>
+              <CCol md={4}>
+                <CFormLabel htmlFor="telefonoMadre">Teléfono</CFormLabel>
+                <CInputGroup>
+                  <CInputGroupText>
+                    <CIcon icon={cilPhone} />
+                  </CInputGroupText>
+                  <CFormInput
+                    type="tel"
+                    id="telefonoMadre"
+                    name="telefonoMadre"
+                    value={formData.telefonoMadre}
+                    onChange={handleChange}
+                    placeholder="Ej: 0414-1234567"
+                  />
+                </CInputGroup>
+              </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
+              <CCol md={12}>
+                <CFormLabel>Vive con</CFormLabel>
+                <div>
+                  <CFormCheck
+                    inline
+                    type="radio"
+                    name="viveCon"
+                    id="viveConPadre"
+                    value="padre"
+                    label="Padre"
+                    checked={formData.viveCon === 'padre'}
+                    onChange={handleChange}
+                  />
+                  <CFormCheck
+                    inline
+                    type="radio"
+                    name="viveCon"
+                    id="viveConMadre"
+                    value="madre"
+                    label="Madre"
+                    checked={formData.viveCon === 'madre'}
+                    onChange={handleChange}
+                  />
+                  <CFormCheck
+                    inline
+                    type="radio"
+                    name="viveCon"
+                    id="viveConAmbos"
+                    value="ambos"
+                    label="Ambos"
+                    checked={formData.viveCon === 'ambos'}
+                    onChange={handleChange}
+                  />
+                  <CFormCheck
+                    inline
+                    type="radio"
+                    name="viveCon"
+                    id="viveConOtros"
+                    value="otros"
+                    label="Otros"
+                    checked={formData.viveCon === 'otros'}
+                    onChange={handleChange}
+                  />
+                </div>
+              </CCol>
+            </CRow>
+
+            <CCol xs={12} className="d-flex justify-content-between">
+              <CButton color="warning" onClick={prevStep}>
+                Atrás
+              </CButton>
+              <CButton color="info" onClick={nextStep}>
+                Siguiente
+              </CButton>
+            </CCol>
+          </CCardBody>
+        </CCard>
+      )}
+
+      {/* Paso 4: Datos del representante */}
       {step === 4 && (
         <CCard className="mb-4">
           <CCardHeader className="bg-info text-white">
@@ -871,7 +959,7 @@ const RegistroEstudiantil = () => {
           <CCardBody>
             <CRow className="mb-3">
               <CCol md={4}>
-                <CFormLabel htmlFor="apellidosRepresentante">Apellidos *</CFormLabel>
+                <CFormLabel htmlFor="apellidosRepresentante">Apellidos</CFormLabel>
                 <CFormInput
                   type="text"
                   id="apellidosRepresentante"
@@ -883,7 +971,7 @@ const RegistroEstudiantil = () => {
                 />
               </CCol>
               <CCol md={4}>
-                <CFormLabel htmlFor="nombresRepresentante">Nombres *</CFormLabel>
+                <CFormLabel htmlFor="nombresRepresentante">Nombres</CFormLabel>
                 <CFormInput
                   type="text"
                   id="nombresRepresentante"
@@ -895,7 +983,7 @@ const RegistroEstudiantil = () => {
                 />
               </CCol>
               <CCol md={2}>
-                <CFormLabel htmlFor="cedulaRepresentante">Cédula *</CFormLabel>
+                <CFormLabel htmlFor="cedulaRepresentante">Cédula</CFormLabel>
                 <CFormInput
                   type="text"
                   id="cedulaRepresentante"
@@ -916,6 +1004,7 @@ const RegistroEstudiantil = () => {
                   onChange={handleChange}
                   min="18"
                   max="99"
+                  required
                 />
               </CCol>
             </CRow>
@@ -929,6 +1018,7 @@ const RegistroEstudiantil = () => {
                   name="fechaNacimientoRepresentante"
                   value={formData.fechaNacimientoRepresentante}
                   onChange={handleChange}
+                  required
                 />
               </CCol>
               <CCol md={4}>
@@ -938,13 +1028,14 @@ const RegistroEstudiantil = () => {
                   name="estadoCivilRepresentante"
                   value={formData.estadoCivilRepresentante}
                   onChange={handleChange}
+                  required
                 >
                   <option value="">Seleccionar...</option>
-                  <option value="Soltero">Soltero(a)</option>
-                  <option value="Casado">Casado(a)</option>
-                  <option value="Divorciado">Divorciado(a)</option>
-                  <option value="Viudo">Viudo(a)</option>
-                  <option value="Concubinato">Concubinato</option>
+                  <option value="soltero">Soltero(a)</option>
+                  <option value="casado">Casado(a)</option>
+                  <option value="divorciado">Divorciado(a)</option>
+                  <option value="viudo">Viudo(a)</option>
+                  <option value="concubinato">Concubinato</option>
                 </CFormSelect>
               </CCol>
               <CCol md={4}>
@@ -954,14 +1045,15 @@ const RegistroEstudiantil = () => {
                   name="nexoEstudiante"
                   value={formData.nexoEstudiante}
                   onChange={handleChange}
+                  required
                 >
                   <option value="">Seleccionar...</option>
-                  <option value="Padre">Padre</option>
-                  <option value="Madre">Madre</option>
-                  <option value="Abuelo">Abuelo(a)</option>
-                  <option value="Tío">Tío(a)</option>
-                  <option value="Hermano">Hermano(a)</option>
-                  <option value="Otro">Otro</option>
+                  <option value="padre">Padre</option>
+                  <option value="madre">Madre</option>
+                  <option value="abuelo">Abuelo(a)</option>
+                  <option value="tio">Tío(a)</option>
+                  <option value="hermano">Hermano(a)</option>
+                  <option value="otro">Otro</option>
                 </CFormSelect>
               </CCol>
             </CRow>
@@ -980,6 +1072,7 @@ const RegistroEstudiantil = () => {
                     value={formData.direccionHabitacion}
                     onChange={handleChange}
                     placeholder="Dirección completa"
+                    required
                   />
                 </CInputGroup>
               </CCol>
@@ -1000,7 +1093,7 @@ const RegistroEstudiantil = () => {
                 </CInputGroup>
               </CCol>
               <CCol md={3}>
-                <CFormLabel htmlFor="telefonoCelular">Teléfono Celular *</CFormLabel>
+                <CFormLabel htmlFor="telefonoCelular">Teléfono Celular</CFormLabel>
                 <CInputGroup>
                   <CInputGroupText>
                     <CIcon icon={cilPhone} />
@@ -1020,20 +1113,6 @@ const RegistroEstudiantil = () => {
 
             <CRow className="mb-3">
               <CCol md={4}>
-                <CFormLabel htmlFor="emailRepresentante">Correo Electrónico</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>@</CInputGroupText>
-                  <CFormInput
-                    type="email"
-                    id="emailRepresentante"
-                    name="emailRepresentante"
-                    value={formData.emailRepresentante}
-                    onChange={handleChange}
-                    placeholder="Ej: correo@dominio.com"
-                  />
-                </CInputGroup>
-              </CCol>
-              <CCol md={4}>
                 <CFormLabel htmlFor="profesion">Profesión</CFormLabel>
                 <CFormInput
                   type="text"
@@ -1042,6 +1121,7 @@ const RegistroEstudiantil = () => {
                   value={formData.profesion}
                   onChange={handleChange}
                   placeholder="Ej: Docente, Ingeniero, etc."
+                  required
                 />
               </CCol>
               <CCol md={4}>
@@ -1055,9 +1135,6 @@ const RegistroEstudiantil = () => {
                   placeholder="Nombre de la empresa o institución"
                 />
               </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
               <CCol md={4}>
                 <CFormLabel htmlFor="telefonoTrabajo">Teléfono Trabajo</CFormLabel>
                 <CInputGroup>
@@ -1088,7 +1165,278 @@ const RegistroEstudiantil = () => {
         </CCard>
       )}
 
-      {/* Saltar a paso 6 para el ejemplo - Requisitos y envío final */}
+      {/* Paso 5: Información del estudiante */}
+      {step === 5 && (
+        <CCard className="mb-4">
+          <CCardHeader className="bg-info text-white">
+            <h5 className="mb-0">
+              <CIcon icon={cilNotes} className="me-2" />
+              D. INFORMACIÓN DEL ESTUDIANTE
+            </h5>
+          </CCardHeader>
+          <CCardBody>
+            <CRow className="mb-3">
+              <CCol md={2}>
+                <CFormLabel htmlFor="peso">Peso (Kg)</CFormLabel>
+                <CFormInput
+                  type="number"
+                  id="peso"
+                  name="peso"
+                  value={formData.peso}
+                  onChange={handleChange}
+                  step="0.01"
+                  required
+                />
+              </CCol>
+              <CCol md={2}>
+                <CFormLabel htmlFor="estatura">Estatura (m)</CFormLabel>
+                <CFormInput
+                  type="number"
+                  id="estatura"
+                  name="estatura"
+                  value={formData.estatura}
+                  onChange={handleChange}
+                  step="0.01"
+                  required
+                />
+              </CCol>
+              <CCol md={2}>
+                <CFormLabel htmlFor="tallaCamisa">Talla Camisa</CFormLabel>
+                <CFormSelect
+                  id="tallaCamisa"
+                  name="tallaCamisa"
+                  value={formData.tallaCamisa}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="4">4</option>
+                  <option value="6">6</option>
+                  <option value="8">8</option>
+                  <option value="10">10</option>
+                  <option value="12">12</option>
+                  <option value="14">14</option>
+                  <option value="16">16</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={2}>
+                <CFormLabel htmlFor="tallaPantalon">Talla Pantalón</CFormLabel>
+                <CFormSelect
+                  id="tallaPantalon"
+                  name="tallaPantalon"
+                  value={formData.tallaPantalon}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="4">4</option>
+                  <option value="6">6</option>
+                  <option value="8">8</option>
+                  <option value="10">10</option>
+                  <option value="12">12</option>
+                  <option value="14">14</option>
+                  <option value="16">16</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={2}>
+                <CFormLabel htmlFor="tallaZapato">Talla Zapato</CFormLabel>
+                <CFormSelect
+                  id="tallaZapato"
+                  name="tallaZapato"
+                  value={formData.tallaZapato}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="28">28</option>
+                  <option value="29">29</option>
+                  <option value="30">30</option>
+                  <option value="31">31</option>
+                  <option value="32">32</option>
+                  <option value="33">33</option>
+                  <option value="34">34</option>
+                  <option value="35">35</option>
+                  <option value="36">36</option>
+                  <option value="37">37</option>
+                  <option value="38">38</option>
+                  <option value="39">39</option>
+                  <option value="40">40</option>
+                  <option value="41">41</option>
+                  <option value="42">42</option>
+                </CFormSelect>
+              </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
+              <CCol md={6}>
+                <CFormLabel htmlFor="enfermedad">Enfermedad que padece</CFormLabel>
+                <CInputGroup>
+                  <CInputGroupText>
+                    <CIcon icon={cilMedicalCross} />
+                  </CInputGroupText>
+                  <CFormInput
+                    type="text"
+                    id="enfermedad"
+                    name="enfermedad"
+                    value={formData.enfermedad}
+                    onChange={handleChange}
+                    placeholder="Indique si padece alguna enfermedad"
+                  />
+                </CInputGroup>
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel>Tiene hermanos estudiando en la escuela</CFormLabel>
+                <div>
+                  <CFormCheck
+                    inline
+                    type="radio"
+                    name="tieneHermanos"
+                    id="tieneHermanosSi"
+                    value="si"
+                    label="Si"
+                    checked={formData.tieneHermanos === 'si'}
+                    onChange={handleChange}
+                  />
+                  <CFormCheck
+                    inline
+                    type="radio"
+                    name="tieneHermanos"
+                    id="tieneHermanosNo"
+                    value="no"
+                    label="No"
+                    checked={formData.tieneHermanos === 'no'}
+                    onChange={handleChange}
+                  />
+                </div>
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel htmlFor="cuantosHermanos">Cuántos</CFormLabel>
+                <CFormInput
+                  type="number"
+                  id="cuantosHermanos"
+                  name="cuantosHermanos"
+                  value={formData.cuantosHermanos}
+                  onChange={handleChange}
+                  min="0"
+                  max="10"
+                />
+              </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
+              <CCol md={4}>
+                <CFormLabel htmlFor="gradosHermanos">En cuáles Grados</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="gradosHermanos"
+                  name="gradosHermanos"
+                  value={formData.gradosHermanos}
+                  onChange={handleChange}
+                  placeholder="Ej: 3° y 5° grado"
+                />
+              </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
+              <CCol md={12}>
+                <CFormLabel>Personas autorizadas para retirar al niño de la escuela</CFormLabel>
+              </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
+              <CCol md={4}>
+                <CFormLabel htmlFor="personaAutorizada1">Nombre y Apellido</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="personaAutorizada1"
+                  name="personaAutorizada1"
+                  value={formData.personaAutorizada1}
+                  onChange={handleChange}
+                  placeholder="Nombre completo"
+                  required
+                />
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel htmlFor="cedulaAutorizada1">Cédula</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="cedulaAutorizada1"
+                  name="cedulaAutorizada1"
+                  value={formData.cedulaAutorizada1}
+                  onChange={handleChange}
+                  placeholder="Ej: V-12345678"
+                  required
+                />
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel htmlFor="parentescoAutorizada1">Parentesco</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="parentescoAutorizada1"
+                  name="parentescoAutorizada1"
+                  value={formData.parentescoAutorizada1}
+                  onChange={handleChange}
+                  placeholder="Ej: Abuela, Tío, etc."
+                  required
+                />
+              </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
+              <CCol md={4}>
+                <CFormLabel htmlFor="personaAutorizada2">Nombre y Apellido</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="personaAutorizada2"
+                  name="personaAutorizada2"
+                  value={formData.personaAutorizada2}
+                  onChange={handleChange}
+                  placeholder="Nombre completo"
+                />
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel htmlFor="cedulaAutorizada2">Cédula</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="cedulaAutorizada2"
+                  name="cedulaAutorizada2"
+                  value={formData.cedulaAutorizada2}
+                  onChange={handleChange}
+                  placeholder="Ej: V-12345678"
+                />
+              </CCol>
+              <CCol md={3}>
+                <CFormLabel htmlFor="parentescoAutorizada2">Parentesco</CFormLabel>
+                <CFormInput
+                  type="text"
+                  id="parentescoAutorizada2"
+                  name="parentescoAutorizada2"
+                  value={formData.parentescoAutorizada2}
+                  onChange={handleChange}
+                  placeholder="Ej: Abuela, Tío, etc."
+                />
+              </CCol>
+            </CRow>
+
+            <CCol xs={12} className="d-flex justify-content-between">
+              <CButton color="warning" onClick={prevStep}>
+                Atrás
+              </CButton>
+              <CButton color="info" onClick={nextStep}>
+                Siguiente
+              </CButton>
+            </CCol>
+          </CCardBody>
+        </CCard>
+      )}
+
+      {/* Paso 6: Requisitos y envío final */}
       {step === 6 && (
         <CCard className="mb-4">
           <CCardHeader className="bg-info text-white">
@@ -1098,7 +1446,12 @@ const RegistroEstudiantil = () => {
             </h5>
           </CCardHeader>
           <CCardBody>
-            <CForm onSubmit={handleSubmit} className="needs-validation" noValidate validated={validated}>
+            <CForm
+              onSubmit={handleSubmit}
+              className="needs-validation"
+              noValidate
+              validated={validated}
+            >
               <CRow className="mb-3">
                 <CCol md={12}>
                   <div className="table-responsive">

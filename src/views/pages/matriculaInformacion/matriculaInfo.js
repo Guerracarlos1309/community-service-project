@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
+"use client"
+
+import { useState, useEffect } from "react"
 import {
-  CNav,
-  CNavItem,
-  CNavLink,
-  CTabContent,
-  CTabPane,
+  CCard,
+  CCardBody,
+  CCardHeader,
   CTable,
+  CTableHead,
   CTableRow,
   CTableHeaderCell,
   CTableBody,
@@ -15,174 +16,135 @@ import {
   CSpinner,
   CAlert,
   CButton,
-  CCard,
-  CCardHeader,
-  CCardBody,
-} from '@coreui/react'
-import { helpFetch } from '../../../api/helpFetch.js'
+  CFormSelect,
+  CRow,
+  CCol,
+  CInputGroup,
+  CInputGroupText,
+  CFormInput,
+  CNav,
+  CNavItem,
+  CNavLink,
+  CTabContent,
+  CTabPane,
+} from "@coreui/react"
+import CIcon from "@coreui/icons-react"
+import { cilSearch, cilPeople, cilSchool, cilUser, cilReload } from "@coreui/icons"
+import { helpFetch } from "../../../api/helpFetch.js"
 
 const api = helpFetch()
 
-// ✅ Colocada antes de usarla
-const adaptMatriculaData = (raw) => {
-  return {
-    ...raw,
-    estudiante: {
-      nombres: raw.student_name,
-      apellidos: raw.student_lastName,
-      cedula_escolar: raw.student_school_id,
-      fecha_nacimiento: raw.student_birthday,
-      lugar_nacimiento: raw.student_birthplace_name,
-      sexo: raw.student_sex,
-      edad: calcularEdad(raw.student_birthday),
-      cantidad_hermanos: raw.student_sibling_count,
-      vive_con_madre: raw.lives_with_mother,
-      vive_con_padre: raw.lives_with_father,
-      vive_con_ambos: raw.lives_with_both,
-      vive_con_representante: raw.lives_with_representative,
-    },
-    grado: {
-      nombre: raw.grade_name,
-    },
-    seccion: {
-      nombre: raw.section_name,
-      periodo: raw.period,
-    },
-    representante: {
-      nombres: raw.representative_name,
-      apellidos: raw.representative_lastName,
-      cedula: raw.representative_ci,
-      telefono_celular: raw.representative_phoneNumber,
-      email: raw.representative_email,
-      direccion_habitacion: raw.representative_address,
-      lugar_trabajo: raw.representative_workplace,
-      telefono_trabajo: raw.representative_work_phone,
-    },
-    fecha_inscripcion: raw.registrationDate,
-    tipo_ingreso: raw.repeater ? 'Repitiente' : 'Nuevo ingreso',
-    datos_fisicos: {
-      peso: raw.weight,
-      estatura: raw.stature,
-      talla_camisa: raw.chemiseSize,
-      talla_pantalon: raw.pantsSize,
-      talla_zapato: raw.shoesSize,
-      enfermedad: raw.diseases,
-      tiene_hermanos: raw.student_sibling_count > 0,
-      cuantos_hermanos: raw.student_sibling_count,
-      grados_hermanos: raw.grados_hermanos,
-      personas_autorizadas: raw.autorizedCopyIDCheck || null,
-    },
-    datos_familiares: {
-      nombre_padre: raw.nombre_padre,
-      cedula_padre: raw.cedula_padre,
-      telefono_padre: raw.telefono_padre,
-      nombre_madre: raw.nombre_madre,
-      cedula_madre: raw.cedula_madre,
-      telefono_madre: raw.telefono_madre,
-      vive_con: raw.vive_con,
-    },
-    periodo_escolar: raw.period,
-    plantel_procedencia: raw.plantel_procedencia,
-  }
-}
-
-const calcularEdad = (fecha) => {
-  if (!fecha) return null
-  const nacimiento = new Date(fecha)
-  const hoy = new Date()
-  let edad = hoy.getFullYear() - nacimiento.getFullYear()
-  const mes = hoy.getMonth() - nacimiento.getMonth()
-  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-    edad--
-  }
-  return edad
-}
-
-const MatriculaInfo = ({ matriculaId }) => {
-  const [activeTab, setActiveTab] = useState('datosGenerales')
-  const [matriculaData, setMatriculaData] = useState(null)
+const MatriculasPorGrado = () => {
+  const [activeTab, setActiveTab] = useState("todos")
+  const [matriculas, setMatriculas] = useState([])
+  const [grados, setGrados] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // Estados para datos de utilidad
-  const [grados, setGrados] = useState([])
-  const [docenteGrados, setDocenteGrados] = useState([])
+  const [filtroGrado, setFiltroGrado] = useState("")
+  const [busqueda, setBusqueda] = useState("")
+  const [estadisticas, setEstadisticas] = useState({})
 
   useEffect(() => {
-    if (matriculaId) {
-      loadMatriculaData()
-      loadUtilityData()
-    }
-  }, [matriculaId])
+    loadData()
+  }, [])
 
-  const loadMatriculaData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true)
       setError(null)
+      console.log("🔄 Cargando datos de matrículas...")
 
-      const response = await api.get(`/api/matriculas/${matriculaId}`)
+      // Cargar matrículas y grados en paralelo
+      const [matriculasResponse, gradosResponse] = await Promise.all([
+        api.get("/api/matriculas"),
+        api.get("/api/matriculas/utils/grados"),
+      ])
 
-      if (response.ok) {
-        const adaptada = adaptMatriculaData(response.matricula)
-        setMatriculaData(adaptada)
+      console.log("📥 Respuesta matrículas:", matriculasResponse)
+      console.log("📥 Respuesta grados:", gradosResponse)
+
+      if (!matriculasResponse.error) {
+        setMatriculas(matriculasResponse.matriculas || [])
+        calcularEstadisticas(matriculasResponse.matriculas || [])
+        console.log("✅ Matrículas cargadas:", matriculasResponse.matriculas?.length || 0)
       } else {
-        setError(response.msg || 'Error al cargar los datos de la matrícula')
+        setError(matriculasResponse.msg || "Error al cargar matrículas")
+      }
+
+      if (!gradosResponse.error) {
+        setGrados(gradosResponse.grados || [])
+        console.log("✅ Grados cargados:", gradosResponse.grados?.length || 0)
       }
     } catch (error) {
-      console.error('❌ Error en loadMatriculaData:', error)
-      setError('Error al cargar los datos de la matrícula')
+      console.error("❌ Error cargando datos:", error)
+      setError("Error al cargar los datos")
     } finally {
       setLoading(false)
     }
   }
 
-  const loadUtilityData = async () => {
-    try {
-      const [gradosResponse, docenteGradosResponse] = await Promise.all([
-        api.get('/api/matriculas/utils/grados'),
-        api.get('/api/matriculas/utils/docente-grados'),
-      ])
-
-      if (gradosResponse.ok) {
-        setGrados(gradosResponse.grados || [])
+  const calcularEstadisticas = (matriculasData) => {
+    const stats = {}
+    matriculasData.forEach((matricula) => {
+      const grado = matricula.grade_name || "Sin grado"
+      if (!stats[grado]) {
+        stats[grado] = {
+          total: 0,
+          masculino: 0,
+          femenino: 0,
+          repitientes: 0,
+        }
       }
-
-      if (docenteGradosResponse.ok) {
-        setDocenteGrados(docenteGradosResponse.docente_grados || [])
-      }
-    } catch (error) {
-      console.error('❌ Error cargando datos de utilidad:', error)
-    }
-  }
-
-  const getGradoName = (gradoId) => {
-    const grado = grados.find((g) => g.id === gradoId || g.id == gradoId)
-    return grado ? grado.nombre : 'No especificado'
+      stats[grado].total++
+      if (matricula.student_sex === "Masculino") stats[grado].masculino++
+      if (matricula.student_sex === "Femenino") stats[grado].femenino++
+      if (matricula.repeater) stats[grado].repitientes++
+    })
+    setEstadisticas(stats)
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+    if (!dateString) return "-"
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     })
   }
 
   const formatPhone = (phone) => {
-    if (!phone) return '-'
+    if (!phone) return "-"
     return phone
   }
+
+  // Filtrar matrículas
+  const matriculasFiltradas = matriculas.filter((matricula) => {
+    const cumpleFiltroGrado = !filtroGrado || matricula.grade_name === filtroGrado
+    const cumpleBusqueda =
+      !busqueda ||
+      matricula.student_name?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      matricula.student_lastName?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      matricula.student_ci?.toLowerCase().includes(busqueda.toLowerCase())
+
+    return cumpleFiltroGrado && cumpleBusqueda
+  })
+
+  // Agrupar por grado
+  const matriculasPorGrado = matriculasFiltradas.reduce((acc, matricula) => {
+    const grado = matricula.grade_name || "Sin grado"
+    if (!acc[grado]) {
+      acc[grado] = []
+    }
+    acc[grado].push(matricula)
+    return acc
+  }, {})
 
   if (loading) {
     return (
       <CContainer>
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{ height: '400px' }}
-        >
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "400px" }}>
           <CSpinner color="primary" size="lg" />
-          <span className="ms-2">Cargando información de matrícula...</span>
+          <span className="ms-2">Cargando matrículas...</span>
         </div>
       </CContainer>
     )
@@ -193,395 +155,234 @@ const MatriculaInfo = ({ matriculaId }) => {
       <CContainer>
         <CAlert color="danger">
           <strong>Error:</strong> {error}
+          <CButton color="danger" variant="outline" size="sm" className="ms-2" onClick={loadData}>
+            <CIcon icon={cilReload} className="me-1" />
+            Reintentar
+          </CButton>
         </CAlert>
       </CContainer>
     )
   }
 
-  if (!matriculaData) {
-    return (
-      <CContainer>
-        <CAlert color="warning">No se encontraron datos de matrícula.</CAlert>
-      </CContainer>
-    )
-  }
-
-  // Extraer datos del objeto matriculaData
-  const {
-    estudiante,
-    grado,
-    seccion,
-    periodo_escolar,
-    fecha_inscripcion,
-    plantel_procedencia,
-    tipo_ingreso,
-    // Datos del estudiante
-    representante,
-    datos_fisicos,
-    datos_familiares,
-  } = matriculaData
-
   return (
-    <CContainer>
+    <CContainer fluid>
       <CCard>
         <CCardHeader>
-          <h2 className="mb-0 text-center">
-            Detalle de Matrícula - {estudiante?.nombres} {estudiante?.apellidos}
-          </h2>
+          <div className="d-flex justify-content-between align-items-center">
+            <h2 className="mb-0">
+              <CIcon icon={cilSchool} className="me-2" />
+              Matrículas por Grado - Año Escolar {new Date().getFullYear()}
+            </h2>
+            <CBadge color="info" size="lg">
+              Total: {matriculas.length} estudiantes
+            </CBadge>
+          </div>
         </CCardHeader>
         <CCardBody>
+          {/* Filtros */}
+          <CRow className="mb-4">
+            <CCol md={4}>
+              <CFormSelect
+                value={filtroGrado}
+                onChange={(e) => setFiltroGrado(e.target.value)}
+                aria-label="Filtrar por grado"
+              >
+                <option value="">Todos los grados</option>
+                {grados.map((grado) => (
+                  <option key={grado.id} value={grado.name}>
+                    {grado.name}
+                  </option>
+                ))}
+              </CFormSelect>
+            </CCol>
+            <CCol md={6}>
+              <CInputGroup>
+                <CInputGroupText>
+                  <CIcon icon={cilSearch} />
+                </CInputGroupText>
+                <CFormInput
+                  placeholder="Buscar por nombre, apellido o cédula..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                />
+              </CInputGroup>
+            </CCol>
+            <CCol md={2}>
+              <CButton color="primary" onClick={loadData} className="w-100">
+                <CIcon icon={cilReload} className="me-1" />
+                Actualizar
+              </CButton>
+            </CCol>
+          </CRow>
+
+          {/* Pestañas */}
           <CNav variant="tabs" role="tablist" className="mb-4">
             <CNavItem>
               <CNavLink
                 href="#"
-                active={activeTab === 'datosGenerales'}
+                active={activeTab === "todos"}
                 onClick={(e) => {
                   e.preventDefault()
-                  setActiveTab('datosGenerales')
+                  setActiveTab("todos")
                 }}
               >
-                Datos Generales
+                <CIcon icon={cilPeople} className="me-1" />
+                Todos los Estudiantes
               </CNavLink>
             </CNavItem>
             <CNavItem>
               <CNavLink
                 href="#"
-                active={activeTab === 'datosPersonales'}
+                active={activeTab === "estadisticas"}
                 onClick={(e) => {
                   e.preventDefault()
-                  setActiveTab('datosPersonales')
+                  setActiveTab("estadisticas")
                 }}
               >
-                Datos Personales
-              </CNavLink>
-            </CNavItem>
-            <CNavItem>
-              <CNavLink
-                href="#"
-                active={activeTab === 'datosFamiliares'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setActiveTab('datosFamiliares')
-                }}
-              >
-                Datos Familiares
-              </CNavLink>
-            </CNavItem>
-            <CNavItem>
-              <CNavLink
-                href="#"
-                active={activeTab === 'datosRepresentante'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setActiveTab('datosRepresentante')
-                }}
-              >
-                Representante
-              </CNavLink>
-            </CNavItem>
-            <CNavItem>
-              <CNavLink
-                href="#"
-                active={activeTab === 'datosFisicos'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setActiveTab('datosFisicos')
-                }}
-              >
-                Datos Físicos
+                📊 Estadísticas
               </CNavLink>
             </CNavItem>
           </CNav>
 
           <CTabContent>
-            {/* Datos Generales */}
-            <CTabPane visible={activeTab === 'datosGenerales'}>
-              <CTable striped bordered hover>
-                <CTableBody>
-                  <CTableRow>
-                    <CTableHeaderCell style={{ width: '40%' }}>Tipo de Ingreso</CTableHeaderCell>
-                    <CTableDataCell>{tipo_ingreso || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Período Escolar</CTableHeaderCell>
-                    <CTableDataCell>{periodo_escolar || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Grado</CTableHeaderCell>
-                    <CTableDataCell>
-                      {getGradoName(grado?.id) || grado?.nombre || '-'}
-                    </CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Sección</CTableHeaderCell>
-                    <CTableDataCell>{seccion?.nombre || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Fecha de Inscripción</CTableHeaderCell>
-                    <CTableDataCell>{formatDate(fecha_inscripcion)}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Plantel de Procedencia</CTableHeaderCell>
-                    <CTableDataCell>{plantel_procedencia || '-'}</CTableDataCell>
-                  </CTableRow>
-                </CTableBody>
-              </CTable>
+            {/* Pestaña: Todos los estudiantes */}
+            <CTabPane visible={activeTab === "todos"}>
+              {Object.keys(matriculasPorGrado).length === 0 ? (
+                <CAlert color="info">
+                  <CIcon icon={cilUser} className="me-2" />
+                  No se encontraron matrículas con los filtros aplicados.
+                </CAlert>
+              ) : (
+                Object.entries(matriculasPorGrado)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([grado, matriculasGrado]) => (
+                    <CCard key={grado} className="mb-4">
+                      <CCardHeader className="bg-info text-white">
+                        <h4 className="mb-0">
+                          {grado} ({matriculasGrado.length} estudiantes)
+                        </h4>
+                      </CCardHeader>
+                      <CCardBody className="p-0">
+                        <CTable striped hover responsive>
+                          <CTableHead>
+                            <CTableRow>
+                              <CTableHeaderCell>Cédula</CTableHeaderCell>
+                              <CTableHeaderCell>Apellidos y Nombres</CTableHeaderCell>
+                              <CTableHeaderCell>Sexo</CTableHeaderCell>
+                              <CTableHeaderCell>Sección</CTableHeaderCell>
+                              <CTableHeaderCell>Docente</CTableHeaderCell>
+                              <CTableHeaderCell>Representante</CTableHeaderCell>
+                              <CTableHeaderCell>Teléfono</CTableHeaderCell>
+                              <CTableHeaderCell>Estado</CTableHeaderCell>
+                              <CTableHeaderCell>Fecha Inscripción</CTableHeaderCell>
+                              <CTableHeaderCell>Acciones</CTableHeaderCell>
+                            </CTableRow>
+                          </CTableHead>
+                          <CTableBody>
+                            {matriculasGrado
+                              .sort((a, b) => {
+                                const apellidoA = a.student_lastName || ""
+                                const apellidoB = b.student_lastName || ""
+                                return apellidoA.localeCompare(apellidoB)
+                              })
+                              .map((matricula) => (
+                                <CTableRow key={matricula.id}>
+                                  <CTableDataCell>
+                                    <strong>{matricula.student_ci || "-"}</strong>
+                                  </CTableDataCell>
+                                  <CTableDataCell>
+                                    <div>
+                                      <strong>
+                                        {matricula.student_lastName}, {matricula.student_name}
+                                      </strong>
+                                      <br />
+                                      <small className="text-muted">{formatDate(matricula.student_birthday)}</small>
+                                    </div>
+                                  </CTableDataCell>
+                                  <CTableDataCell>
+                                    <CBadge color={matricula.student_sex === "Masculino" ? "primary" : "danger"}>
+                                      {matricula.student_sex === "Masculino" ? "M" : "F"}
+                                    </CBadge>
+                                  </CTableDataCell>
+                                  <CTableDataCell>{matricula.section_name || "-"}</CTableDataCell>
+                                  <CTableDataCell>
+                                    {matricula.teacher_name && matricula.teacher_lastName
+                                      ? `${matricula.teacher_name} ${matricula.teacher_lastName}`
+                                      : "-"}
+                                  </CTableDataCell>
+                                  <CTableDataCell>
+                                    {matricula.representative_name && matricula.representative_lastName
+                                      ? `${matricula.representative_name} ${matricula.representative_lastName}`
+                                      : "-"}
+                                  </CTableDataCell>
+                                  <CTableDataCell>{formatPhone(matricula.representative_phone)}</CTableDataCell>
+                                  <CTableDataCell>
+                                    <CBadge color={matricula.repeater ? "warning" : "success"}>
+                                      {matricula.repeater ? "Repitiente" : "Regular"}
+                                    </CBadge>
+                                  </CTableDataCell>
+                                  <CTableDataCell>{formatDate(matricula.registrationDate)}</CTableDataCell>
+                                  <CTableDataCell>
+                                    <CButton
+                                      color="info"
+                                      size="sm"
+                                      onClick={() => {
+                                        console.log("Ver detalles de matrícula:", matricula.id)
+                                        // Aquí puedes abrir un modal o navegar a la vista de detalles
+                                      }}
+                                    >
+                                      Ver
+                                    </CButton>
+                                  </CTableDataCell>
+                                </CTableRow>
+                              ))}
+                          </CTableBody>
+                        </CTable>
+                      </CCardBody>
+                    </CCard>
+                  ))
+              )}
             </CTabPane>
 
-            {/* Datos Personales */}
-            <CTabPane visible={activeTab === 'datosPersonales'}>
-              <CTable striped bordered hover>
-                <CTableBody>
-                  <CTableRow>
-                    <CTableHeaderCell style={{ width: '40%' }}>Cédula Escolar</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.cedula_escolar || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Apellidos</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.apellidos || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Nombres</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.nombres || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Fecha de Nacimiento</CTableHeaderCell>
-                    <CTableDataCell>{formatDate(estudiante?.fecha_nacimiento)}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Edad</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.edad || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Sexo</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.sexo || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Lugar de Nacimiento</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.lugar_nacimiento || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Entidad Federal</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.entidad_federal || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Municipio</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.municipio || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Parroquia</CTableHeaderCell>
-                    <CTableDataCell>{estudiante?.parroquia || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Apreciación Cualitativa</CTableHeaderCell>
-                    <CTableDataCell>
-                      <CBadge color={estudiante?.apreciacion_cualitativa ? 'success' : 'secondary'}>
-                        {estudiante?.apreciacion_cualitativa ? 'Sí' : 'No'}
-                      </CBadge>
-                    </CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Repitiente</CTableHeaderCell>
-                    <CTableDataCell>
-                      <CBadge color={estudiante?.repitiente ? 'warning' : 'success'}>
-                        {estudiante?.repitiente ? 'Sí' : 'No'}
-                      </CBadge>
-                    </CTableDataCell>
-                  </CTableRow>
-                </CTableBody>
-              </CTable>
-            </CTabPane>
-
-            {/* Datos Familiares */}
-            <CTabPane visible={activeTab === 'datosFamiliares'}>
-              <CTable striped bordered hover>
-                <CTableBody>
-                  <CTableRow>
-                    <CTableHeaderCell style={{ width: '40%' }}>Nombre del Padre</CTableHeaderCell>
-                    <CTableDataCell>{datos_familiares?.nombre_padre || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Cédula del Padre</CTableHeaderCell>
-                    <CTableDataCell>{datos_familiares?.cedula_padre || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Teléfono del Padre</CTableHeaderCell>
-                    <CTableDataCell>{formatPhone(datos_familiares?.telefono_padre)}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Nombre de la Madre</CTableHeaderCell>
-                    <CTableDataCell>{datos_familiares?.nombre_madre || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Cédula de la Madre</CTableHeaderCell>
-                    <CTableDataCell>{datos_familiares?.cedula_madre || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Teléfono de la Madre</CTableHeaderCell>
-                    <CTableDataCell>{formatPhone(datos_familiares?.telefono_madre)}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Vive con</CTableHeaderCell>
-                    <CTableDataCell>{datos_familiares?.vive_con || '-'}</CTableDataCell>
-                  </CTableRow>
-                </CTableBody>
-              </CTable>
-            </CTabPane>
-
-            {/* Datos del Representante */}
-            <CTabPane visible={activeTab === 'datosRepresentante'}>
-              <CTable striped bordered hover>
-                <CTableBody>
-                  <CTableRow>
-                    <CTableHeaderCell style={{ width: '40%' }}>
-                      Apellidos del Representante
-                    </CTableHeaderCell>
-                    <CTableDataCell>{representante?.apellidos || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Nombres del Representante</CTableHeaderCell>
-                    <CTableDataCell>{representante?.nombres || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Cédula del Representante</CTableHeaderCell>
-                    <CTableDataCell>{representante?.cedula || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Edad del Representante</CTableHeaderCell>
-                    <CTableDataCell>{representante?.edad || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Fecha de Nacimiento del Representante</CTableHeaderCell>
-                    <CTableDataCell>{formatDate(representante?.fecha_nacimiento)}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Estado Civil del Representante</CTableHeaderCell>
-                    <CTableDataCell>{representante?.estado_civil || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Nexo con el Estudiante</CTableHeaderCell>
-                    <CTableDataCell>{representante?.nexo_estudiante || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Dirección de Habitación</CTableHeaderCell>
-                    <CTableDataCell>{representante?.direccion_habitacion || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Teléfono de Casa</CTableHeaderCell>
-                    <CTableDataCell>{formatPhone(representante?.telefono_casa)}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Teléfono Celular</CTableHeaderCell>
-                    <CTableDataCell>{formatPhone(representante?.telefono_celular)}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Profesión</CTableHeaderCell>
-                    <CTableDataCell>{representante?.profesion || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Lugar de Trabajo</CTableHeaderCell>
-                    <CTableDataCell>{representante?.lugar_trabajo || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Teléfono del Trabajo</CTableHeaderCell>
-                    <CTableDataCell>{formatPhone(representante?.telefono_trabajo)}</CTableDataCell>
-                  </CTableRow>
-                </CTableBody>
-              </CTable>
-            </CTabPane>
-
-            {/* Datos Físicos */}
-            <CTabPane visible={activeTab === 'datosFisicos'}>
-              <CTable striped bordered hover>
-                <CTableBody>
-                  <CTableRow>
-                    <CTableHeaderCell style={{ width: '40%' }}>Peso (Kg)</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.peso || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Estatura (m)</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.estatura || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Talla de Camisa</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.talla_camisa || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Talla de Pantalón</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.talla_pantalon || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Talla de Zapato</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.talla_zapato || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Enfermedad</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.enfermedad || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Tiene Hermanos</CTableHeaderCell>
-                    <CTableDataCell>
-                      <CBadge color={datos_fisicos?.tiene_hermanos ? 'success' : 'secondary'}>
-                        {datos_fisicos?.tiene_hermanos ? 'Sí' : 'No'}
-                      </CBadge>
-                    </CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Cantidad de Hermanos</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.cuantos_hermanos || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Grados de Hermanos</CTableHeaderCell>
-                    <CTableDataCell>{datos_fisicos?.grados_hermanos || '-'}</CTableDataCell>
-                  </CTableRow>
-                  <CTableRow>
-                    <CTableHeaderCell>Personas Autorizadas</CTableHeaderCell>
-                    <CTableDataCell>
-                      {(() => {
-                        try {
-                          const personas = JSON.parse(datos_fisicos?.personas_autorizadas || '[]')
-                          if (Array.isArray(personas)) {
-                            return personas.length > 0 ? (
-                              personas.map((persona, i) => (
-                                <div key={i} className="mb-2">
-                                  <strong>{persona.nombreApellido}</strong> — {persona.parentesco}
-                                  <br />
-                                  <small>Cédula: {persona.cedula}</small>
-                                </div>
-                              ))
-                            ) : (
-                              <span>-</span>
-                            )
-                          } else {
-                            return <span>-</span>
-                          }
-                        } catch (error) {
-                          console.error('❌ Error al parsear personas_autorizadas:', error)
-                          return <span>-</span>
-                        }
-                      })()}
-                    </CTableDataCell>
-                  </CTableRow>
-                </CTableBody>
-              </CTable>
+            {/* Pestaña: Estadísticas */}
+            <CTabPane visible={activeTab === "estadisticas"}>
+              <CRow>
+                {Object.entries(estadisticas).map(([grado, stats]) => (
+                  <CCol md={6} lg={4} key={grado} className="mb-4">
+                    <CCard>
+                      <CCardHeader className="bg-primary text-white">
+                        <h5 className="mb-0">{grado}</h5>
+                      </CCardHeader>
+                      <CCardBody>
+                        <div className="d-flex justify-content-between mb-2">
+                          <span>Total estudiantes:</span>
+                          <CBadge color="info" size="lg">
+                            {stats.total}
+                          </CBadge>
+                        </div>
+                        <div className="d-flex justify-content-between mb-2">
+                          <span>Masculino:</span>
+                          <CBadge color="primary">{stats.masculino}</CBadge>
+                        </div>
+                        <div className="d-flex justify-content-between mb-2">
+                          <span>Femenino:</span>
+                          <CBadge color="danger">{stats.femenino}</CBadge>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <span>Repitientes:</span>
+                          <CBadge color="warning">{stats.repitientes}</CBadge>
+                        </div>
+                      </CCardBody>
+                    </CCard>
+                  </CCol>
+                ))}
+              </CRow>
             </CTabPane>
           </CTabContent>
-
-          <div className="mt-4 d-flex justify-content-end gap-2">
-            <CButton color="info">Imprimir</CButton>
-            <CButton
-              color="primary"
-              onClick={() => {
-                /* Función para editar */
-              }}
-            >
-              Editar Matrícula
-            </CButton>
-          </div>
         </CCardBody>
       </CCard>
     </CContainer>
   )
 }
 
-export default MatriculaInfo
+export default MatriculasPorGrado
