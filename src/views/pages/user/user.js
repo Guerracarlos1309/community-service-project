@@ -1,5 +1,5 @@
-"use client"
-import { useState, useEffect } from "react"
+'use client'
+import { useState, useEffect } from 'react'
 import {
   CCard,
   CCardBody,
@@ -30,10 +30,18 @@ import {
   CCol,
   CPagination,
   CPaginationItem,
-} from "@coreui/react"
-import CIcon from "@coreui/icons-react"
-import { cilUser, cilUserPlus, cilTrash, cilLockLocked, cilLockUnlocked, cilSearch, cilReload } from "@coreui/icons"
-import { helpFetch } from "../../../api/helpFetch"
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import {
+  cilUser,
+  cilUserPlus,
+  cilTrash,
+  cilLockLocked,
+  cilLockUnlocked,
+  cilSearch,
+  cilReload,
+} from '@coreui/icons'
+import { helpFetch } from '../../../api/helpFetch'
 
 const UserManagement = () => {
   // Estados principales
@@ -43,7 +51,7 @@ const UserManagement = () => {
   const [success, setSuccess] = useState(null)
 
   // Estados para búsqueda y paginación
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState('')
   const [filteredUsers, setFilteredUsers] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [usersPerPage] = useState(10)
@@ -56,14 +64,14 @@ const UserManagement = () => {
 
   // Estados para formularios
   const [userForm, setUserForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    permiso_id: "",
-    security_word: "",
-    respuesta_de_seguridad: "",
-    personal_id: "",
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    permiso_id: '',
+    security_word: '',
+    respuesta_de_seguridad: '',
+    personal_id: '',
   })
 
   const [formErrors, setFormErrors] = useState({})
@@ -79,7 +87,7 @@ const UserManagement = () => {
 
   // Filtrar usuarios cuando cambie el término de búsqueda
   useEffect(() => {
-    if (searchTerm.trim() === "") {
+    if (searchTerm.trim() === '') {
       setFilteredUsers(users)
     } else {
       const filtered = users.filter(
@@ -98,18 +106,18 @@ const UserManagement = () => {
       setLoading(true)
       setError(null)
 
-      console.log("🔄 Cargando lista de usuarios...")
+      console.log('🔄 Cargando lista de usuarios...')
 
-      const response = await api.get("/api/users/list")
+      const response = await api.get('/api/users/list')
 
       if (response.ok) {
         setUsers(response.users)
-        console.log("✅ Usuarios cargados:", response.users.length)
+        console.log('✅ Usuarios cargados:', response.users.length)
       } else {
-        throw new Error(response.msg || "Error al cargar usuarios")
+        throw new Error(response.msg || 'Error al cargar usuarios')
       }
     } catch (error) {
-      console.error("❌ Error cargando usuarios:", error)
+      console.error('❌ Error cargando usuarios:', error)
       setError(`Error al cargar usuarios: ${error.msg || error.message}`)
     } finally {
       setLoading(false)
@@ -120,25 +128,25 @@ const UserManagement = () => {
     const errors = {}
 
     if (!userForm.username.trim()) {
-      errors.username = "El nombre de usuario es requerido"
+      errors.username = 'El nombre de usuario es requerido'
     }
 
     if (userForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email)) {
-      errors.email = "Formato de email inválido"
+      errors.email = 'Formato de email inválido'
     }
 
     if (!userForm.password && !selectedUser) {
-      errors.password = "La contraseña es requerida"
+      errors.password = 'La contraseña es requerida'
     } else if (userForm.password && userForm.password.length < 6) {
-      errors.password = "La contraseña debe tener al menos 6 caracteres"
+      errors.password = 'La contraseña debe tener al menos 6 caracteres'
     }
 
     if (userForm.password && userForm.password !== userForm.confirmPassword) {
-      errors.confirmPassword = "Las contraseñas no coinciden"
+      errors.confirmPassword = 'Las contraseñas no coinciden'
     }
 
     if (!userForm.permiso_id) {
-      errors.permiso_id = "Debe seleccionar un permiso"
+      errors.permiso_id = 'Debe seleccionar un permiso'
     }
 
     setFormErrors(errors)
@@ -153,25 +161,25 @@ const UserManagement = () => {
       setError(null)
       setSuccess(null)
 
-      console.log("👤 Creando nuevo usuario...")
+      console.log('👤 Creando nuevo usuario...')
 
       const { confirmPassword, ...userData } = userForm
 
-      const response = await api.post("/api/users/register", {
+      const response = await api.post('/api/users/register', {
         body: userData,
       })
 
       if (response.ok) {
-        setSuccess("Usuario creado exitosamente")
+        setSuccess('Usuario creado exitosamente')
         setShowCreateModal(false)
         resetForm()
         await loadUsers()
-        console.log("✅ Usuario creado")
+        console.log('✅ Usuario creado')
       } else {
-        throw new Error(response.msg || "Error al crear usuario")
+        throw new Error(response.msg || 'Error al crear usuario')
       }
     } catch (error) {
-      console.error("❌ Error creando usuario:", error)
+      console.error('❌ Error creando usuario:', error)
       setError(`Error al crear usuario: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
@@ -183,8 +191,10 @@ const UserManagement = () => {
       setError(null)
       setSuccess(null)
 
-      const endpoint = currentStatus ? `/api/users/deactivate/${userId}` : `/api/users/activate/${userId}`
-      const action = currentStatus ? "desactivar" : "activar"
+      const endpoint = currentStatus
+        ? `/api/users/deactivate/${userId}`
+        : `/api/users/activate/${userId}`
+      const action = currentStatus ? 'desactivar' : 'activar'
 
       console.log(`🔄 ${action} usuario...`)
 
@@ -211,21 +221,21 @@ const UserManagement = () => {
       setError(null)
       setSuccess(null)
 
-      console.log("🗑️ Eliminando usuario...")
+      console.log('🗑️ Eliminando usuario...')
 
-      const response = await api.del(`/api/users/${selectedUser.id}`)
+      const response = await api.delet(`/api/users/${selectedUser.id}`)
 
       if (response.ok) {
-        setSuccess("Usuario eliminado exitosamente")
+        setSuccess('Usuario eliminado exitosamente')
         setShowDeleteModal(false)
         setSelectedUser(null)
         await loadUsers()
-        console.log("✅ Usuario eliminado")
+        console.log('✅ Usuario eliminado')
       } else {
-        throw new Error(response.msg || "Error al eliminar usuario")
+        throw new Error(response.msg || 'Error al eliminar usuario')
       }
     } catch (error) {
-      console.error("❌ Error eliminando usuario:", error)
+      console.error('❌ Error eliminando usuario:', error)
       setError(`Error al eliminar usuario: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
@@ -234,14 +244,14 @@ const UserManagement = () => {
 
   const resetForm = () => {
     setUserForm({
-      username: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      permiso_id: "",
-      security_word: "",
-      respuesta_de_seguridad: "",
-      personal_id: "",
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      permiso_id: '',
+      security_word: '',
+      respuesta_de_seguridad: '',
+      personal_id: '',
     })
     setFormErrors({})
   }
@@ -265,7 +275,7 @@ const UserManagement = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: "400px" }}>
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
         <CSpinner color="primary" size="lg" />
         <span className="ms-2">Cargando usuarios...</span>
       </div>
@@ -346,28 +356,28 @@ const UserManagement = () => {
                     <CTableDataCell>
                       <strong>{user.username}</strong>
                     </CTableDataCell>
-                    <CTableDataCell>{user.email || "Sin email"}</CTableDataCell>
-                    <CTableDataCell>{user.nombre_completo || "Usuario Externo"}</CTableDataCell>
+                    <CTableDataCell>{user.email || 'Sin email'}</CTableDataCell>
+                    <CTableDataCell>{user.nombre_completo || 'Usuario Externo'}</CTableDataCell>
                     <CTableDataCell>
-                      <CBadge color="info">{user.rol_nombre || "Sin rol"}</CBadge>
+                      <CBadge color="info">{user.rol_nombre || 'Sin rol'}</CBadge>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <CBadge color={user.is_active ? "success" : "danger"}>
-                        {user.is_active ? "Activo" : "Inactivo"}
+                      <CBadge color={user.is_active ? 'success' : 'danger'}>
+                        {user.is_active ? 'Activo' : 'Inactivo'}
                       </CBadge>
                     </CTableDataCell>
                     <CTableDataCell>
                       <small className="text-muted">
-                        {user.last_login ? new Date(user.last_login).toLocaleDateString() : "Nunca"}
+                        {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Nunca'}
                       </small>
                     </CTableDataCell>
                     <CTableDataCell>
                       <CButtonGroup size="sm">
                         <CButton
-                          color={user.is_active ? "warning" : "success"}
+                          color={user.is_active ? 'warning' : 'success'}
                           variant="outline"
                           onClick={() => handleToggleUserStatus(user.id, user.is_active)}
-                          title={user.is_active ? "Desactivar" : "Activar"}
+                          title={user.is_active ? 'Desactivar' : 'Activar'}
                         >
                           <CIcon icon={user.is_active ? cilLockLocked : cilLockUnlocked} />
                         </CButton>
@@ -386,7 +396,9 @@ const UserManagement = () => {
               ) : (
                 <CTableRow>
                   <CTableDataCell colSpan={7} className="text-center text-muted">
-                    {searchTerm ? "No se encontraron usuarios que coincidan con la búsqueda" : "No hay usuarios"}
+                    {searchTerm
+                      ? 'No se encontraron usuarios que coincidan con la búsqueda'
+                      : 'No hay usuarios'}
                   </CTableDataCell>
                 </CTableRow>
               )}
@@ -400,7 +412,7 @@ const UserManagement = () => {
                 <CPaginationItem
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(currentPage - 1)}
-                  style={{ cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+                  style={{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
                 >
                   Anterior
                 </CPaginationItem>
@@ -409,7 +421,7 @@ const UserManagement = () => {
                     key={index + 1}
                     active={currentPage === index + 1}
                     onClick={() => setCurrentPage(index + 1)}
-                    style={{ cursor: "pointer" }}
+                    style={{ cursor: 'pointer' }}
                   >
                     {index + 1}
                   </CPaginationItem>
@@ -417,7 +429,7 @@ const UserManagement = () => {
                 <CPaginationItem
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(currentPage + 1)}
-                  style={{ cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+                  style={{ cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
                 >
                   Siguiente
                 </CPaginationItem>
@@ -443,7 +455,9 @@ const UserManagement = () => {
                     onChange={(e) => setUserForm((prev) => ({ ...prev, username: e.target.value }))}
                     invalid={!!formErrors.username}
                   />
-                  {formErrors.username && <div className="invalid-feedback">{formErrors.username}</div>}
+                  {formErrors.username && (
+                    <div className="invalid-feedback">{formErrors.username}</div>
+                  )}
                 </div>
               </CCol>
               <CCol md={6}>
@@ -470,7 +484,9 @@ const UserManagement = () => {
                     onChange={(e) => setUserForm((prev) => ({ ...prev, password: e.target.value }))}
                     invalid={!!formErrors.password}
                   />
-                  {formErrors.password && <div className="invalid-feedback">{formErrors.password}</div>}
+                  {formErrors.password && (
+                    <div className="invalid-feedback">{formErrors.password}</div>
+                  )}
                 </div>
               </CCol>
               <CCol md={6}>
@@ -479,10 +495,14 @@ const UserManagement = () => {
                   <CFormInput
                     type="password"
                     value={userForm.confirmPassword}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setUserForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                    }
                     invalid={!!formErrors.confirmPassword}
                   />
-                  {formErrors.confirmPassword && <div className="invalid-feedback">{formErrors.confirmPassword}</div>}
+                  {formErrors.confirmPassword && (
+                    <div className="invalid-feedback">{formErrors.confirmPassword}</div>
+                  )}
                 </div>
               </CCol>
             </CRow>
@@ -493,7 +513,9 @@ const UserManagement = () => {
                   <CFormLabel>Nivel de Permisos *</CFormLabel>
                   <CFormSelect
                     value={userForm.permiso_id}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, permiso_id: e.target.value }))}
+                    onChange={(e) =>
+                      setUserForm((prev) => ({ ...prev, permiso_id: e.target.value }))
+                    }
                     invalid={!!formErrors.permiso_id}
                   >
                     <option value="">Seleccionar permiso...</option>
@@ -502,7 +524,9 @@ const UserManagement = () => {
                     <option value="3">Gestión Personal</option>
                     <option value="4">Consulta Básica</option>
                   </CFormSelect>
-                  {formErrors.permiso_id && <div className="invalid-feedback">{formErrors.permiso_id}</div>}
+                  {formErrors.permiso_id && (
+                    <div className="invalid-feedback">{formErrors.permiso_id}</div>
+                  )}
                 </div>
               </CCol>
               <CCol md={6}>
@@ -511,7 +535,9 @@ const UserManagement = () => {
                   <CFormInput
                     type="number"
                     value={userForm.personal_id}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, personal_id: e.target.value }))}
+                    onChange={(e) =>
+                      setUserForm((prev) => ({ ...prev, personal_id: e.target.value }))
+                    }
                     placeholder="ID del personal asociado"
                   />
                 </div>
@@ -524,7 +550,9 @@ const UserManagement = () => {
                   <CFormLabel>Palabra de Seguridad</CFormLabel>
                   <CFormInput
                     value={userForm.security_word}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, security_word: e.target.value }))}
+                    onChange={(e) =>
+                      setUserForm((prev) => ({ ...prev, security_word: e.target.value }))
+                    }
                     placeholder="Ej: ¿Cuál es tu color favorito?"
                   />
                 </div>
@@ -534,7 +562,9 @@ const UserManagement = () => {
                   <CFormLabel>Respuesta de Seguridad</CFormLabel>
                   <CFormInput
                     value={userForm.respuesta_de_seguridad}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, respuesta_de_seguridad: e.target.value }))}
+                    onChange={(e) =>
+                      setUserForm((prev) => ({ ...prev, respuesta_de_seguridad: e.target.value }))
+                    }
                     placeholder="Respuesta a la palabra de seguridad"
                   />
                 </div>
@@ -553,7 +583,7 @@ const UserManagement = () => {
                 Creando...
               </>
             ) : (
-              "Crear Usuario"
+              'Crear Usuario'
             )}
           </CButton>
         </CModalFooter>
@@ -583,7 +613,7 @@ const UserManagement = () => {
                 Eliminando...
               </>
             ) : (
-              "Eliminar Usuario"
+              'Eliminar Usuario'
             )}
           </CButton>
         </CModalFooter>
