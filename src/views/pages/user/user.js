@@ -21,7 +21,6 @@ import {
   CForm,
   CFormInput,
   CFormSelect,
-  CFormLabel,
   CSpinner,
   CAlert,
   CInputGroup,
@@ -41,7 +40,9 @@ import {
   cilSearch,
   cilReload,
 } from '@coreui/icons'
-import { helpFetch } from '../../../api/helpFetch'
+import { helpFetch } from '../../../api/helpFetch.js'
+
+const api = helpFetch()
 
 const UserManagement = () => {
   // Estados principales
@@ -71,14 +72,10 @@ const UserManagement = () => {
     permiso_id: '',
     security_word: '',
     respuesta_de_seguridad: '',
-    personal_id: '',
+    personal_id: '' || 'null',
   })
-
   const [formErrors, setFormErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Instancia de API
-  const api = helpFetch()
 
   // Cargar usuarios al montar
   useEffect(() => {
@@ -105,16 +102,17 @@ const UserManagement = () => {
     try {
       setLoading(true)
       setError(null)
-
       console.log('🔄 Cargando lista de usuarios...')
 
       const response = await api.get('/api/users/list')
 
-      if (response.ok) {
+      // SIGUIENDO EL PATRÓN DEL COMPONENTE DOCENTE
+      if (!response.error) {
         setUsers(response.users)
         console.log('✅ Usuarios cargados:', response.users.length)
       } else {
-        throw new Error(response.msg || 'Error al cargar usuarios')
+        console.error('Error al obtener usuarios:', response)
+        setError(response.msg || 'Error al cargar usuarios')
       }
     } catch (error) {
       console.error('❌ Error cargando usuarios:', error)
@@ -125,59 +123,67 @@ const UserManagement = () => {
   }
 
   const validateUserForm = () => {
-    const errors = {}
-
-    if (!userForm.username.trim()) {
-      errors.username = 'El nombre de usuario es requerido'
+    if (
+      !userForm.username ||
+      !userForm.password ||
+      userForm.password !== userForm.confirmPassword
+    ) {
+      console.error('Por favor, complete todos los campos requeridos.')
+      setError('Por favor, complete todos los campos requeridos correctamente.')
+      return false
     }
 
     if (userForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email)) {
-      errors.email = 'Formato de email inválido'
+      console.error('Formato de email inválido')
+      setError('Formato de email inválido')
+      return false
     }
 
-    if (!userForm.password && !selectedUser) {
-      errors.password = 'La contraseña es requerida'
-    } else if (userForm.password && userForm.password.length < 6) {
-      errors.password = 'La contraseña debe tener al menos 6 caracteres'
+    if (userForm.password.length < 6) {
+      console.error('La contraseña debe tener al menos 6 caracteres')
+      setError('La contraseña debe tener al menos 6 caracteres')
+      return false
     }
 
-    if (userForm.password && userForm.password !== userForm.confirmPassword) {
-      errors.confirmPassword = 'Las contraseñas no coinciden'
-    }
-
-    if (!userForm.permiso_id) {
-      errors.permiso_id = 'Debe seleccionar un permiso'
-    }
-
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
+    return true
   }
 
   const handleCreateUser = async () => {
-    try {
-      if (!validateUserForm()) return
+    if (!validateUserForm()) return
 
+    try {
       setIsSubmitting(true)
       setError(null)
       setSuccess(null)
 
       console.log('👤 Creando nuevo usuario...')
 
-      const { confirmPassword, ...userData } = userForm
-
       const response = await api.post('/api/users/register', {
-        body: userData,
+        body: {
+          username: userForm.username.trim(),
+          email: userForm.email.trim(),
+          password: userForm.password,
+          permiso_id: Number.parseInt(userForm.permiso_id),
+          security_word: userForm.security_word.trim(),
+          respuesta_de_seguridad: userForm.respuesta_de_seguridad.trim(),
+          personal_id: userForm.personal_id ? Number.parseInt(userForm.personal_id) : null,
+        },
       })
 
-      if (response.ok) {
-        setSuccess('Usuario creado exitosamente')
-        setShowCreateModal(false)
-        resetForm()
-        await loadUsers()
-        console.log('✅ Usuario creado')
-      } else {
-        throw new Error(response.msg || 'Error al crear usuario')
+      console.log('Response:', response)
+
+      // SIGUIENDO EL PATRÓN DEL COMPONENTE DOCENTE
+      if (response.error) {
+        console.error('Error al crear usuario:', response.msg || response)
+        setError(response.msg || 'Ocurrió un error al crear el usuario')
+        return
       }
+
+      console.log('Usuario creado exitosamente:', response)
+      setSuccess('Usuario creado exitosamente')
+      setShowCreateModal(false)
+      loadUsers()
+      resetForm()
     } catch (error) {
       console.error('❌ Error creando usuario:', error)
       setError(`Error al crear usuario: ${error.msg || error.message}`)
@@ -200,12 +206,14 @@ const UserManagement = () => {
 
       const response = await api.put(endpoint)
 
-      if (response.ok) {
+      // SIGUIENDO EL PATRÓN DEL COMPONENTE DOCENTE
+      if (!response.error) {
         setSuccess(`Usuario ${action}do exitosamente`)
-        await loadUsers()
+        loadUsers()
         console.log(`✅ Usuario ${action}do`)
       } else {
-        throw new Error(response.msg || `Error al ${action} usuario`)
+        console.error(`Error al ${action} usuario:`, response)
+        setError(response.msg || `Error al ${action} usuario`)
       }
     } catch (error) {
       console.error(`❌ Error al cambiar estado del usuario:`, error)
@@ -214,25 +222,28 @@ const UserManagement = () => {
   }
 
   const handleDeleteUser = async () => {
-    try {
-      if (!selectedUser) return
+    if (!selectedUser) return
 
+    try {
       setIsSubmitting(true)
       setError(null)
       setSuccess(null)
 
-      console.log('🗑️ Eliminando usuario...')
+      console.log('🗑️ Eliminando usuario:', selectedUser.id)
 
-      const response = await api.delet(`/api/users/${selectedUser.id}`)
+      // SIGUIENDO EL PATRÓN DEL COMPONENTE DOCENTE - USANDO DELET
+      const response = await api.delet('/api/users', selectedUser.id)
 
-      if (response.ok) {
+      // SIGUIENDO EL PATRÓN DEL COMPONENTE DOCENTE
+      if (!response.error) {
         setSuccess('Usuario eliminado exitosamente')
         setShowDeleteModal(false)
         setSelectedUser(null)
-        await loadUsers()
+        loadUsers()
         console.log('✅ Usuario eliminado')
       } else {
-        throw new Error(response.msg || 'Error al eliminar usuario')
+        console.error('Error eliminando usuario:', response)
+        setError(response.msg || 'Error al eliminar usuario')
       }
     } catch (error) {
       console.error('❌ Error eliminando usuario:', error)
@@ -267,6 +278,14 @@ const UserManagement = () => {
     setShowDeleteModal(true)
   }
 
+  const handleFormChange = (e) => {
+    const { name, value } = e.target
+    setUserForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
   // Calcular usuarios para la página actual
   const indexOfLastUser = currentPage * usersPerPage
   const indexOfFirstUser = indexOfLastUser - usersPerPage
@@ -297,13 +316,13 @@ const UserManagement = () => {
       )}
 
       <CCard>
-        <CCardHeader className="d-flex justify-content-between align-items-center">
+        <CCardHeader className="d-flex justify-content-between align-items-center bg-info text-white">
           <h5 className="mb-0">
             <CIcon icon={cilUser} className="me-2" />
             Gestión de Usuarios
           </h5>
           <div className="d-flex gap-2">
-            <CButton color="info" onClick={loadUsers}>
+            <CButton color="warning" onClick={loadUsers}>
               <CIcon icon={cilReload} className="me-1" />
               Actualizar
             </CButton>
@@ -350,7 +369,7 @@ const UserManagement = () => {
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {currentUsers.length > 0 ? (
+              {Array.isArray(currentUsers) && currentUsers.length > 0 ? (
                 currentUsers.map((user) => (
                   <CTableRow key={user.id}>
                     <CTableDataCell>
@@ -441,7 +460,7 @@ const UserManagement = () => {
 
       {/* Modal para crear usuario */}
       <CModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} size="lg">
-        <CModalHeader>
+        <CModalHeader className="bg-info text-white">
           <CModalTitle>Crear Nuevo Usuario</CModalTitle>
         </CModalHeader>
         <CModalBody>
@@ -449,74 +468,66 @@ const UserManagement = () => {
             <CRow>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>Nombre de Usuario *</CFormLabel>
                   <CFormInput
+                    label="Nombre de Usuario *"
+                    name="username"
                     value={userForm.username}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, username: e.target.value }))}
-                    invalid={!!formErrors.username}
+                    onChange={handleFormChange}
+                    placeholder="Ingrese el nombre de usuario"
+                    required
                   />
-                  {formErrors.username && (
-                    <div className="invalid-feedback">{formErrors.username}</div>
-                  )}
                 </div>
               </CCol>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>Email</CFormLabel>
                   <CFormInput
+                    label="Email"
+                    name="email"
                     type="email"
                     value={userForm.email}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, email: e.target.value }))}
-                    invalid={!!formErrors.email}
+                    onChange={handleFormChange}
+                    placeholder="Ingrese el email"
                   />
-                  {formErrors.email && <div className="invalid-feedback">{formErrors.email}</div>}
                 </div>
               </CCol>
             </CRow>
-
             <CRow>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>Contraseña *</CFormLabel>
                   <CFormInput
+                    label="Contraseña *"
+                    name="password"
                     type="password"
                     value={userForm.password}
-                    onChange={(e) => setUserForm((prev) => ({ ...prev, password: e.target.value }))}
-                    invalid={!!formErrors.password}
+                    onChange={handleFormChange}
+                    placeholder="Ingrese la contraseña"
+                    required
                   />
-                  {formErrors.password && (
-                    <div className="invalid-feedback">{formErrors.password}</div>
-                  )}
                 </div>
               </CCol>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>Confirmar Contraseña *</CFormLabel>
                   <CFormInput
+                    label="Confirmar Contraseña *"
+                    name="confirmPassword"
                     type="password"
                     value={userForm.confirmPassword}
-                    onChange={(e) =>
-                      setUserForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
-                    }
-                    invalid={!!formErrors.confirmPassword}
+                    onChange={handleFormChange}
+                    placeholder="Confirme la contraseña"
+                    required
                   />
-                  {formErrors.confirmPassword && (
-                    <div className="invalid-feedback">{formErrors.confirmPassword}</div>
-                  )}
                 </div>
               </CCol>
             </CRow>
-
             <CRow>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>Nivel de Permisos *</CFormLabel>
                   <CFormSelect
+                    label="Nivel de Permisos *"
+                    name="permiso_id"
                     value={userForm.permiso_id}
-                    onChange={(e) =>
-                      setUserForm((prev) => ({ ...prev, permiso_id: e.target.value }))
-                    }
-                    invalid={!!formErrors.permiso_id}
+                    onChange={handleFormChange}
+                    required
                   >
                     <option value="">Seleccionar permiso...</option>
                     <option value="1">Acceso Total</option>
@@ -524,47 +535,40 @@ const UserManagement = () => {
                     <option value="3">Gestión Personal</option>
                     <option value="4">Consulta Básica</option>
                   </CFormSelect>
-                  {formErrors.permiso_id && (
-                    <div className="invalid-feedback">{formErrors.permiso_id}</div>
-                  )}
                 </div>
               </CCol>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>ID Personal (Opcional)</CFormLabel>
                   <CFormInput
+                    label="ID Personal (Opcional)"
+                    name="personal_id"
                     type="number"
                     value={userForm.personal_id}
-                    onChange={(e) =>
-                      setUserForm((prev) => ({ ...prev, personal_id: e.target.value }))
-                    }
+                    onChange={handleFormChange}
                     placeholder="ID del personal asociado"
                   />
                 </div>
               </CCol>
             </CRow>
-
             <CRow>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>Palabra de Seguridad</CFormLabel>
                   <CFormInput
+                    label="Palabra de Seguridad"
+                    name="security_word"
                     value={userForm.security_word}
-                    onChange={(e) =>
-                      setUserForm((prev) => ({ ...prev, security_word: e.target.value }))
-                    }
+                    onChange={handleFormChange}
                     placeholder="Ej: ¿Cuál es tu color favorito?"
                   />
                 </div>
               </CCol>
               <CCol md={6}>
                 <div className="mb-3">
-                  <CFormLabel>Respuesta de Seguridad</CFormLabel>
                   <CFormInput
+                    label="Respuesta de Seguridad"
+                    name="respuesta_de_seguridad"
                     value={userForm.respuesta_de_seguridad}
-                    onChange={(e) =>
-                      setUserForm((prev) => ({ ...prev, respuesta_de_seguridad: e.target.value }))
-                    }
+                    onChange={handleFormChange}
                     placeholder="Respuesta a la palabra de seguridad"
                   />
                 </div>
@@ -573,17 +577,22 @@ const UserManagement = () => {
           </CForm>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowCreateModal(false)}>
-            Cancelar
+          <CButton color="danger" className="text-white" onClick={() => setShowCreateModal(false)}>
+            Cerrar
           </CButton>
-          <CButton color="primary" onClick={handleCreateUser} disabled={isSubmitting}>
+          <CButton
+            color="success"
+            className="text-white"
+            onClick={handleCreateUser}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (
               <>
                 <CSpinner size="sm" className="me-1" />
                 Creando...
               </>
             ) : (
-              'Crear Usuario'
+              'Guardar'
             )}
           </CButton>
         </CModalFooter>
@@ -592,15 +601,10 @@ const UserManagement = () => {
       {/* Modal para confirmar eliminación */}
       <CModal visible={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
         <CModalHeader>
-          <CModalTitle>Confirmar Eliminación</CModalTitle>
+          <CModalTitle>Confirmar eliminación</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <p>
-            ¿Está seguro de que desea eliminar el usuario <strong>{selectedUser?.username}</strong>?
-          </p>
-          <CAlert color="warning">
-            <strong>Advertencia:</strong> Esta acción no se puede deshacer.
-          </CAlert>
+          ¿Estás seguro que quieres eliminar al usuario <strong>{selectedUser?.username}</strong>?
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setShowDeleteModal(false)}>
@@ -613,7 +617,7 @@ const UserManagement = () => {
                 Eliminando...
               </>
             ) : (
-              'Eliminar Usuario'
+              'Eliminar'
             )}
           </CButton>
         </CModalFooter>
