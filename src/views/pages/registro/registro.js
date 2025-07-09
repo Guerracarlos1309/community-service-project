@@ -70,7 +70,6 @@ const RegistroEstudiantil = () => {
     nombres: "",
     apellidos: "",
     fechaNacimiento: "",
-    edad: "",
     sexo: "",
     lugarNacimiento: "",
     entidadFederal: "",
@@ -92,7 +91,6 @@ const RegistroEstudiantil = () => {
     apellidosRepresentante: "",
     nombresRepresentante: "",
     cedulaRepresentante: "",
-    edadRepresentante: "",
     fechaNacimientoRepresentante: "",
     estadoCivilRepresentante: "",
     nexoEstudiante: "",
@@ -322,7 +320,7 @@ const RegistroEstudiantil = () => {
       const matriculaData = {
         studentData,
         representativeData,
-        sectionID: Number.parseInt(formData.seccion) || 1,
+        sectionID: 1, // Usar valor por defecto ya que las secciones son solo A y B
         registrationDate: formData.fechaInscripcion,
         repeater: formData.repitiente === "si",
         chemiseSize: formData.tallaCamisa,
@@ -391,7 +389,6 @@ const RegistroEstudiantil = () => {
       nombres: "",
       apellidos: "",
       fechaNacimiento: "",
-      edad: "",
       sexo: "",
       lugarNacimiento: "",
       entidadFederal: "",
@@ -409,7 +406,6 @@ const RegistroEstudiantil = () => {
       apellidosRepresentante: "",
       nombresRepresentante: "",
       cedulaRepresentante: "",
-      edadRepresentante: "",
       fechaNacimientoRepresentante: "",
       estadoCivilRepresentante: "",
       nexoEstudiante: "",
@@ -472,9 +468,11 @@ const RegistroEstudiantil = () => {
   const schoolYear = `${currentYear}-${nextYear}`
 
   // Filtrar secciones por grado seleccionado
-  const seccionesFiltradas = secciones.filter(
-    (seccion) => seccion.grade_name === grados.find((g) => g.id == formData.grado)?.name,
-  )
+  // Eliminar estas líneas:
+  // Filtrar secciones por grado seleccionado
+  // const seccionesFiltradas = secciones.filter(
+  //   (seccion) => seccion.grade_name === grados.find((g) => g.id == formData.grado)?.name,
+  // )
 
   // Calcular progreso
   const progress = (step / 6) * 100
@@ -607,14 +605,11 @@ const RegistroEstudiantil = () => {
                     name="seccion"
                     value={formData.seccion}
                     onChange={handleChange}
-                    disabled={!formData.grado || loadingSecciones}
+                    disabled={!formData.grado}
                   >
                     <option value="">Seleccionar...</option>
-                    {seccionesFiltradas.map((seccion) => (
-                      <option key={seccion.id} value={seccion.id}>
-                        {seccion.seccion} - {seccion.teacher_name} {seccion.teacher_lastName}
-                      </option>
-                    ))}
+                    <option value="A">A</option>
+                    <option value="B">B</option>
                   </CFormSelect>
                 </CCol>
               </CRow>
@@ -721,19 +716,7 @@ const RegistroEstudiantil = () => {
                   required
                 />
               </CCol>
-              <CCol md={2}>
-                <CFormLabel htmlFor="edad">Edad</CFormLabel>
-                <CFormInput
-                  type="number"
-                  id="edad"
-                  name="edad"
-                  value={formData.edad}
-                  onChange={handleChange}
-                  min="3"
-                  max="18"
-                />
-              </CCol>
-              <CCol md={2}>
+              <CCol md={3}>
                 <CFormLabel htmlFor="sexo">Sexo *</CFormLabel>
                 <CFormSelect id="sexo" name="sexo" value={formData.sexo} onChange={handleChange} required>
                   <option value="">Seleccionar...</option>
@@ -741,7 +724,7 @@ const RegistroEstudiantil = () => {
                   <option value="F">Femenino</option>
                 </CFormSelect>
               </CCol>
-              <CCol md={5}>
+              <CCol md={6}>
                 <CFormLabel htmlFor="lugarNacimiento">Lugar de Nacimiento</CFormLabel>
                 <CFormInput
                   type="text"
@@ -1042,7 +1025,7 @@ const RegistroEstudiantil = () => {
                   required
                 />
               </CCol>
-              <CCol md={2}>
+              <CCol md={4}>
                 <CFormLabel htmlFor="cedulaRepresentante">Cédula *</CFormLabel>
                 <CFormInput
                   type="text"
@@ -1052,18 +1035,6 @@ const RegistroEstudiantil = () => {
                   onChange={handleChange}
                   placeholder="Ej: V-12345678"
                   required
-                />
-              </CCol>
-              <CCol md={2}>
-                <CFormLabel htmlFor="edadRepresentante">Edad</CFormLabel>
-                <CFormInput
-                  type="number"
-                  id="edadRepresentante"
-                  name="edadRepresentante"
-                  value={formData.edadRepresentante}
-                  onChange={handleChange}
-                  min="18"
-                  max="99"
                 />
               </CCol>
             </CRow>
