@@ -302,14 +302,6 @@ const Docente = () => {
   }
 
   const viewOpen = (docente) => {
-    console.log('👁️ === ABRIENDO MODAL VER ===')
-    console.log('👁️ Docente completo:', docente)
-    console.log('👁️ Parish del docente:', docente.parish)
-    console.log('👁️ Tipo de parish:', typeof docente.parish)
-    console.log('👁️ Parroquias disponibles:', parroquias)
-    console.log('👁️ Estado de parroquias cargadas:', parroquias.length > 0)
-    console.log('🔍 docente.parish:', docente.parish, typeof docente.parish)
-
     // Verificar si la parroquia existe en el array
     const parroquiaExiste = parroquias.find(
       (p) =>
