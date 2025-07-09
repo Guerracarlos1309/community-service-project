@@ -129,34 +129,48 @@ const BrigadeManagement = () => {
 
   const loadAvailableTeachers = async () => {
     try {
-      const response = await api.get("/api/brigadas/utils/available-teachers")
+      console.log("🔄 Cargando docentes disponibles...")
+      const response = await api.get("/api/brigadas/available-teachers")
       if (response.ok) {
         setAvailableTeachers(response.teachers || [])
         console.log("✅ Docentes disponibles cargados:", response.teachers?.length || 0)
+      } else {
+        console.warn("⚠️ Error cargando docentes:", response.msg)
+        setAvailableTeachers([])
       }
     } catch (error) {
       console.error("❌ Error cargando docentes:", error)
+      setAvailableTeachers([])
     }
   }
 
   const loadAvailableStudents = async () => {
     try {
-      const response = await api.get("/api/brigadas/utils/available-students")
+      console.log("🔄 Cargando estudiantes disponibles...")
+      const response = await api.get("/api/brigadas/available-students")
       if (response.ok) {
         setAvailableStudents(response.students || [])
         console.log("✅ Estudiantes disponibles cargados:", response.students?.length || 0)
+      } else {
+        console.warn("⚠️ Error cargando estudiantes:", response.msg)
+        setAvailableStudents([])
       }
     } catch (error) {
       console.error("❌ Error cargando estudiantes:", error)
+      setAvailableStudents([])
     }
   }
 
   const loadBrigadeStudents = async (brigadeId) => {
     try {
+      console.log(`🔄 Cargando estudiantes de brigada ${brigadeId}...`)
       const response = await api.get(`/api/brigadas/${brigadeId}/students`)
       if (response.ok) {
         setBrigadeStudents(response.students || [])
         console.log("✅ Estudiantes de brigada cargados:", response.students?.length || 0)
+      } else {
+        console.warn("⚠️ Error cargando estudiantes de brigada:", response.msg)
+        setBrigadeStudents([])
       }
     } catch (error) {
       console.error("❌ Error cargando estudiantes de brigada:", error)
@@ -204,7 +218,7 @@ const BrigadeManagement = () => {
       }
     } catch (error) {
       console.error("❌ Error creando brigada:", error)
-      setError(`Error de conexión: ${error.message}`)
+      setError(`Error de conexión: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -220,9 +234,10 @@ const BrigadeManagement = () => {
 
       console.log("✏️ Actualizando brigada...")
 
-      const response = await api.put(`/api/brigadas/${selectedBrigade.id}`, {
+      // CORREGIDO: Usar put con el ID como parámetro separado según helpFetch original
+      const response = await api.put("/api/brigadas", {
         body: brigadeForm,
-      })
+      }, selectedBrigade.id)
 
       if (response.ok) {
         setSuccess("Brigada actualizada exitosamente")
@@ -235,7 +250,7 @@ const BrigadeManagement = () => {
       }
     } catch (error) {
       console.error("❌ Error actualizando brigada:", error)
-      setError(`Error de conexión: ${error.message}`)
+      setError(`Error de conexión: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -251,7 +266,8 @@ const BrigadeManagement = () => {
 
       console.log("🗑️ Eliminando brigada...")
 
-      const response = await api.del(`/api/brigadas/${selectedBrigade.id}`)
+      // CORREGIDO: Usar delet con endpoint e id como parámetros separados según helpFetch original
+      const response = await api.delet("/api/brigadas", selectedBrigade.id)
 
       if (response.ok) {
         setSuccess("Brigada eliminada exitosamente")
@@ -265,7 +281,7 @@ const BrigadeManagement = () => {
       }
     } catch (error) {
       console.error("❌ Error eliminando brigada:", error)
-      setError(`Error de conexión: ${error.message}`)
+      setError(`Error de conexión: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -284,7 +300,7 @@ const BrigadeManagement = () => {
 
       console.log("👨‍🏫 Asignando docente...")
 
-      const response = await api.post(`/api/brigadas/${selectedBrigade.id}/assign-teacher`, {
+      const response = await api.post(`/api/brigadas/${selectedBrigade.id}/teacher`, {
         body: {
           personalId: Number.parseInt(teacherForm.personalId),
           startDate: teacherForm.startDate,
@@ -303,7 +319,7 @@ const BrigadeManagement = () => {
       }
     } catch (error) {
       console.error("❌ Error asignando docente:", error)
-      setError(`Error de conexión: ${error.message}`)
+      setError(`Error de conexión: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -322,16 +338,16 @@ const BrigadeManagement = () => {
 
       console.log("👥 Inscribiendo estudiantes...")
 
-      const response = await api.post(`/api/brigadas/${selectedBrigade.id}/enroll-students`, {
+      const response = await api.post(`/api/brigadas/${selectedBrigade.id}/students`, {
         body: {
           studentIds: studentForm.studentIds.map((id) => Number.parseInt(id)),
         },
       })
 
       if (response.ok) {
-        setSuccess(
-          `${response.result?.studentsEnrolled || studentForm.studentIds.length} estudiantes inscritos exitosamente`,
-        )
+        const enrolled = response.result?.studentsEnrolled || studentForm.studentIds.length
+        const total = response.result?.totalRequested || studentForm.studentIds.length
+        setSuccess(`${enrolled} de ${total} estudiantes inscritos exitosamente`)
         setShowEnrollStudentsModal(false)
         resetStudentForm()
         await loadBrigades()
@@ -342,7 +358,7 @@ const BrigadeManagement = () => {
       }
     } catch (error) {
       console.error("❌ Error inscribiendo estudiantes:", error)
-      setError(`Error de conexión: ${error.message}`)
+      setError(`Error de conexión: ${error.msg || error.message}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -363,7 +379,8 @@ const BrigadeManagement = () => {
 
       console.log("🧹 Limpiando brigada...")
 
-      const response = await api.post(`/api/brigadas/${brigade.id}/clear`)
+      // Para rutas anidadas como /api/brigadas/1/students, necesitamos usar la URL completa
+      const response = await api.delet(`/api/brigadas/${brigade.id}/students`, "")
 
       if (response.ok) {
         setSuccess(`Brigada limpiada exitosamente. ${response.result?.studentsRemoved || 0} estudiantes removidos.`)
@@ -375,7 +392,35 @@ const BrigadeManagement = () => {
       }
     } catch (error) {
       console.error("❌ Error limpiando brigada:", error)
-      setError(`Error de conexión: ${error.message}`)
+      setError(`Error de conexión: ${error.msg || error.message}`)
+    }
+  }
+
+  const handleRemoveTeacher = async (brigade) => {
+    try {
+      if (!window.confirm(`¿Está seguro de que desea remover el docente de la brigada "${brigade.name}"?`)) {
+        return
+      }
+
+      setError(null)
+      setSuccess(null)
+
+      console.log("👨‍🏫 Removiendo docente...")
+
+      // Para rutas anidadas como /api/brigadas/1/teacher, necesitamos usar la URL completa
+      const response = await api.delet(`/api/brigadas/${brigade.id}/teacher`, "")
+
+      if (response.ok) {
+        setSuccess("Docente removido exitosamente")
+        await loadBrigades()
+        await loadAvailableTeachers()
+        console.log("✅ Docente removido")
+      } else {
+        setError(response.msg || "Error al remover docente")
+      }
+    } catch (error) {
+      console.error("❌ Error removiendo docente:", error)
+      setError(`Error de conexión: ${error.msg || error.message}`)
     }
   }
 
@@ -538,7 +583,7 @@ const BrigadeManagement = () => {
 
                         <div className="mb-3">
                           <CBadge color="info" className="me-2">
-                            {brigade.studentcount || 0} estudiantes
+                            {brigade.studentCount || 0} estudiantes
                           </CBadge>
                           {brigade.fecha_inicio && (
                             <CBadge color="secondary">
@@ -619,6 +664,19 @@ const BrigadeManagement = () => {
                             </CButton>
                           </CCol>
                         </CRow>
+
+                        {/* Botón adicional para remover docente si hay uno asignado */}
+                        {brigade.encargado_name && (
+                          <CButton
+                            color="outline-warning"
+                            size="sm"
+                            onClick={() => handleRemoveTeacher(brigade)}
+                            title="Remover Docente"
+                            className="w-100"
+                          >
+                            Remover Docente
+                          </CButton>
+                        )}
                       </div>
                     </CCardBody>
                   </CCard>
@@ -829,7 +887,6 @@ const BrigadeManagement = () => {
                       <CTableHeaderCell>CI</CTableHeaderCell>
                       <CTableHeaderCell>Sexo</CTableHeaderCell>
                       <CTableHeaderCell>Grado</CTableHeaderCell>
-                      <CTableHeaderCell>Sección</CTableHeaderCell>
                       <CTableHeaderCell>Fecha Asignación</CTableHeaderCell>
                     </CTableRow>
                   </CTableHead>
@@ -844,7 +901,6 @@ const BrigadeManagement = () => {
                           <CBadge color={student.sex === "Masculino" ? "info" : "warning"}>{student.sex}</CBadge>
                         </CTableDataCell>
                         <CTableDataCell>{student.grade_name || "N/A"}</CTableDataCell>
-                        <CTableDataCell>{student.section_name || "N/A"}</CTableDataCell>
                         <CTableDataCell>
                           {student.assignmentDate ? new Date(student.assignmentDate).toLocaleDateString() : "N/A"}
                         </CTableDataCell>
@@ -884,7 +940,7 @@ const BrigadeManagement = () => {
                 <option value="">Seleccionar docente...</option>
                 {availableTeachers.map((teacher) => (
                   <option key={teacher.id} value={teacher.id}>
-                    {teacher.name} {teacher.lastName} - {teacher.ci} ({teacher.rol_nombre})
+                    {teacher.name} {teacher.lastName} - {teacher.ci} ({teacher.role})
                   </option>
                 ))}
               </CFormSelect>
@@ -926,8 +982,7 @@ const BrigadeManagement = () => {
           <div className="mb-3">
             <h6>Estudiantes Disponibles</h6>
             <small className="text-muted">
-              Seleccione los estudiantes que desea inscribir en la brigada "{selectedBrigade?.name}". Los estudiantes
-              pueden pertenecer a múltiples brigadas.
+              Seleccione los estudiantes que desea inscribir en la brigada "{selectedBrigade?.name}".
             </small>
           </div>
 
@@ -986,7 +1041,7 @@ const BrigadeManagement = () => {
             <div className="text-center text-muted py-4">
               <CIcon icon={cilUser} size="3xl" className="mb-3 opacity-50" />
               <h6>No hay estudiantes disponibles</h6>
-              <p>Todos los estudiantes están registrados en el sistema</p>
+              <p>Todos los estudiantes están asignados a brigadas o no están activos</p>
             </div>
           )}
 

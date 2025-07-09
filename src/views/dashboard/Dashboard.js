@@ -28,6 +28,7 @@ import {
   CTableBody,
   CTableDataCell,
   CBadge,
+  CFormCheck,
 } from "@coreui/react"
 import { CChart } from "@coreui/react-chartjs"
 import CIcon from "@coreui/icons-react"
@@ -40,6 +41,11 @@ import {
   cilCalendar,
   cilSchool,
   cilGroup,
+  cilChart,
+  cilUserFollow,
+  cilCheckCircle,
+  cilXCircle,
+  cilReload,
 } from "@coreui/icons"
 
 const Dashboard = () => {
@@ -47,10 +53,13 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
   const [chartData, setChartData] = useState(null)
 
   // Estados para el modal de asistencia
-  const [visible, setVisible] = useState(false)
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false)
+  const [availableSections, setAvailableSections] = useState([])
+  const [selectedSection, setSelectedSection] = useState(null)
   const [attendanceForm, setAttendanceForm] = useState({
     sectionId: "",
     date: new Date().toISOString().split("T")[0],
@@ -58,12 +67,17 @@ const Dashboard = () => {
     students: [],
   })
 
+  // Estados para estudiantes de la sección
+  const [sectionStudents, setSectionStudents] = useState([])
+  const [loadingStudents, setLoadingStudents] = useState(false)
+
   // Instancia de helpFetch
   const api = helpFetch()
 
   // Cargar datos del dashboard al montar el componente
   useEffect(() => {
     loadDashboardData()
+    loadAvailableSections()
   }, [])
 
   const loadDashboardData = async () => {
@@ -73,16 +87,16 @@ const Dashboard = () => {
 
       console.log("🔄 Cargando datos del dashboard escolar...")
 
-      const summaryResponse = await api.get("/api/dashboard/summary")
+      const response = await api.get("/api/dashboard/summary")
 
-      console.log("📊 Respuesta del dashboard:", summaryResponse)
+      console.log("📊 Respuesta del dashboard:", response)
 
-      if (summaryResponse.ok) {
-        setDashboardData(summaryResponse.data)
-        processChartData(summaryResponse.data)
+      if (response.ok) {
+        setDashboardData(response.data)
+        processChartData(response.data)
         console.log("✅ Datos del dashboard cargados exitosamente")
       } else {
-        throw new Error(summaryResponse.msg || "Error al cargar datos del dashboard")
+        throw new Error(response.msg || "Error al cargar datos del dashboard")
       }
     } catch (error) {
       console.error("❌ Error loading dashboard data:", error)
@@ -90,6 +104,24 @@ const Dashboard = () => {
       loadExampleData()
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAvailableSections = async () => {
+    try {
+      console.log("📚 Cargando secciones disponibles...")
+      const response = await api.get("/api/dashboard/sections")
+
+      if (response.ok) {
+        setAvailableSections(response.data || [])
+        console.log("✅ Secciones cargadas:", response.data?.length || 0)
+      } else {
+        console.warn("⚠️ Error cargando secciones:", response.msg)
+        setAvailableSections([])
+      }
+    } catch (error) {
+      console.error("❌ Error cargando secciones:", error)
+      setAvailableSections([])
     }
   }
 
@@ -102,8 +134,8 @@ const Dashboard = () => {
         total_teachers: 25,
         total_staff: 35,
         total_sections: 12,
-        total_grades: 6,
-        total_brigades: 3,
+        total_grades: 9,
+        total_brigades: 5,
         repeating_students: 15,
         new_students: 450,
         male_students: 234,
@@ -111,13 +143,28 @@ const Dashboard = () => {
         total_representatives: 380,
       },
       gradeDistribution: [
-        { grade_name: "Primer Grado", student_count: 85, male_count: 42, female_count: 43 },
-        { grade_name: "Segundo Grado", student_count: 78, male_count: 38, female_count: 40 },
-        { grade_name: "Tercer Grado", student_count: 82, male_count: 41, female_count: 41 },
+        { grade_name: "Nivel Preescolar I", student_count: 25, male_count: 12, female_count: 13, section_count: 1 },
+        { grade_name: "Nivel Preescolar II", student_count: 28, male_count: 14, female_count: 14, section_count: 1 },
+        { grade_name: "Nivel Preescolar III", student_count: 30, male_count: 15, female_count: 15, section_count: 1 },
+        { grade_name: "Primer Grado", student_count: 85, male_count: 42, female_count: 43, section_count: 2 },
+        { grade_name: "Segundo Grado", student_count: 78, male_count: 38, female_count: 40, section_count: 2 },
+        { grade_name: "Tercer Grado", student_count: 82, male_count: 41, female_count: 41, section_count: 2 },
+        { grade_name: "Cuarto Grado", student_count: 75, male_count: 37, female_count: 38, section_count: 2 },
+        { grade_name: "Quinto Grado", student_count: 70, male_count: 35, female_count: 35, section_count: 2 },
+        { grade_name: "Sexto Grado", student_count: 65, male_count: 32, female_count: 33, section_count: 2 },
       ],
       academicPerformance: [
         { subject: "Matemáticas", total_notes: 156, average_grade: 16.75, passing_grades: 142, failing_grades: 14 },
         { subject: "Lengua", total_notes: 156, average_grade: 17.25, passing_grades: 148, failing_grades: 8 },
+        {
+          subject: "Ciencias Naturales",
+          total_notes: 120,
+          average_grade: 16.5,
+          passing_grades: 110,
+          failing_grades: 10,
+        },
+        { subject: "Ciencias Sociales", total_notes: 120, average_grade: 17.0, passing_grades: 115, failing_grades: 5 },
+        { subject: "Educación Física", total_notes: 200, average_grade: 18.5, passing_grades: 195, failing_grades: 5 },
       ],
       attendanceStats: [
         {
@@ -129,19 +176,33 @@ const Dashboard = () => {
           absent_students: 2,
           attendance_percentage: 92.86,
         },
+        {
+          date_a: "2025-01-10",
+          grade_name: "Segundo Grado",
+          seccion: "A",
+          total_registered: 25,
+          present_students: 24,
+          absent_students: 1,
+          attendance_percentage: 96.0,
+        },
       ],
       brigadeStats: [
         { brigade_name: "Brigada Ecológica", student_count: 45, teacher_name: "Ana", teacher_lastName: "García" },
         { brigade_name: "Brigada Deportiva", student_count: 38, teacher_name: "María", teacher_lastName: "Fernández" },
+        { brigade_name: "Brigada Cívica", student_count: 35, teacher_name: "Pedro", teacher_lastName: "Gómez" },
+        { brigade_name: "Brigada de Lectura", student_count: 30, teacher_name: "Laura", teacher_lastName: "Díaz" },
+        { brigade_name: "Brigada de Arte", student_count: 28, teacher_name: "Ricardo", teacher_lastName: "Soto" },
       ],
       staffByRole: [
         { role_name: "Docente", role_description: "Personal encargado de la enseñanza", staff_count: 25 },
         { role_name: "Administrador", role_description: "Personal administrativo", staff_count: 5 },
+        { role_name: "Mantenimiento", role_description: "Personal de mantenimiento", staff_count: 3 },
+        { role_name: "Secretaría", role_description: "Personal de secretaría", staff_count: 2 },
       ],
       studentsByStatus: [
-        { status_description: "Activo", student_count: 450 },
-        { status_description: "Inactivo", student_count: 10 },
-        { status_description: "Graduado", student_count: 5 },
+        { status_description: "Activo", student_count: 450, male_count: 234, female_count: 216 },
+        { status_description: "Inactivo", student_count: 10, male_count: 5, female_count: 5 },
+        { status_description: "Graduado", student_count: 5, male_count: 2, female_count: 3 },
       ],
       enrollmentStats: [
         {
@@ -152,6 +213,15 @@ const Dashboard = () => {
           new_students: 26,
           teacher_name: "Ana",
           teacher_lastName: "García",
+        },
+        {
+          grade_name: "Primer Grado",
+          section_name: "B",
+          total_enrolled: 27,
+          repeaters: 1,
+          new_students: 26,
+          teacher_name: "María",
+          teacher_lastName: "Fernández",
         },
       ],
     }
@@ -170,8 +240,43 @@ const Dashboard = () => {
           {
             label: "Estudiantes",
             data: data.gradeDistribution?.map((item) => Number.parseInt(item.student_count) || 0) || [],
-            backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"],
-            hoverBackgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"],
+            backgroundColor: [
+              "#FF6384",
+              "#36A2EB",
+              "#FFCE56",
+              "#4BC0C0",
+              "#9966FF",
+              "#FF9F40",
+              "#FF6384",
+              "#36A2EB",
+              "#FFCE56",
+            ],
+            hoverBackgroundColor: [
+              "#FF6384",
+              "#36A2EB",
+              "#FFCE56",
+              "#4BC0C0",
+              "#9966FF",
+              "#FF9F40",
+              "#FF6384",
+              "#36A2EB",
+              "#FFCE56",
+            ],
+          },
+        ],
+      },
+      genderDistribution: {
+        labels: data.gradeDistribution?.map((item) => item.grade_name) || [],
+        datasets: [
+          {
+            label: "Masculino",
+            data: data.gradeDistribution?.map((item) => Number.parseInt(item.male_count) || 0) || [],
+            backgroundColor: "#36A2EB",
+          },
+          {
+            label: "Femenino",
+            data: data.gradeDistribution?.map((item) => Number.parseInt(item.female_count) || 0) || [],
+            backgroundColor: "#FF6384",
           },
         ],
       },
@@ -211,22 +316,79 @@ const Dashboard = () => {
     setChartData(processedCharts)
   }
 
-  const abrirModal = () => {
-    setVisible(true)
-  }
-
-  const cerrarModal = () => {
-    setVisible(false)
+  const openAttendanceModal = () => {
+    setShowAttendanceModal(true)
     setAttendanceForm({
       sectionId: "",
       date: new Date().toISOString().split("T")[0],
       observations: "",
       students: [],
     })
+    setSectionStudents([])
+    setSelectedSection(null)
+  }
+
+  const closeAttendanceModal = () => {
+    setShowAttendanceModal(false)
+    setAttendanceForm({
+      sectionId: "",
+      date: new Date().toISOString().split("T")[0],
+      observations: "",
+      students: [],
+    })
+    setSectionStudents([])
+    setSelectedSection(null)
+  }
+
+  const handleSectionChange = async (sectionId) => {
+    if (!sectionId) {
+      setSectionStudents([])
+      setSelectedSection(null)
+      setAttendanceForm((prev) => ({ ...prev, sectionId: "", students: [] }))
+      return
+    }
+
+    setLoadingStudents(true)
+    const section = availableSections.find((s) => s.id === Number.parseInt(sectionId))
+    setSelectedSection(section)
+    setAttendanceForm((prev) => ({ ...prev, sectionId }))
+
+    // Simular estudiantes de la sección (en producción esto vendría del backend)
+    setTimeout(() => {
+      const mockStudents = Array.from({ length: section?.student_count || 0 }, (_, i) => ({
+        id: i + 1,
+        name: `Estudiante ${i + 1}`,
+        lastName: `Apellido ${i + 1}`,
+        ci: `3000${String(i + 1).padStart(4, "0")}`,
+        present: true,
+      }))
+
+      setSectionStudents(mockStudents)
+      setAttendanceForm((prev) => ({
+        ...prev,
+        students: mockStudents.map((student) => ({
+          studentId: student.id,
+          present: true,
+        })),
+      }))
+      setLoadingStudents(false)
+    }, 1000)
+  }
+
+  const handleStudentAttendance = (studentId, present) => {
+    setAttendanceForm((prev) => ({
+      ...prev,
+      students: prev.students.map((student) => (student.studentId === studentId ? { ...student, present } : student)),
+    }))
   }
 
   const handleAttendanceSubmit = async () => {
     try {
+      if (!attendanceForm.sectionId) {
+        setError("Debe seleccionar una sección")
+        return
+      }
+
       console.log("💾 Guardando asistencia...", attendanceForm)
 
       const response = await api.post("/api/dashboard/attendance", {
@@ -234,9 +396,10 @@ const Dashboard = () => {
       })
 
       if (response.ok) {
+        setSuccess("Asistencia guardada exitosamente")
         console.log("✅ Asistencia guardada exitosamente")
-        cerrarModal()
-        loadDashboardData()
+        closeAttendanceModal()
+        loadDashboardData() // Recargar datos
       } else {
         throw new Error(response.msg || "Error al guardar la asistencia")
       }
@@ -302,10 +465,26 @@ const Dashboard = () => {
   return (
     <>
       {error && (
-        <CAlert color="warning" dismissible onClose={() => setError(null)}>
-          <strong>⚠️ Advertencia:</strong> {error}
+        <CAlert color="danger" dismissible onClose={() => setError(null)}>
+          <strong>❌ Error:</strong> {error}
         </CAlert>
       )}
+
+      {success && (
+        <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
+          <strong>✅ Éxito:</strong> {success}
+        </CAlert>
+      )}
+
+      {/* Botón de actualización */}
+      <CRow className="mb-3">
+        <CCol className="d-flex justify-content-end">
+          <CButton color="info" onClick={loadDashboardData} disabled={loading}>
+            <CIcon icon={cilReload} className="me-1" />
+            {loading ? "Actualizando..." : "Actualizar Datos"}
+          </CButton>
+        </CCol>
+      </CRow>
 
       {/* Tarjetas de estadísticas principales */}
       <CRow className="mb-4">
@@ -320,6 +499,10 @@ const Dashboard = () => {
                   </span>
                 </div>
                 <div>Estudiantes Activos</div>
+                <small className="text-white-50">
+                  ♂ {dashboardData?.generalStats?.male_students || "234"} | ♀{" "}
+                  {dashboardData?.generalStats?.female_students || "231"}
+                </small>
               </div>
               <CIcon icon={cilUser} height={52} />
             </CCardBody>
@@ -331,6 +514,9 @@ const Dashboard = () => {
               <div>
                 <div className="fs-4 fw-semibold">{dashboardData?.generalStats?.total_teachers || "25"}</div>
                 <div>Personal Docente</div>
+                <small className="text-white-50">
+                  {dashboardData?.generalStats?.total_staff || "35"} total personal
+                </small>
               </div>
               <CIcon icon={cilEducation} height={52} />
             </CCardBody>
@@ -342,6 +528,7 @@ const Dashboard = () => {
               <div>
                 <div className="fs-4 fw-semibold">{dashboardData?.generalStats?.total_sections || "12"}</div>
                 <div>Secciones</div>
+                <small className="text-white-50">{dashboardData?.generalStats?.total_grades || "9"} grados</small>
               </div>
               <CIcon icon={cilSchool} height={52} />
             </CCardBody>
@@ -351,8 +538,9 @@ const Dashboard = () => {
           <CCard className="mb-4" color="success" textColor="white">
             <CCardBody className="pb-0 d-flex justify-content-between align-items-start">
               <div>
-                <div className="fs-4 fw-semibold">{dashboardData?.generalStats?.total_brigades || "3"}</div>
+                <div className="fs-4 fw-semibold">{dashboardData?.generalStats?.total_brigades || "5"}</div>
                 <div>Brigadas</div>
+                <small className="text-white-50">Actividades extracurriculares</small>
               </div>
               <CIcon icon={cilGroup} height={52} />
             </CCardBody>
@@ -400,8 +588,40 @@ const Dashboard = () => {
         <CCol md={6}>
           <CCard>
             <CCardHeader>
+              <CIcon icon={cilChart} className="me-2" />
+              Distribución por Género
+            </CCardHeader>
+            <CCardBody>
+              {chartData?.genderDistribution ? (
+                <CChart
+                  type="bar"
+                  data={chartData.genderDistribution}
+                  options={{
+                    scales: {
+                      x: { stacked: true },
+                      y: { stacked: true, beginAtZero: true },
+                    },
+                    plugins: { legend: { position: "top" } },
+                    aspectRatio: 2,
+                  }}
+                />
+              ) : (
+                <div className="text-center">
+                  <CSpinner />
+                </div>
+              )}
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
+      {/* Segunda fila de gráficas */}
+      <CRow className="mb-4">
+        <CCol md={6}>
+          <CCard>
+            <CCardHeader>
               <CIcon icon={cilNotes} className="me-2" />
-              Rendimiento Académico
+              Rendimiento Académico por Materia
             </CCardHeader>
             <CCardBody>
               {chartData?.academicPerformance ? (
@@ -428,6 +648,41 @@ const Dashboard = () => {
             </CCardBody>
           </CCard>
         </CCol>
+        <CCol md={6}>
+          <CCard>
+            <CCardHeader>
+              <CIcon icon={cilUserFollow} className="me-2" />
+              Estado de Estudiantes
+            </CCardHeader>
+            <CCardBody>
+              {chartData?.studentStatus ? (
+                <CChart
+                  type="pie"
+                  data={chartData.studentStatus}
+                  options={{
+                    plugins: {
+                      legend: { position: "bottom" },
+                      tooltip: {
+                        callbacks: {
+                          label: (context) => {
+                            const label = context.label || ""
+                            const value = context.raw || 0
+                            return `${label}: ${value} estudiantes`
+                          },
+                        },
+                      },
+                    },
+                    aspectRatio: 2,
+                  }}
+                />
+              ) : (
+                <div className="text-center">
+                  <CSpinner />
+                </div>
+              )}
+            </CCardBody>
+          </CCard>
+        </CCol>
       </CRow>
 
       {/* Tabla de asistencia reciente */}
@@ -439,7 +694,7 @@ const Dashboard = () => {
                 <CIcon icon={cilCalendar} className="me-2" />
                 Asistencia Reciente
               </div>
-              <CButton color="primary" size="sm" onClick={abrirModal}>
+              <CButton color="primary" size="sm" onClick={openAttendanceModal}>
                 <CIcon icon={cilCloudDownload} className="me-1" />
                 Registrar Asistencia
               </CButton>
@@ -452,6 +707,7 @@ const Dashboard = () => {
                       <CTableHeaderCell>Fecha</CTableHeaderCell>
                       <CTableHeaderCell>Grado</CTableHeaderCell>
                       <CTableHeaderCell>Sección</CTableHeaderCell>
+                      <CTableHeaderCell>Inscritos</CTableHeaderCell>
                       <CTableHeaderCell>Presentes</CTableHeaderCell>
                       <CTableHeaderCell>Ausentes</CTableHeaderCell>
                       <CTableHeaderCell>% Asistencia</CTableHeaderCell>
@@ -462,7 +718,12 @@ const Dashboard = () => {
                       <CTableRow key={index}>
                         <CTableDataCell>{new Date(attendance.date_a).toLocaleDateString()}</CTableDataCell>
                         <CTableDataCell>{attendance.grade_name}</CTableDataCell>
-                        <CTableDataCell>{attendance.seccion}</CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge color="info">{attendance.seccion}</CBadge>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge color="secondary">{attendance.total_registered}</CBadge>
+                        </CTableDataCell>
                         <CTableDataCell>
                           <CBadge color="success">{attendance.present_students}</CBadge>
                         </CTableDataCell>
@@ -479,7 +740,64 @@ const Dashboard = () => {
                   </CTableBody>
                 </CTable>
               ) : (
-                <div className="text-center text-muted">No hay datos de asistencia recientes</div>
+                <div className="text-center text-muted py-4">
+                  <CIcon icon={cilCalendar} size="3xl" className="mb-3 opacity-50" />
+                  <h6>No hay datos de asistencia recientes</h6>
+                  <p>Registre la primera asistencia del día</p>
+                </div>
+              )}
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
+      {/* Estadísticas de brigadas */}
+      <CRow className="mb-4">
+        <CCol>
+          <CCard>
+            <CCardHeader>
+              <CIcon icon={cilGroup} className="me-2" />
+              Estadísticas de Brigadas
+            </CCardHeader>
+            <CCardBody>
+              {dashboardData?.brigadeStats?.length > 0 ? (
+                <CTable hover responsive>
+                  <CTableHead>
+                    <CTableRow>
+                      <CTableHeaderCell>Brigada</CTableHeaderCell>
+                      <CTableHeaderCell>Estudiantes</CTableHeaderCell>
+                      <CTableHeaderCell>Docente Encargado</CTableHeaderCell>
+                      <CTableHeaderCell>Estado</CTableHeaderCell>
+                    </CTableRow>
+                  </CTableHead>
+                  <CTableBody>
+                    {dashboardData.brigadeStats.map((brigade, index) => (
+                      <CTableRow key={index}>
+                        <CTableDataCell>
+                          <strong>{brigade.brigade_name}</strong>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge color="info">{brigade.student_count} estudiantes</CBadge>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          {brigade.teacher_name && brigade.teacher_lastName
+                            ? `${brigade.teacher_name} ${brigade.teacher_lastName}`
+                            : "Sin asignar"}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge color={brigade.student_count > 0 ? "success" : "warning"}>
+                            {brigade.student_count > 0 ? "Activa" : "Inactiva"}
+                          </CBadge>
+                        </CTableDataCell>
+                      </CTableRow>
+                    ))}
+                  </CTableBody>
+                </CTable>
+              ) : (
+                <div className="text-center text-muted py-4">
+                  <CIcon icon={cilGroup} size="3xl" className="mb-3 opacity-50" />
+                  <h6>No hay brigadas registradas</h6>
+                </div>
               )}
             </CCardBody>
           </CCard>
@@ -490,7 +808,10 @@ const Dashboard = () => {
       <CRow>
         <CCol>
           <CCard>
-            <CCardHeader>Métricas del Sistema</CCardHeader>
+            <CCardHeader>
+              <CIcon icon={cilChart} className="me-2" />
+              Métricas del Sistema
+            </CCardHeader>
             <CCardBody>
               <CRow className="text-center">
                 {progressMetrics.map((item, index) => (
@@ -498,6 +819,7 @@ const Dashboard = () => {
                     <div className="text-body-secondary">{item.title}</div>
                     <div className="fw-semibold text-truncate">{item.value}</div>
                     <CProgress thin className="mt-2" color={item.color} value={item.percent} />
+                    <small className="text-muted">{item.percent}%</small>
                   </CCol>
                 ))}
               </CRow>
@@ -507,7 +829,7 @@ const Dashboard = () => {
       </CRow>
 
       {/* Modal de registro de asistencia */}
-      <CModal visible={visible} size="lg" onClose={cerrarModal}>
+      <CModal visible={showAttendanceModal} size="xl" onClose={closeAttendanceModal}>
         <CModalHeader>
           <CModalTitle>Registrar Asistencia Diaria</CModalTitle>
         </CModalHeader>
@@ -515,24 +837,19 @@ const Dashboard = () => {
           <CForm>
             <CRow className="mb-3">
               <CCol md={6}>
-                <CFormLabel>Sección</CFormLabel>
-                <CFormSelect
-                  value={attendanceForm.sectionId}
-                  onChange={(e) =>
-                    setAttendanceForm((prev) => ({
-                      ...prev,
-                      sectionId: e.target.value,
-                    }))
-                  }
-                >
+                <CFormLabel>Sección *</CFormLabel>
+                <CFormSelect value={attendanceForm.sectionId} onChange={(e) => handleSectionChange(e.target.value)}>
                   <option value="">Seleccionar sección...</option>
-                  <option value="1">1° Grado - Sección A</option>
-                  <option value="2">1° Grado - Sección B</option>
-                  <option value="3">2° Grado - Sección A</option>
+                  {availableSections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.grade_name} - Sección {section.seccion}({section.student_count} estudiantes)
+                      {section.teacher_name && ` - ${section.teacher_name} ${section.teacher_lastName}`}
+                    </option>
+                  ))}
                 </CFormSelect>
               </CCol>
               <CCol md={6}>
-                <CFormLabel>Fecha</CFormLabel>
+                <CFormLabel>Fecha *</CFormLabel>
                 <CFormInput
                   type="date"
                   value={attendanceForm.date}
@@ -545,6 +862,29 @@ const Dashboard = () => {
                 />
               </CCol>
             </CRow>
+
+            {selectedSection && (
+              <CRow className="mb-3">
+                <CCol>
+                  <div className="bg-light p-3 rounded">
+                    <h6>Información de la Sección</h6>
+                    <p className="mb-1">
+                      <strong>Grado:</strong> {selectedSection.grade_name}
+                    </p>
+                    <p className="mb-1">
+                      <strong>Sección:</strong> {selectedSection.seccion}
+                    </p>
+                    <p className="mb-1">
+                      <strong>Docente:</strong> {selectedSection.teacher_name} {selectedSection.teacher_lastName}
+                    </p>
+                    <p className="mb-0">
+                      <strong>Estudiantes inscritos:</strong> {selectedSection.student_count}
+                    </p>
+                  </div>
+                </CCol>
+              </CRow>
+            )}
+
             <CRow className="mb-3">
               <CCol>
                 <CFormLabel>Observaciones</CFormLabel>
@@ -562,13 +902,130 @@ const Dashboard = () => {
                 />
               </CCol>
             </CRow>
+
+            {/* Lista de estudiantes */}
+            {attendanceForm.sectionId && (
+              <CRow>
+                <CCol>
+                  <h6>Lista de Estudiantes</h6>
+                  {loadingStudents ? (
+                    <div className="text-center py-4">
+                      <CSpinner />
+                      <p className="mt-2">Cargando estudiantes...</p>
+                    </div>
+                  ) : sectionStudents.length > 0 ? (
+                    <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                      <CTable hover responsive>
+                        <CTableHead>
+                          <CTableRow>
+                            <CTableHeaderCell width="50">
+                              <CFormCheck
+                                checked={attendanceForm.students.every((s) => s.present)}
+                                onChange={(e) => {
+                                  const allPresent = e.target.checked
+                                  setAttendanceForm((prev) => ({
+                                    ...prev,
+                                    students: prev.students.map((student) => ({
+                                      ...student,
+                                      present: allPresent,
+                                    })),
+                                  }))
+                                }}
+                              />
+                            </CTableHeaderCell>
+                            <CTableHeaderCell>Nombre</CTableHeaderCell>
+                            <CTableHeaderCell>Apellido</CTableHeaderCell>
+                            <CTableHeaderCell>CI</CTableHeaderCell>
+                            <CTableHeaderCell>Estado</CTableHeaderCell>
+                          </CTableRow>
+                        </CTableHead>
+                        <CTableBody>
+                          {sectionStudents.map((student) => {
+                            const studentAttendance = attendanceForm.students.find((s) => s.studentId === student.id)
+                            const isPresent = studentAttendance?.present || false
+
+                            return (
+                              <CTableRow key={student.id}>
+                                <CTableDataCell>
+                                  <CFormCheck
+                                    checked={isPresent}
+                                    onChange={(e) => handleStudentAttendance(student.id, e.target.checked)}
+                                  />
+                                </CTableDataCell>
+                                <CTableDataCell>{student.name}</CTableDataCell>
+                                <CTableDataCell>{student.lastName}</CTableDataCell>
+                                <CTableDataCell>{student.ci}</CTableDataCell>
+                                <CTableDataCell>
+                                  <CBadge color={isPresent ? "success" : "danger"}>
+                                    <CIcon icon={isPresent ? cilCheckCircle : cilXCircle} className="me-1" />
+                                    {isPresent ? "Presente" : "Ausente"}
+                                  </CBadge>
+                                </CTableDataCell>
+                              </CTableRow>
+                            )
+                          })}
+                        </CTableBody>
+                      </CTable>
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted py-4">
+                      <CIcon icon={cilUser} size="2xl" className="mb-2 opacity-50" />
+                      <p>No hay estudiantes en esta sección</p>
+                    </div>
+                  )}
+
+                  {/* Resumen de asistencia */}
+                  {sectionStudents.length > 0 && (
+                    <div className="mt-3 p-3 bg-light rounded">
+                      <CRow className="text-center">
+                        <CCol xs={4}>
+                          <div className="text-success">
+                            <strong>{attendanceForm.students.filter((s) => s.present).length}</strong>
+                            <br />
+                            <small>Presentes</small>
+                          </div>
+                        </CCol>
+                        <CCol xs={4}>
+                          <div className="text-danger">
+                            <strong>{attendanceForm.students.filter((s) => !s.present).length}</strong>
+                            <br />
+                            <small>Ausentes</small>
+                          </div>
+                        </CCol>
+                        <CCol xs={4}>
+                          <div className="text-info">
+                            <strong>
+                              {attendanceForm.students.length > 0
+                                ? Math.round(
+                                    (attendanceForm.students.filter((s) => s.present).length /
+                                      attendanceForm.students.length) *
+                                      100,
+                                  )
+                                : 0}
+                              %
+                            </strong>
+                            <br />
+                            <small>Asistencia</small>
+                          </div>
+                        </CCol>
+                      </CRow>
+                    </div>
+                  )}
+                </CCol>
+              </CRow>
+            )}
           </CForm>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={cerrarModal}>
+          <CButton color="secondary" onClick={closeAttendanceModal}>
             Cancelar
           </CButton>
-          <CButton color="primary" onClick={handleAttendanceSubmit}>
+          <CButton
+            color="primary"
+            onClick={handleAttendanceSubmit}
+            disabled={!attendanceForm.sectionId || loadingStudents}
+          >
+            <CIcon icon={cilCloudDownload} className="me-1" />
             Guardar Asistencia
           </CButton>
         </CModalFooter>
