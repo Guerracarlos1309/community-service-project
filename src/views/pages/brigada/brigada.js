@@ -27,12 +27,11 @@ import {
   CInputGroupText,
   CSpinner,
   CAlert,
-  CButtonGroup,
   CPagination,
   CPaginationItem,
 } from "@coreui/react"
 import CIcon from "@coreui/icons-react"
-import { cilGroup, cilPlus, cilPencil, cilTrash, cilUser, cilUserPlus, cilSearch, cilX } from "@coreui/icons"
+import { cilGroup, cilPlus, cilPencil, cilTrash, cilUser, cilUserPlus, cilSearch, cilX, cilInfo } from "@coreui/icons"
 import { helpFetch } from "../../../api/helpFetch"
 
 const BrigadeManagement = () => {
@@ -94,7 +93,12 @@ const BrigadeManagement = () => {
     if (searchTerm.trim() === "") {
       setFilteredBrigades(brigades)
     } else {
-      const filtered = brigades.filter((brigade) => brigade.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      const filtered = brigades.filter(
+        (brigade) =>
+          brigade.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (brigade.encargado_name &&
+            `${brigade.encargado_name} ${brigade.encargado_lastName}`.toLowerCase().includes(searchTerm.toLowerCase())),
+      )
       setFilteredBrigades(filtered)
     }
     setCurrentPage(1)
@@ -128,6 +132,7 @@ const BrigadeManagement = () => {
       const response = await api.get("/api/brigadas/utils/available-teachers")
       if (response.ok) {
         setAvailableTeachers(response.teachers || [])
+        console.log("✅ Docentes disponibles cargados:", response.teachers?.length || 0)
       }
     } catch (error) {
       console.error("❌ Error cargando docentes:", error)
@@ -139,6 +144,7 @@ const BrigadeManagement = () => {
       const response = await api.get("/api/brigadas/utils/available-students")
       if (response.ok) {
         setAvailableStudents(response.students || [])
+        console.log("✅ Estudiantes disponibles cargados:", response.students?.length || 0)
       }
     } catch (error) {
       console.error("❌ Error cargando estudiantes:", error)
@@ -150,9 +156,11 @@ const BrigadeManagement = () => {
       const response = await api.get(`/api/brigadas/${brigadeId}/students`)
       if (response.ok) {
         setBrigadeStudents(response.students || [])
+        console.log("✅ Estudiantes de brigada cargados:", response.students?.length || 0)
       }
     } catch (error) {
       console.error("❌ Error cargando estudiantes de brigada:", error)
+      setBrigadeStudents([])
     }
   }
 
@@ -161,6 +169,8 @@ const BrigadeManagement = () => {
 
     if (!brigadeForm.name.trim()) {
       errors.name = "El nombre de la brigada es requerido"
+    } else if (brigadeForm.name.length < 3) {
+      errors.name = "El nombre debe tener al menos 3 caracteres"
     } else if (brigadeForm.name.length > 100) {
       errors.name = "El nombre es demasiado largo (máximo 100 caracteres)"
     }
@@ -248,6 +258,7 @@ const BrigadeManagement = () => {
         setShowDeleteModal(false)
         setSelectedBrigade(null)
         await loadBrigades()
+        await loadAvailableStudents() // Recargar estudiantes disponibles
         console.log("✅ Brigada eliminada")
       } else {
         setError(response.msg || "Error al eliminar brigada")
@@ -275,7 +286,7 @@ const BrigadeManagement = () => {
 
       const response = await api.post(`/api/brigadas/${selectedBrigade.id}/assign-teacher`, {
         body: {
-          personalId: teacherForm.personalId,
+          personalId: Number.parseInt(teacherForm.personalId),
           startDate: teacherForm.startDate,
         },
       })
@@ -313,7 +324,7 @@ const BrigadeManagement = () => {
 
       const response = await api.post(`/api/brigadas/${selectedBrigade.id}/enroll-students`, {
         body: {
-          studentIds: studentForm.studentIds,
+          studentIds: studentForm.studentIds.map((id) => Number.parseInt(id)),
         },
       })
 
@@ -340,7 +351,9 @@ const BrigadeManagement = () => {
   const handleClearBrigade = async (brigade) => {
     try {
       if (
-        !confirm(`¿Está seguro de que desea limpiar la brigada "${brigade.name}"? Esto removerá todos los estudiantes.`)
+        !window.confirm(
+          `¿Está seguro de que desea limpiar la brigada "${brigade.name}"? Esto removerá todos los estudiantes.`,
+        )
       ) {
         return
       }
@@ -353,7 +366,7 @@ const BrigadeManagement = () => {
       const response = await api.post(`/api/brigadas/${brigade.id}/clear`)
 
       if (response.ok) {
-        setSuccess("Brigada limpiada exitosamente")
+        setSuccess(`Brigada limpiada exitosamente. ${response.result?.studentsRemoved || 0} estudiantes removidos.`)
         await loadBrigades()
         await loadAvailableStudents()
         console.log("✅ Brigada limpiada")
@@ -390,6 +403,7 @@ const BrigadeManagement = () => {
   const openEditModal = (brigade) => {
     setSelectedBrigade(brigade)
     setBrigadeForm({ name: brigade.name })
+    setFormErrors({})
     setShowEditModal(true)
   }
 
@@ -418,13 +432,15 @@ const BrigadeManagement = () => {
 
   const handleStudentSelection = (studentId) => {
     const currentIds = studentForm.studentIds
-    if (currentIds.includes(Number.parseInt(studentId))) {
+    const numericId = Number.parseInt(studentId)
+
+    if (currentIds.includes(numericId)) {
       setStudentForm({
-        studentIds: currentIds.filter((id) => id !== Number.parseInt(studentId)),
+        studentIds: currentIds.filter((id) => id !== numericId),
       })
     } else {
       setStudentForm({
-        studentIds: [...currentIds, Number.parseInt(studentId)],
+        studentIds: [...currentIds, numericId],
       })
     }
   }
@@ -485,7 +501,7 @@ const BrigadeManagement = () => {
                   <CIcon icon={cilSearch} />
                 </CInputGroupText>
                 <CFormInput
-                  placeholder="Buscar brigadas por nombre..."
+                  placeholder="Buscar brigadas por nombre o encargado..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -506,57 +522,103 @@ const BrigadeManagement = () => {
                   <CCard className="h-100 shadow-sm">
                     <CCardBody className="d-flex flex-column">
                       <div className="flex-grow-1">
-                        <h6 className="fw-bold text-truncate" title={brigade.name}>
+                        <h6 className="fw-bold text-truncate mb-2" title={brigade.name}>
                           {brigade.name}
                         </h6>
+
                         <div className="mb-2">
                           <small className="text-muted">Encargado:</small>
-                          <div className="fw-semibold">
-                            {brigade.encargado_name
+                          <div className="fw-semibold small">
+                            {brigade.encargado_name && brigade.encargado_lastName
                               ? `${brigade.encargado_name} ${brigade.encargado_lastName}`
                               : "Sin asignar"}
                           </div>
+                          {brigade.encargado_ci && <small className="text-muted">CI: {brigade.encargado_ci}</small>}
                         </div>
+
                         <div className="mb-3">
                           <CBadge color="info" className="me-2">
-                            {brigade.studentCount || 0} estudiantes
+                            {brigade.studentcount || 0} estudiantes
                           </CBadge>
+                          {brigade.fecha_inicio && (
+                            <CBadge color="secondary">
+                              Desde: {new Date(brigade.fecha_inicio).toLocaleDateString()}
+                            </CBadge>
+                          )}
                         </div>
                       </div>
 
                       <div className="d-grid gap-2">
-                        <CButton color="info" size="sm" onClick={() => openDetailsModal(brigade)}>
+                        <CButton
+                          color="info"
+                          size="sm"
+                          onClick={() => openDetailsModal(brigade)}
+                          className="d-flex align-items-center justify-content-center"
+                        >
+                          <CIcon icon={cilInfo} className="me-1" />
                           Ver Detalles
                         </CButton>
-                        <CButtonGroup size="sm">
-                          <CButton color="warning" onClick={() => openEditModal(brigade)} title="Editar">
-                            <CIcon icon={cilPencil} />
-                          </CButton>
-                          <CButton
-                            color="success"
-                            onClick={() => openAssignTeacherModal(brigade)}
-                            title="Asignar Docente"
-                          >
-                            <CIcon icon={cilUser} />
-                          </CButton>
-                          <CButton
-                            color="primary"
-                            onClick={() => openEnrollStudentsModal(brigade)}
-                            title="Inscribir Estudiantes"
-                          >
-                            <CIcon icon={cilUserPlus} />
-                          </CButton>
-                          <CButton
-                            color="secondary"
-                            onClick={() => handleClearBrigade(brigade)}
-                            title="Limpiar Brigada"
-                          >
-                            <CIcon icon={cilX} />
-                          </CButton>
-                          <CButton color="danger" onClick={() => openDeleteModal(brigade)} title="Eliminar">
-                            <CIcon icon={cilTrash} />
-                          </CButton>
-                        </CButtonGroup>
+
+                        <CRow className="g-1">
+                          <CCol xs={6}>
+                            <CButton
+                              color="warning"
+                              size="sm"
+                              onClick={() => openEditModal(brigade)}
+                              title="Editar"
+                              className="w-100"
+                            >
+                              <CIcon icon={cilPencil} />
+                            </CButton>
+                          </CCol>
+                          <CCol xs={6}>
+                            <CButton
+                              color="success"
+                              size="sm"
+                              onClick={() => openAssignTeacherModal(brigade)}
+                              title="Asignar Docente"
+                              className="w-100"
+                            >
+                              <CIcon icon={cilUser} />
+                            </CButton>
+                          </CCol>
+                        </CRow>
+
+                        <CRow className="g-1">
+                          <CCol xs={4}>
+                            <CButton
+                              color="primary"
+                              size="sm"
+                              onClick={() => openEnrollStudentsModal(brigade)}
+                              title="Inscribir Estudiantes"
+                              className="w-100"
+                            >
+                              <CIcon icon={cilUserPlus} />
+                            </CButton>
+                          </CCol>
+                          <CCol xs={4}>
+                            <CButton
+                              color="secondary"
+                              size="sm"
+                              onClick={() => handleClearBrigade(brigade)}
+                              title="Limpiar Brigada"
+                              className="w-100"
+                            >
+                              <CIcon icon={cilX} />
+                            </CButton>
+                          </CCol>
+                          <CCol xs={4}>
+                            <CButton
+                              color="danger"
+                              size="sm"
+                              onClick={() => openDeleteModal(brigade)}
+                              title="Eliminar"
+                              className="w-100"
+                            >
+                              <CIcon icon={cilTrash} />
+                            </CButton>
+                          </CCol>
+                        </CRow>
                       </div>
                     </CCardBody>
                   </CCard>
@@ -565,7 +627,15 @@ const BrigadeManagement = () => {
             ) : (
               <CCol xs={12}>
                 <div className="text-center text-muted py-5">
-                  {searchTerm ? "No se encontraron brigadas que coincidan con la búsqueda" : "No hay brigadas"}
+                  <CIcon icon={cilGroup} size="3xl" className="mb-3 opacity-50" />
+                  <h5>{searchTerm ? "No se encontraron brigadas" : "No hay brigadas registradas"}</h5>
+                  <p>{searchTerm ? "Intenta con otros términos de búsqueda" : "Comienza creando tu primera brigada"}</p>
+                  {!searchTerm && (
+                    <CButton color="primary" onClick={openCreateModal}>
+                      <CIcon icon={cilPlus} className="me-1" />
+                      Crear Primera Brigada
+                    </CButton>
+                  )}
                 </div>
               </CCol>
             )}
@@ -619,8 +689,10 @@ const BrigadeManagement = () => {
                 onChange={(e) => setBrigadeForm({ ...brigadeForm, name: e.target.value })}
                 invalid={!!formErrors.name}
                 placeholder="Ej: Brigada Ecológica"
+                maxLength={100}
               />
               {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
+              <small className="text-muted">Mínimo 3 caracteres, máximo 100 caracteres</small>
             </div>
           </CForm>
         </CModalBody>
@@ -655,8 +727,10 @@ const BrigadeManagement = () => {
                 onChange={(e) => setBrigadeForm({ ...brigadeForm, name: e.target.value })}
                 invalid={!!formErrors.name}
                 placeholder="Ej: Brigada Ecológica"
+                maxLength={100}
               />
               {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
+              <small className="text-muted">Mínimo 3 caracteres, máximo 100 caracteres</small>
             </div>
           </CForm>
         </CModalBody>
@@ -717,23 +791,33 @@ const BrigadeManagement = () => {
             <>
               <div className="mb-4">
                 <h5>{selectedBrigade.name}</h5>
-                <div className="row">
-                  <div className="col-md-6">
-                    <strong>Encargado:</strong>
-                    <div>
-                      {selectedBrigade.encargado_name
-                        ? `${selectedBrigade.encargado_name} ${selectedBrigade.encargado_lastName}`
-                        : "Sin asignar"}
+                <CRow>
+                  <CCol md={6}>
+                    <div className="mb-3">
+                      <strong>Encargado:</strong>
+                      <div>
+                        {selectedBrigade.encargado_name && selectedBrigade.encargado_lastName
+                          ? `${selectedBrigade.encargado_name} ${selectedBrigade.encargado_lastName}`
+                          : "Sin asignar"}
+                      </div>
+                      {selectedBrigade.encargado_ci && (
+                        <small className="text-muted">CI: {selectedBrigade.encargado_ci}</small>
+                      )}
                     </div>
-                    {selectedBrigade.encargado_ci && (
-                      <small className="text-muted">CI: {selectedBrigade.encargado_ci}</small>
-                    )}
+                  </CCol>
+                  <CCol md={6}>
+                    <div className="mb-3">
+                      <strong>Estudiantes:</strong>
+                      <div>{brigadeStudents.length} inscritos</div>
+                    </div>
+                  </CCol>
+                </CRow>
+                {selectedBrigade.fecha_inicio && (
+                  <div className="mb-3">
+                    <strong>Fecha de Inicio:</strong>
+                    <div>{new Date(selectedBrigade.fecha_inicio).toLocaleDateString()}</div>
                   </div>
-                  <div className="col-md-6">
-                    <strong>Estudiantes:</strong>
-                    <div>{brigadeStudents.length} inscritos</div>
-                  </div>
-                </div>
+                )}
               </div>
 
               <h6>Estudiantes Inscritos</h6>
@@ -743,8 +827,10 @@ const BrigadeManagement = () => {
                     <CTableRow>
                       <CTableHeaderCell>Nombre</CTableHeaderCell>
                       <CTableHeaderCell>CI</CTableHeaderCell>
+                      <CTableHeaderCell>Sexo</CTableHeaderCell>
                       <CTableHeaderCell>Grado</CTableHeaderCell>
                       <CTableHeaderCell>Sección</CTableHeaderCell>
+                      <CTableHeaderCell>Fecha Asignación</CTableHeaderCell>
                     </CTableRow>
                   </CTableHead>
                   <CTableBody>
@@ -754,14 +840,23 @@ const BrigadeManagement = () => {
                           {student.name} {student.lastName}
                         </CTableDataCell>
                         <CTableDataCell>{student.ci}</CTableDataCell>
-                        <CTableDataCell>{student.grade_name}</CTableDataCell>
-                        <CTableDataCell>{student.section_name}</CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge color={student.sex === "Masculino" ? "info" : "warning"}>{student.sex}</CBadge>
+                        </CTableDataCell>
+                        <CTableDataCell>{student.grade_name || "N/A"}</CTableDataCell>
+                        <CTableDataCell>{student.section_name || "N/A"}</CTableDataCell>
+                        <CTableDataCell>
+                          {student.assignmentDate ? new Date(student.assignmentDate).toLocaleDateString() : "N/A"}
+                        </CTableDataCell>
                       </CTableRow>
                     ))}
                   </CTableBody>
                 </CTable>
               ) : (
-                <div className="text-center text-muted py-3">No hay estudiantes inscritos</div>
+                <div className="text-center text-muted py-3">
+                  <CIcon icon={cilUser} size="2xl" className="mb-2 opacity-50" />
+                  <p>No hay estudiantes inscritos en esta brigada</p>
+                </div>
               )}
             </>
           )}
@@ -776,7 +871,7 @@ const BrigadeManagement = () => {
       {/* Modal para asignar docente */}
       <CModal visible={showAssignTeacherModal} onClose={() => setShowAssignTeacherModal(false)}>
         <CModalHeader>
-          <CModalTitle>Asignar Docente</CModalTitle>
+          <CModalTitle>Asignar Docente a Brigada</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
@@ -789,10 +884,11 @@ const BrigadeManagement = () => {
                 <option value="">Seleccionar docente...</option>
                 {availableTeachers.map((teacher) => (
                   <option key={teacher.id} value={teacher.id}>
-                    {teacher.name} {teacher.lastName} - {teacher.ci}
+                    {teacher.name} {teacher.lastName} - {teacher.ci} ({teacher.rol_nombre})
                   </option>
                 ))}
               </CFormSelect>
+              {availableTeachers.length === 0 && <small className="text-muted">No hay docentes disponibles</small>}
             </div>
             <div className="mb-3">
               <CFormLabel>Fecha de Inicio</CFormLabel>
@@ -808,7 +904,7 @@ const BrigadeManagement = () => {
           <CButton color="secondary" onClick={() => setShowAssignTeacherModal(false)} disabled={isSubmitting}>
             Cancelar
           </CButton>
-          <CButton color="success" onClick={handleAssignTeacher} disabled={isSubmitting}>
+          <CButton color="success" onClick={handleAssignTeacher} disabled={isSubmitting || !teacherForm.personalId}>
             {isSubmitting ? (
               <>
                 <CSpinner size="sm" className="me-1" />
@@ -824,12 +920,15 @@ const BrigadeManagement = () => {
       {/* Modal para inscribir estudiantes */}
       <CModal visible={showEnrollStudentsModal} onClose={() => setShowEnrollStudentsModal(false)} size="lg">
         <CModalHeader>
-          <CModalTitle>Inscribir Estudiantes</CModalTitle>
+          <CModalTitle>Inscribir Estudiantes en Brigada</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <div className="mb-3">
             <h6>Estudiantes Disponibles</h6>
-            <small className="text-muted">Seleccione los estudiantes que desea inscribir en la brigada</small>
+            <small className="text-muted">
+              Seleccione los estudiantes que desea inscribir en la brigada "{selectedBrigade?.name}". Los estudiantes
+              pueden pertenecer a múltiples brigadas.
+            </small>
           </div>
 
           {availableStudents.length > 0 ? (
@@ -837,9 +936,26 @@ const BrigadeManagement = () => {
               <CTable hover responsive>
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell>Seleccionar</CTableHeaderCell>
+                    <CTableHeaderCell width="50">
+                      <input
+                        type="checkbox"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setStudentForm({
+                              studentIds: availableStudents.map((s) => s.id),
+                            })
+                          } else {
+                            setStudentForm({ studentIds: [] })
+                          }
+                        }}
+                        checked={
+                          studentForm.studentIds.length === availableStudents.length && availableStudents.length > 0
+                        }
+                      />
+                    </CTableHeaderCell>
                     <CTableHeaderCell>Nombre</CTableHeaderCell>
                     <CTableHeaderCell>CI</CTableHeaderCell>
+                    <CTableHeaderCell>Sexo</CTableHeaderCell>
                     <CTableHeaderCell>Grado</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
@@ -857,19 +973,31 @@ const BrigadeManagement = () => {
                         {student.name} {student.lastName}
                       </CTableDataCell>
                       <CTableDataCell>{student.ci}</CTableDataCell>
-                      <CTableDataCell>{student.grade_name}</CTableDataCell>
+                      <CTableDataCell>
+                        <CBadge color={student.sex === "Masculino" ? "info" : "warning"}>{student.sex}</CBadge>
+                      </CTableDataCell>
+                      <CTableDataCell>{student.grade_name || "N/A"}</CTableDataCell>
                     </CTableRow>
                   ))}
                 </CTableBody>
               </CTable>
             </div>
           ) : (
-            <div className="text-center text-muted py-3">No hay estudiantes disponibles</div>
+            <div className="text-center text-muted py-4">
+              <CIcon icon={cilUser} size="3xl" className="mb-3 opacity-50" />
+              <h6>No hay estudiantes disponibles</h6>
+              <p>Todos los estudiantes están registrados en el sistema</p>
+            </div>
           )}
 
           {studentForm.studentIds.length > 0 && (
-            <div className="mt-3">
-              <CBadge color="info">{studentForm.studentIds.length} estudiantes seleccionados</CBadge>
+            <div className="mt-3 p-3 bg-light rounded">
+              <CBadge color="info" className="me-2">
+                {studentForm.studentIds.length} estudiantes seleccionados
+              </CBadge>
+              <small className="text-muted">
+                Se inscribirán {studentForm.studentIds.length} estudiantes en la brigada
+              </small>
             </div>
           )}
         </CModalBody>
@@ -877,14 +1005,18 @@ const BrigadeManagement = () => {
           <CButton color="secondary" onClick={() => setShowEnrollStudentsModal(false)} disabled={isSubmitting}>
             Cancelar
           </CButton>
-          <CButton color="primary" onClick={handleEnrollStudents} disabled={isSubmitting}>
+          <CButton
+            color="primary"
+            onClick={handleEnrollStudents}
+            disabled={isSubmitting || studentForm.studentIds.length === 0}
+          >
             {isSubmitting ? (
               <>
                 <CSpinner size="sm" className="me-1" />
                 Inscribiendo...
               </>
             ) : (
-              `Inscribir ${studentForm.studentIds.length} Estudiantes`
+              `Inscribir ${studentForm.studentIds.length} Estudiante${studentForm.studentIds.length !== 1 ? "s" : ""}`
             )}
           </CButton>
         </CModalFooter>
