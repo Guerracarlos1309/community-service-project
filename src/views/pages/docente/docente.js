@@ -287,7 +287,6 @@ const Docente = () => {
     return parroquia ? parroquia.label : 'No especificada'
   }
 
-  // Función para obtener el nombre del cargo
   const getCargoName = (cargoId) => {
     const cargo = cargos.find((c) => c.value === cargoId)
     return cargo ? cargo.label : 'No especificado'
@@ -339,6 +338,9 @@ const Docente = () => {
 
       <CButton color="info text-white" className="mb-3" onClick={handleOpen}>
         Crear docente
+      </CButton>
+      <CButton color="success text-white" className="mb-3 ms-2">
+        Imprimir Lista docentes
       </CButton>
 
       <CCard>
@@ -745,6 +747,9 @@ const Docente = () => {
           )}
         </CModalBody>
         <CModalFooter>
+          <CButton color="success" className="text-white">
+            Imprimir
+          </CButton>
           <CButton color="warning" className="text-white" onClick={viewClose}>
             Cerrar
           </CButton>
