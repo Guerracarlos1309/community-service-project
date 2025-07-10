@@ -183,19 +183,6 @@ const MatriculaList = () => {
     )
   }
 
-  const getGradeColor = (gradeName) => {
-    const colorsByGrade = {
-      'Primer Grado': 'primary',
-      'Segundo Grado': 'success',
-      'Tercer Grado': 'warning',
-      'Cuarto Grado': 'danger',
-      'Quinto Grado': 'info',
-      'Sexto Grado': 'dark',
-    }
-
-    return colorsByGrade[gradeName] || 'secondary'
-  }
-
   return (
     <>
       {error && (
@@ -275,15 +262,11 @@ const MatriculaList = () => {
                   <CTableRow key={matricula.id}>
                     <CTableDataCell>
                       <strong>
-                        {matricula.student_name} {matricula.student_lastName}
+                        {matricula.student_name} {matricula.student_lastname}
                       </strong>
                     </CTableDataCell>
                     <CTableDataCell>{matricula.student_school_id || '-'}</CTableDataCell>
-                    <CTableDataCell>
-                      <CBadge color={getGradeColor(matricula.grade_name)}>
-                        {matricula.grade_name || '-'}
-                      </CBadge>
-                    </CTableDataCell>
+                    <CTableDataCell>{matricula.grade_name || '-'}</CTableDataCell>
                     <CTableDataCell>{matricula.section_name || '-'}</CTableDataCell>
                     <CTableDataCell>
                       <CBadge color="info">{matricula.period}</CBadge>

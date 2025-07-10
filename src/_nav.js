@@ -35,12 +35,6 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Registro Estudiante',
-    to: '/registroEstudiante',
-    icon: <CIcon icon={cibVerizon} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
     name: 'Brigada Estudiantil',
     to: '/brigadas',
     icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
@@ -51,7 +45,7 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Asignación Estudiantil',
+    name: 'Matricula Estudiantil',
     to: '/matricula',
     icon: <CIcon icon={cilBook} customClassName="nav-icon" />,
   },
