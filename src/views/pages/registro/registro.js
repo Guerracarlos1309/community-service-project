@@ -1,1606 +1,881 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   CCard,
   CCardBody,
-  CForm,
+  CCardHeader,
   CFormInput,
   CFormLabel,
+  CFormSelect,
+  CFormTextarea,
   CButton,
   CRow,
   CCol,
-  CFormSelect,
-  CCardHeader,
-  CFormCheck,
-  CFormTextarea,
+  CContainer,
   CSpinner,
   CAlert,
-  CInputGroup,
-  CInputGroupText,
   CProgress,
   CBadge,
   CToast,
-  CToastBody,
   CToastHeader,
+  CToastBody,
   CToaster,
 } from "@coreui/react"
 import CIcon from "@coreui/icons-react"
 import {
   cilUser,
   cilPeople,
-  cilPhone,
-  cilHome,
-  cilNotes,
-  cilMedicalCross,
-  cilSave,
+  cilSchool,
   cilCheckCircle,
   cilWarning,
-  cilReload,
+  cilArrowRight,
+  cilArrowLeft,
+  cilSave,
 } from "@coreui/icons"
 import { helpFetch } from "../../../api/helpFetch.js"
 
 const api = helpFetch()
 
 const RegistroEstudiantil = () => {
-  const [step, setStep] = useState(1)
+  // Estados principales
+  const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(null)
-  const [error, setError] = useState(null)
-  const [validated, setValidated] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [toast, addToast] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
 
-  // Estados para datos de la API
+  // Estados para datos auxiliares
   const [grados, setGrados] = useState([])
   const [secciones, setSecciones] = useState([])
-  const [loadingGrados, setLoadingGrados] = useState(false)
-  const [loadingSecciones, setLoadingSecciones] = useState(false)
+  const [docentes, setDocentes] = useState([])
 
+  // Toast system
+  const toasterRef = useRef()
+
+  // Estados del formulario
   const [formData, setFormData] = useState({
-    // Paso 1: Información básica
-    tipoIngreso: "regular",
-    grado: "",
-    seccion: "",
-    fechaInscripcion: new Date().toISOString().split("T")[0],
-    plantelProcedencia: "",
+    // Paso 1: Información Académica
+    grade_id: "",
+    section_id: "",
+    teacher_id: "",
+    repeater: false,
+    school_year: new Date().getFullYear(),
 
-    // Paso 2: Datos del estudiante
-    cedulaEscolar: "",
-    nombres: "",
-    apellidos: "",
-    fechaNacimiento: "",
-    sexo: "",
-    lugarNacimiento: "",
-    entidadFederal: "",
-    municipio: "",
-    parroquia: "",
-    apreciacionCualitativa: "no",
-    repitiente: "no",
+    // Paso 2: Información del Estudiante
+    student_ci: "",
+    student_name: "",
+    student_lastName: "",
+    student_birthday: "",
+    student_sex: "",
+    student_birthPlace: "",
+    student_address: "",
 
-    // Paso 3: Datos de los padres
-    nombrePadre: "",
-    cedulaPadre: "",
-    telefonoPadre: "",
-    nombreMadre: "",
-    cedulaMadre: "",
-    telefonoMadre: "",
-    viveCon: "ambos",
+    // Paso 3: Información del Representante
+    representative_ci: "",
+    representative_name: "",
+    representative_lastName: "",
+    representative_phone: "",
+    representative_email: "",
+    representative_address: "",
+    representative_relationship: "",
+    representative_occupation: "",
 
-    // Paso 4: Datos del representante
-    apellidosRepresentante: "",
-    nombresRepresentante: "",
-    cedulaRepresentante: "",
-    fechaNacimientoRepresentante: "",
-    estadoCivilRepresentante: "",
-    nexoEstudiante: "",
-    direccionHabitacion: "",
-    telefonoCasa: "",
-    telefonoCelular: "",
-    emailRepresentante: "",
-    profesion: "",
-    lugarTrabajo: "",
-    telefonoTrabajo: "",
+    // Paso 4: Información Médica
+    medical_allergies: "",
+    medical_conditions: "",
+    medical_medications: "",
+    medical_emergency_contact: "",
+    medical_emergency_phone: "",
 
-    // Paso 5: Información del estudiante
-    peso: "",
-    estatura: "",
-    tallaCamisa: "",
-    tallaPantalon: "",
-    tallaZapato: "",
-    enfermedad: "",
-    tieneHermanos: "no",
-    cuantosHermanos: "0",
-    gradosHermanos: "",
+    // Paso 5: Información Adicional
+    previous_school: "",
+    previous_grade: "",
+    transportation: "",
+    lunch_program: false,
 
-    // Personas autorizadas
-    personaAutorizada1: "",
-    cedulaAutorizada1: "",
-    parentescoAutorizada1: "",
-    personaAutorizada2: "",
-    cedulaAutorizada2: "",
-    parentescoAutorizada2: "",
-
-    // Paso 6: Requisitos
-    actaNacimiento: false,
-    tarjetaVacunas: false,
-    fotosEstudiante: false,
-    fotosRepresentante: false,
-    copiaCedulaRepresentante: false,
-    rifRepresentante: false,
-    copiaCedulaAutorizados: false,
-    observaciones: "",
+    // Paso 6: Observaciones
+    observations: "",
   })
 
-  // Cargar datos iniciales
+  const [errors, setErrors] = useState({})
+
   useEffect(() => {
-    loadGrados()
-    loadSecciones()
+    loadInitialData()
   }, [])
 
+  const loadInitialData = async () => {
+    try {
+      setLoading(true)
+      console.log("🔄 Cargando datos iniciales...")
+
+      const [gradosResponse, seccionesResponse, docentesResponse] = await Promise.all([
+        api.get("/api/matriculas/utils/grados"),
+        api.get("/api/matriculas/utils/secciones"),
+        api.get("/api/personal/teachers"),
+      ])
+
+      console.log("📥 Respuestas:", { gradosResponse, seccionesResponse, docentesResponse })
+
+      if (!gradosResponse.error) {
+        setGrados(gradosResponse.grados || [])
+      }
+
+      if (!seccionesResponse.error) {
+        setSecciones(seccionesResponse.secciones || [])
+      }
+
+      if (!docentesResponse.error) {
+        setDocentes(docentesResponse.teachers || [])
+      }
+
+      console.log("✅ Datos iniciales cargados")
+    } catch (error) {
+      console.error("❌ Error cargando datos iniciales:", error)
+      showToast("Error al cargar los datos iniciales", "danger")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const showToast = (message, color = "success") => {
-    addToast(
-      <CToast>
+    const toast = (
+      <CToast autohide delay={3000}>
         <CToastHeader closeButton>
           <CIcon icon={color === "success" ? cilCheckCircle : cilWarning} className="me-2" />
           <strong className="me-auto">{color === "success" ? "Éxito" : "Error"}</strong>
         </CToastHeader>
         <CToastBody>{message}</CToastBody>
-      </CToast>,
+      </CToast>
     )
-  }
 
-  const loadGrados = async () => {
-    try {
-      setLoadingGrados(true)
-      setError(null)
-      console.log("🔄 Cargando grados...")
-      const response = await api.get("/api/matriculas/utils/grados")
-      if (!response.error) {
-        setGrados(response.grados || [])
-        console.log("✅ Grados cargados:", response.grados?.length || 0)
-      } else {
-        console.error("Error al obtener grados:", response)
-        setError(response.msg || "Error al cargar grados")
-        showToast("Error al cargar grados", "danger")
-      }
-    } catch (error) {
-      console.error("❌ Error cargando grados:", error)
-      setError(`Error al cargar grados: ${error.msg || error.message}`)
-      showToast("Error al cargar grados", "danger")
-    } finally {
-      setLoadingGrados(false)
+    if (toasterRef.current) {
+      toasterRef.current.addToast(toast)
     }
   }
 
-  const loadSecciones = async () => {
-    try {
-      setLoadingSecciones(true)
-      console.log("🔄 Cargando secciones...")
-      const response = await api.get("/api/matriculas/utils/docente-grados")
-      if (!response.error) {
-        setSecciones(response.docente_grados || [])
-        console.log("✅ Secciones cargadas:", response.docente_grados?.length || 0)
-      } else {
-        console.error("Error al obtener secciones:", response)
-        showToast("Error al cargar secciones", "danger")
-      }
-    } catch (error) {
-      console.error("❌ Error cargando secciones:", error)
-      showToast("Error al cargar secciones", "danger")
-    } finally {
-      setLoadingSecciones(false)
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+
+    // Limpiar error del campo si existe
+    if (errors[field]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: null,
+      }))
     }
   }
 
-  const validateStep = (currentStep) => {
-    switch (currentStep) {
+  const validateStep = (step) => {
+    const newErrors = {}
+
+    switch (step) {
       case 1:
-        if (!formData.grado) {
-          setError("Debe seleccionar un grado")
-          return false
-        }
-        if (!formData.fechaInscripcion) {
-          setError("La fecha de inscripción es requerida")
-          return false
-        }
+        if (!formData.grade_id) newErrors.grade_id = "El grado es requerido"
+        if (!formData.section_id) newErrors.section_id = "La sección es requerida"
+        if (!formData.teacher_id) newErrors.teacher_id = "El docente es requerido"
         break
+
       case 2:
-        if (!formData.cedulaEscolar.trim()) {
-          setError("La cédula escolar es requerida")
-          return false
-        }
-        if (!formData.nombres.trim()) {
-          setError("El nombre del estudiante es requerido")
-          return false
-        }
-        if (!formData.apellidos.trim()) {
-          setError("Los apellidos del estudiante son requeridos")
-          return false
-        }
-        if (!formData.fechaNacimiento) {
-          setError("La fecha de nacimiento es requerida")
-          return false
-        }
-        if (!formData.sexo) {
-          setError("Debe seleccionar el sexo del estudiante")
-          return false
-        }
+        if (!formData.student_ci) newErrors.student_ci = "La cédula es requerida"
+        if (!formData.student_name) newErrors.student_name = "El nombre es requerido"
+        if (!formData.student_lastName) newErrors.student_lastName = "El apellido es requerido"
+        if (!formData.student_birthday) newErrors.student_birthday = "La fecha de nacimiento es requerida"
+        if (!formData.student_sex) newErrors.student_sex = "El sexo es requerido"
+        if (!formData.student_birthPlace) newErrors.student_birthPlace = "El lugar de nacimiento es requerido"
+        if (!formData.student_address) newErrors.student_address = "La dirección es requerida"
         break
+
+      case 3:
+        if (!formData.representative_ci) newErrors.representative_ci = "La cédula del representante es requerida"
+        if (!formData.representative_name) newErrors.representative_name = "El nombre del representante es requerido"
+        if (!formData.representative_lastName)
+          newErrors.representative_lastName = "El apellido del representante es requerido"
+        if (!formData.representative_phone) newErrors.representative_phone = "El teléfono es requerido"
+        if (!formData.representative_address) newErrors.representative_address = "La dirección es requerida"
+        if (!formData.representative_relationship) newErrors.representative_relationship = "El parentesco es requerido"
+        break
+
       case 4:
-        if (!formData.cedulaRepresentante.trim()) {
-          setError("La cédula del representante es requerida")
-          return false
-        }
-        if (!formData.nombresRepresentante.trim()) {
-          setError("El nombre del representante es requerido")
-          return false
-        }
-        if (!formData.apellidosRepresentante.trim()) {
-          setError("Los apellidos del representante son requeridos")
-          return false
-        }
-        if (!formData.telefonoCelular.trim()) {
-          setError("El teléfono celular del representante es requerido")
-          return false
-        }
-        break
-      case 5:
-        if (formData.peso && (isNaN(formData.peso) || Number.parseFloat(formData.peso) <= 0)) {
-          setError("El peso debe ser un número válido mayor a 0")
-          return false
-        }
+        // Campos opcionales, solo validar formato si están llenos
         if (
-          formData.estatura &&
-          (isNaN(formData.estatura) ||
-            Number.parseFloat(formData.estatura) <= 0 ||
-            Number.parseFloat(formData.estatura) > 3)
+          formData.medical_emergency_phone &&
+          !/^\d{10,}$/.test(formData.medical_emergency_phone.replace(/\D/g, ""))
         ) {
-          setError("La estatura debe ser un número válido entre 0 y 3 metros")
-          return false
+          newErrors.medical_emergency_phone = "Formato de teléfono inválido"
         }
         break
+
+      case 5:
+        // Campos opcionales
+        break
+
+      case 6:
+        // Observaciones opcionales
+        break
     }
-    return true
-  }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    if (!validateStep(6)) {
-      return
-    }
-
-    try {
-      setIsSubmitting(true)
-      setError(null)
-      setSuccess(null)
-      console.log("📝 Iniciando proceso de matrícula...")
-
-      // Preparar datos del estudiante
-      const studentData = {
-        ci: formData.cedulaEscolar,
-        name: formData.nombres,
-        lastName: formData.apellidos,
-        sex: formData.sexo === "M" ? "Masculino" : "Femenino",
-        birthday: formData.fechaNacimiento,
-        placeBirth: formData.lugarNacimiento,
-        parishID: 1, // Valor por defecto
-        quantityBrothers: Number.parseInt(formData.cuantosHermanos) || 0,
-        representativeID: formData.cedulaRepresentante,
-        motherName: formData.nombreMadre,
-        motherCi: formData.cedulaMadre,
-        motherTelephone: formData.telefonoMadre,
-        fatherName: formData.nombrePadre,
-        fatherCi: formData.cedulaPadre,
-        fatherTelephone: formData.telefonoPadre,
-        livesMother: formData.viveCon === "madre" || formData.viveCon === "ambos",
-        livesFather: formData.viveCon === "padre" || formData.viveCon === "ambos",
-        livesBoth: formData.viveCon === "ambos",
-        livesRepresentative: formData.viveCon === "otros",
-        rolRopresentative: formData.nexoEstudiante,
-      }
-
-      // Preparar datos del representante
-      const representativeData = {
-        ci: formData.cedulaRepresentante,
-        name: formData.nombresRepresentante,
-        lastName: formData.apellidosRepresentante,
-        telephoneNumber: formData.telefonoCelular,
-        email: formData.emailRepresentante,
-        maritalStat: formData.estadoCivilRepresentante,
-        profesion: formData.profesion,
-        birthday: formData.fechaNacimientoRepresentante,
-        telephoneHouse: formData.telefonoCasa,
-        roomAdress: formData.direccionHabitacion,
-        workPlace: formData.lugarTrabajo,
-        jobNumber: formData.telefonoTrabajo,
-      }
-
-      // Preparar datos de la matrícula
-      const matriculaData = {
-        studentData,
-        representativeData,
-        sectionID: 1, // Usar valor por defecto ya que las secciones son solo A y B
-        registrationDate: formData.fechaInscripcion,
-        repeater: formData.repitiente === "si",
-        chemiseSize: formData.tallaCamisa,
-        pantsSize: formData.tallaPantalon,
-        shoesSize: formData.tallaZapato,
-        weight: formData.peso ? Number.parseFloat(formData.peso) : null,
-        stature: formData.estatura ? Number.parseFloat(formData.estatura) : null,
-        diseases: formData.enfermedad,
-        observation: formData.observaciones,
-        documents: {
-          birthCertificate: formData.actaNacimiento,
-          vaccinationCard: formData.tarjetaVacunas,
-          studentPhotos: formData.fotosEstudiante,
-          representativePhotos: formData.fotosRepresentante,
-          representativeCopyID: formData.copiaCedulaRepresentante,
-          representativeRIF: formData.rifRepresentante,
-          autorizedCopyID: formData.copiaCedulaAutorizados,
-        },
-      }
-
-      console.log("📤 Enviando datos de matrícula:", matriculaData)
-
-      // Crear matrícula
-      const response = await api.post("/api/matriculas", {
-        body: matriculaData,
-      })
-
-      console.log("📥 Respuesta del servidor:", response)
-
-      if (response.error) {
-        console.error("❌ Error al crear matrícula:", response.msg || response)
-        setError(response.msg || "Ocurrió un error al crear la matrícula")
-        showToast(response.msg || "Error al crear la matrícula", "danger")
-        return
-      }
-
-      console.log("✅ Matrícula creada exitosamente:", response)
-      setSuccess("¡Matrícula creada exitosamente!")
-      showToast("¡Matrícula creada exitosamente!", "success")
-
-      // Resetear formulario después de 3 segundos
-      setTimeout(() => {
-        setSuccess(null)
-        setStep(1)
-        resetForm()
-        setValidated(false)
-      }, 3000)
-    } catch (error) {
-      console.error("❌ Error en el proceso de matrícula:", error)
-      const errorMsg = `Error al procesar la matrícula: ${error.msg || error.message}`
-      setError(errorMsg)
-      showToast(errorMsg, "danger")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const resetForm = () => {
-    setFormData({
-      tipoIngreso: "regular",
-      grado: "",
-      seccion: "",
-      fechaInscripcion: new Date().toISOString().split("T")[0],
-      plantelProcedencia: "",
-      cedulaEscolar: "",
-      nombres: "",
-      apellidos: "",
-      fechaNacimiento: "",
-      sexo: "",
-      lugarNacimiento: "",
-      entidadFederal: "",
-      municipio: "",
-      parroquia: "",
-      apreciacionCualitativa: "no",
-      repitiente: "no",
-      nombrePadre: "",
-      cedulaPadre: "",
-      telefonoPadre: "",
-      nombreMadre: "",
-      cedulaMadre: "",
-      telefonoMadre: "",
-      viveCon: "ambos",
-      apellidosRepresentante: "",
-      nombresRepresentante: "",
-      cedulaRepresentante: "",
-      fechaNacimientoRepresentante: "",
-      estadoCivilRepresentante: "",
-      nexoEstudiante: "",
-      direccionHabitacion: "",
-      telefonoCasa: "",
-      telefonoCelular: "",
-      emailRepresentante: "",
-      profesion: "",
-      lugarTrabajo: "",
-      telefonoTrabajo: "",
-      peso: "",
-      estatura: "",
-      tallaCamisa: "",
-      tallaPantalon: "",
-      tallaZapato: "",
-      enfermedad: "",
-      tieneHermanos: "no",
-      cuantosHermanos: "0",
-      gradosHermanos: "",
-      personaAutorizada1: "",
-      cedulaAutorizada1: "",
-      parentescoAutorizada1: "",
-      personaAutorizada2: "",
-      cedulaAutorizada2: "",
-      parentescoAutorizada2: "",
-      actaNacimiento: false,
-      tarjetaVacunas: false,
-      fotosEstudiante: false,
-      fotosRepresentante: false,
-      copiaCedulaRepresentante: false,
-      rifRepresentante: false,
-      copiaCedulaAutorizados: false,
-      observaciones: "",
-    })
-  }
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    if (type === "checkbox") {
-      setFormData((prev) => ({ ...prev, [name]: checked }))
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }))
-    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const nextStep = () => {
-    if (validateStep(step)) {
-      setError(null)
-      setStep((prev) => prev + 1)
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, 6))
     }
   }
 
   const prevStep = () => {
-    setError(null)
-    setStep((prev) => prev - 1)
+    setCurrentStep((prev) => Math.max(prev - 1, 1))
   }
 
-  const currentYear = new Date().getFullYear()
-  const nextYear = currentYear + 1
-  const schoolYear = `${currentYear}-${nextYear}`
+  const handleSubmit = async () => {
+    if (!validateStep(6)) return
 
-  // Filtrar secciones por grado seleccionado
-  // Eliminar estas líneas:
-  // Filtrar secciones por grado seleccionado
-  // const seccionesFiltradas = secciones.filter(
-  //   (seccion) => seccion.grade_name === grados.find((g) => g.id == formData.grado)?.name,
-  // )
+    try {
+      setSubmitting(true)
+      console.log("📝 Enviando formulario de registro:", formData)
 
-  // Calcular progreso
-  const progress = (step / 6) * 100
+      const response = await api.post("/api/matriculas", {
+        body: formData,
+      })
 
-  // Mostrar mensaje de éxito
-  if (success && success.includes("exitosamente")) {
+      console.log("📥 Respuesta registro:", response)
+
+      if (!response.error) {
+        showToast("Estudiante registrado exitosamente")
+
+        // Resetear formulario después de un delay
+        setTimeout(() => {
+          setFormData({
+            grade_id: "",
+            section_id: "",
+            teacher_id: "",
+            repeater: false,
+            school_year: new Date().getFullYear(),
+            student_ci: "",
+            student_name: "",
+            student_lastName: "",
+            student_birthday: "",
+            student_sex: "",
+            student_birthPlace: "",
+            student_address: "",
+            representative_ci: "",
+            representative_name: "",
+            representative_lastName: "",
+            representative_phone: "",
+            representative_email: "",
+            representative_address: "",
+            representative_relationship: "",
+            representative_occupation: "",
+            medical_allergies: "",
+            medical_conditions: "",
+            medical_medications: "",
+            medical_emergency_contact: "",
+            medical_emergency_phone: "",
+            previous_school: "",
+            previous_grade: "",
+            transportation: "",
+            lunch_program: false,
+            observations: "",
+          })
+          setCurrentStep(1)
+          setErrors({})
+        }, 2000)
+      } else {
+        showToast(response.msg || "Error al registrar el estudiante", "danger")
+      }
+    } catch (error) {
+      console.error("❌ Error en registro:", error)
+      showToast("Error al registrar el estudiante", "danger")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <CCard>
+            <CCardHeader className="bg-primary text-white">
+              <h5 className="mb-0">
+                <CIcon icon={cilSchool} className="me-2" />
+                Paso 1: Información Académica
+              </h5>
+            </CCardHeader>
+            <CCardBody>
+              <CRow>
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Grado *</CFormLabel>
+                  <CFormSelect
+                    value={formData.grade_id}
+                    onChange={(e) => handleInputChange("grade_id", e.target.value)}
+                    invalid={!!errors.grade_id}
+                  >
+                    <option value="">Seleccione un grado</option>
+                    {grados.map((grado) => (
+                      <option key={grado.id} value={grado.id}>
+                        {grado.name}
+                      </option>
+                    ))}
+                  </CFormSelect>
+                  {errors.grade_id && <div className="invalid-feedback d-block">{errors.grade_id}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Sección *</CFormLabel>
+                  <CFormSelect
+                    value={formData.section_id}
+                    onChange={(e) => handleInputChange("section_id", e.target.value)}
+                    invalid={!!errors.section_id}
+                  >
+                    <option value="">Seleccione una sección</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                  </CFormSelect>
+                  {errors.section_id && <div className="invalid-feedback d-block">{errors.section_id}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Docente *</CFormLabel>
+                  <CFormSelect
+                    value={formData.teacher_id}
+                    onChange={(e) => handleInputChange("teacher_id", e.target.value)}
+                    invalid={!!errors.teacher_id}
+                  >
+                    <option value="">Seleccione un docente</option>
+                    {docentes.map((docente) => (
+                      <option key={docente.id} value={docente.id}>
+                        {docente.name} {docente.lastName}
+                      </option>
+                    ))}
+                  </CFormSelect>
+                  {errors.teacher_id && <div className="invalid-feedback d-block">{errors.teacher_id}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Año Escolar</CFormLabel>
+                  <CFormInput
+                    type="number"
+                    value={formData.school_year}
+                    onChange={(e) => handleInputChange("school_year", Number.parseInt(e.target.value))}
+                    min="2020"
+                    max="2030"
+                  />
+                </CCol>
+
+                <CCol md={12} className="mb-3">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="repeater"
+                      checked={formData.repeater}
+                      onChange={(e) => handleInputChange("repeater", e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="repeater">
+                      Estudiante repitiente
+                    </label>
+                  </div>
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+        )
+
+      case 2:
+        return (
+          <CCard>
+            <CCardHeader className="bg-success text-white">
+              <h5 className="mb-0">
+                <CIcon icon={cilUser} className="me-2" />
+                Paso 2: Información del Estudiante
+              </h5>
+            </CCardHeader>
+            <CCardBody>
+              <CRow>
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Cédula de Identidad *</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.student_ci}
+                    onChange={(e) => handleInputChange("student_ci", e.target.value)}
+                    placeholder="Ej: V-12345678"
+                    invalid={!!errors.student_ci}
+                  />
+                  {errors.student_ci && <div className="invalid-feedback">{errors.student_ci}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Nombres *</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.student_name}
+                    onChange={(e) => handleInputChange("student_name", e.target.value)}
+                    placeholder="Nombres del estudiante"
+                    invalid={!!errors.student_name}
+                  />
+                  {errors.student_name && <div className="invalid-feedback">{errors.student_name}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Apellidos *</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.student_lastName}
+                    onChange={(e) => handleInputChange("student_lastName", e.target.value)}
+                    placeholder="Apellidos del estudiante"
+                    invalid={!!errors.student_lastName}
+                  />
+                  {errors.student_lastName && <div className="invalid-feedback">{errors.student_lastName}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Fecha de Nacimiento *</CFormLabel>
+                  <CFormInput
+                    type="date"
+                    value={formData.student_birthday}
+                    onChange={(e) => handleInputChange("student_birthday", e.target.value)}
+                    invalid={!!errors.student_birthday}
+                  />
+                  {errors.student_birthday && <div className="invalid-feedback">{errors.student_birthday}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Sexo *</CFormLabel>
+                  <CFormSelect
+                    value={formData.student_sex}
+                    onChange={(e) => handleInputChange("student_sex", e.target.value)}
+                    invalid={!!errors.student_sex}
+                  >
+                    <option value="">Seleccione</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                  </CFormSelect>
+                  {errors.student_sex && <div className="invalid-feedback">{errors.student_sex}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Lugar de Nacimiento *</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.student_birthPlace}
+                    onChange={(e) => handleInputChange("student_birthPlace", e.target.value)}
+                    placeholder="Ciudad, Estado"
+                    invalid={!!errors.student_birthPlace}
+                  />
+                  {errors.student_birthPlace && <div className="invalid-feedback">{errors.student_birthPlace}</div>}
+                </CCol>
+
+                <CCol md={12} className="mb-3">
+                  <CFormLabel>Dirección de Habitación *</CFormLabel>
+                  <CFormTextarea
+                    rows={3}
+                    value={formData.student_address}
+                    onChange={(e) => handleInputChange("student_address", e.target.value)}
+                    placeholder="Dirección completa del estudiante"
+                    invalid={!!errors.student_address}
+                  />
+                  {errors.student_address && <div className="invalid-feedback">{errors.student_address}</div>}
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+        )
+
+      case 3:
+        return (
+          <CCard>
+            <CCardHeader className="bg-info text-white">
+              <h5 className="mb-0">
+                <CIcon icon={cilPeople} className="me-2" />
+                Paso 3: Información del Representante
+              </h5>
+            </CCardHeader>
+            <CCardBody>
+              <CRow>
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Cédula de Identidad *</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.representative_ci}
+                    onChange={(e) => handleInputChange("representative_ci", e.target.value)}
+                    placeholder="Ej: V-12345678"
+                    invalid={!!errors.representative_ci}
+                  />
+                  {errors.representative_ci && <div className="invalid-feedback">{errors.representative_ci}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Nombres *</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.representative_name}
+                    onChange={(e) => handleInputChange("representative_name", e.target.value)}
+                    placeholder="Nombres del representante"
+                    invalid={!!errors.representative_name}
+                  />
+                  {errors.representative_name && <div className="invalid-feedback">{errors.representative_name}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Apellidos *</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.representative_lastName}
+                    onChange={(e) => handleInputChange("representative_lastName", e.target.value)}
+                    placeholder="Apellidos del representante"
+                    invalid={!!errors.representative_lastName}
+                  />
+                  {errors.representative_lastName && (
+                    <div className="invalid-feedback">{errors.representative_lastName}</div>
+                  )}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Teléfono *</CFormLabel>
+                  <CFormInput
+                    type="tel"
+                    value={formData.representative_phone}
+                    onChange={(e) => handleInputChange("representative_phone", e.target.value)}
+                    placeholder="Ej: 0414-1234567"
+                    invalid={!!errors.representative_phone}
+                  />
+                  {errors.representative_phone && <div className="invalid-feedback">{errors.representative_phone}</div>}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Email</CFormLabel>
+                  <CFormInput
+                    type="email"
+                    value={formData.representative_email}
+                    onChange={(e) => handleInputChange("representative_email", e.target.value)}
+                    placeholder="correo@ejemplo.com"
+                  />
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Parentesco *</CFormLabel>
+                  <CFormSelect
+                    value={formData.representative_relationship}
+                    onChange={(e) => handleInputChange("representative_relationship", e.target.value)}
+                    invalid={!!errors.representative_relationship}
+                  >
+                    <option value="">Seleccione</option>
+                    <option value="Padre">Padre</option>
+                    <option value="Madre">Madre</option>
+                    <option value="Abuelo/a">Abuelo/a</option>
+                    <option value="Tío/a">Tío/a</option>
+                    <option value="Hermano/a">Hermano/a</option>
+                    <option value="Tutor Legal">Tutor Legal</option>
+                    <option value="Otro">Otro</option>
+                  </CFormSelect>
+                  {errors.representative_relationship && (
+                    <div className="invalid-feedback">{errors.representative_relationship}</div>
+                  )}
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Ocupación</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.representative_occupation}
+                    onChange={(e) => handleInputChange("representative_occupation", e.target.value)}
+                    placeholder="Ocupación del representante"
+                  />
+                </CCol>
+
+                <CCol md={12} className="mb-3">
+                  <CFormLabel>Dirección de Habitación *</CFormLabel>
+                  <CFormTextarea
+                    rows={3}
+                    value={formData.representative_address}
+                    onChange={(e) => handleInputChange("representative_address", e.target.value)}
+                    placeholder="Dirección completa del representante"
+                    invalid={!!errors.representative_address}
+                  />
+                  {errors.representative_address && (
+                    <div className="invalid-feedback">{errors.representative_address}</div>
+                  )}
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+        )
+
+      case 4:
+        return (
+          <CCard>
+            <CCardHeader className="bg-warning text-dark">
+              <h5 className="mb-0">Paso 4: Información Médica</h5>
+            </CCardHeader>
+            <CCardBody>
+              <CRow>
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Alergias</CFormLabel>
+                  <CFormTextarea
+                    rows={3}
+                    value={formData.medical_allergies}
+                    onChange={(e) => handleInputChange("medical_allergies", e.target.value)}
+                    placeholder="Describa las alergias conocidas"
+                  />
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Condiciones Médicas</CFormLabel>
+                  <CFormTextarea
+                    rows={3}
+                    value={formData.medical_conditions}
+                    onChange={(e) => handleInputChange("medical_conditions", e.target.value)}
+                    placeholder="Describa condiciones médicas relevantes"
+                  />
+                </CCol>
+
+                <CCol md={12} className="mb-3">
+                  <CFormLabel>Medicamentos</CFormLabel>
+                  <CFormTextarea
+                    rows={3}
+                    value={formData.medical_medications}
+                    onChange={(e) => handleInputChange("medical_medications", e.target.value)}
+                    placeholder="Medicamentos que toma regularmente"
+                  />
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Contacto de Emergencia</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.medical_emergency_contact}
+                    onChange={(e) => handleInputChange("medical_emergency_contact", e.target.value)}
+                    placeholder="Nombre del contacto de emergencia"
+                  />
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Teléfono de Emergencia</CFormLabel>
+                  <CFormInput
+                    type="tel"
+                    value={formData.medical_emergency_phone}
+                    onChange={(e) => handleInputChange("medical_emergency_phone", e.target.value)}
+                    placeholder="Teléfono de emergencia"
+                    invalid={!!errors.medical_emergency_phone}
+                  />
+                  {errors.medical_emergency_phone && (
+                    <div className="invalid-feedback">{errors.medical_emergency_phone}</div>
+                  )}
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+        )
+
+      case 5:
+        return (
+          <CCard>
+            <CCardHeader className="bg-secondary text-white">
+              <h5 className="mb-0">Paso 5: Información Adicional</h5>
+            </CCardHeader>
+            <CCardBody>
+              <CRow>
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Institución Anterior</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.previous_school}
+                    onChange={(e) => handleInputChange("previous_school", e.target.value)}
+                    placeholder="Nombre de la institución anterior"
+                  />
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Grado Anterior</CFormLabel>
+                  <CFormInput
+                    type="text"
+                    value={formData.previous_grade}
+                    onChange={(e) => handleInputChange("previous_grade", e.target.value)}
+                    placeholder="Último grado cursado"
+                  />
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <CFormLabel>Transporte</CFormLabel>
+                  <CFormSelect
+                    value={formData.transportation}
+                    onChange={(e) => handleInputChange("transportation", e.target.value)}
+                  >
+                    <option value="">Seleccione</option>
+                    <option value="Propio">Propio</option>
+                    <option value="Transporte Escolar">Transporte Escolar</option>
+                    <option value="Transporte Público">Transporte Público</option>
+                    <option value="Caminando">Caminando</option>
+                  </CFormSelect>
+                </CCol>
+
+                <CCol md={6} className="mb-3">
+                  <div className="form-check mt-4">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="lunch_program"
+                      checked={formData.lunch_program}
+                      onChange={(e) => handleInputChange("lunch_program", e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="lunch_program">
+                      Participa en el programa de alimentación
+                    </label>
+                  </div>
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+        )
+
+      case 6:
+        return (
+          <CCard>
+            <CCardHeader className="bg-dark text-white">
+              <h5 className="mb-0">Paso 6: Observaciones y Confirmación</h5>
+            </CCardHeader>
+            <CCardBody>
+              <CRow>
+                <CCol md={12} className="mb-4">
+                  <CFormLabel>Observaciones</CFormLabel>
+                  <CFormTextarea
+                    rows={4}
+                    value={formData.observations}
+                    onChange={(e) => handleInputChange("observations", e.target.value)}
+                    placeholder="Observaciones adicionales sobre el estudiante..."
+                  />
+                </CCol>
+
+                <CCol md={12}>
+                  <CAlert color="info">
+                    <h6>Resumen del Registro:</h6>
+                    <ul className="mb-0">
+                      <li>
+                        <strong>Estudiante:</strong> {formData.student_name} {formData.student_lastName}
+                      </li>
+                      <li>
+                        <strong>Cédula:</strong> {formData.student_ci}
+                      </li>
+                      <li>
+                        <strong>Grado:</strong>{" "}
+                        {grados.find((g) => g.id == formData.grade_id)?.name || "No seleccionado"}
+                      </li>
+                      <li>
+                        <strong>Sección:</strong> {formData.section_id || "No seleccionada"}
+                      </li>
+                      <li>
+                        <strong>Representante:</strong> {formData.representative_name}{" "}
+                        {formData.representative_lastName}
+                      </li>
+                      <li>
+                        <strong>Teléfono:</strong> {formData.representative_phone}
+                      </li>
+                    </ul>
+                  </CAlert>
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+        )
+
+      default:
+        return null
+    }
+  }
+
+  if (loading) {
     return (
-      <CAlert color="success" className="text-center">
-        <CIcon icon={cilCheckCircle} size="xl" className="mb-3" />
-        <h4>¡Matrícula guardada exitosamente!</h4>
-        <p>La inscripción ha sido registrada correctamente en el sistema.</p>
-        <CSpinner size="sm" className="me-2" />
-        <span>Redirigiendo...</span>
-      </CAlert>
+      <CContainer>
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "400px" }}>
+          <CSpinner color="primary" size="lg" />
+          <span className="ms-2">Cargando formulario...</span>
+        </div>
+      </CContainer>
     )
   }
 
   return (
-    <div className="container py-4">
-      <CToaster ref={(ref) => addToast(ref)} push={toast} placement="top-end" />
+    <CContainer fluid>
+      <CRow className="mb-4">
+        <CCol>
+          <h2 className="mb-3">Registro de Estudiante</h2>
 
-      {/* Barra de progreso */}
-      <CCard className="mb-4">
-        <CCardBody>
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <h6 className="mb-0">Progreso del Registro</h6>
-            <div className="d-flex align-items-center gap-2">
-              <CBadge color="info">Paso {step} de 6</CBadge>
-              <CButton
-                color="light"
-                size="sm"
-                onClick={() => {
-                  loadGrados()
-                  loadSecciones()
-                }}
-                disabled={loadingGrados || loadingSecciones}
-              >
-                <CIcon icon={cilReload} className={loadingGrados || loadingSecciones ? "spin" : ""} />
-              </CButton>
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <div className="d-flex justify-content-between mb-2">
+              <span>Progreso del Registro</span>
+              <span>{Math.round((currentStep / 6) * 100)}%</span>
             </div>
+            <CProgress value={(currentStep / 6) * 100} color="primary" />
           </div>
-          <CProgress value={progress} className="mb-2" />
-          <small className="text-muted">
-            {step === 1 && "Información básica"}
-            {step === 2 && "Datos del estudiante"}
-            {step === 3 && "Datos de los padres"}
-            {step === 4 && "Datos del representante"}
-            {step === 5 && "Información adicional"}
-            {step === 6 && "Requisitos y finalización"}
-          </small>
-        </CCardBody>
-      </CCard>
 
-      {/* Alertas */}
-      {error && (
-        <CAlert color="danger" dismissible onClose={() => setError(null)}>
-          <CIcon icon={cilWarning} className="me-2" />
-          <strong>Error:</strong> {error}
-        </CAlert>
-      )}
-
-      {success && !success.includes("exitosamente") && (
-        <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
-          <CIcon icon={cilCheckCircle} className="me-2" />
-          <strong>Éxito:</strong> {success}
-        </CAlert>
-      )}
-
-      {/* Paso 1: Información básica */}
-      {step === 1 && (
-        <CCard className="mb-4">
-          <CCardHeader className="d-flex justify-content-between align-items-center bg-info text-white">
-            <h4 className="mb-0">
-              <CIcon icon={cilUser} className="me-2" />
-              FICHA DE INSCRIPCION ESCOLAR {schoolYear}
-            </h4>
-          </CCardHeader>
-          <CCardBody>
-            <CForm className="needs-validation" noValidate validated={validated}>
-              <CRow className="mb-4">
-                <CCol md={3}>
-                  <CFormLabel>Tipo de Ingreso</CFormLabel>
-                  <div>
-                    <CFormCheck
-                      inline
-                      type="radio"
-                      name="tipoIngreso"
-                      id="ingresoNuevo"
-                      value="nuevo"
-                      label="Nuevo Ingreso"
-                      checked={formData.tipoIngreso === "nuevo"}
-                      onChange={handleChange}
-                    />
-                    <CFormCheck
-                      inline
-                      type="radio"
-                      name="tipoIngreso"
-                      id="ingresoRegular"
-                      value="regular"
-                      label="Regular"
-                      checked={formData.tipoIngreso === "regular"}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </CCol>
-                <CCol md={4}>
-                  <CFormLabel htmlFor="grado">Grado *</CFormLabel>
-                  <CFormSelect
-                    id="grado"
-                    name="grado"
-                    value={formData.grado}
-                    onChange={handleChange}
-                    required
-                    disabled={loadingGrados}
-                  >
-                    <option value="">{loadingGrados ? "Cargando..." : "Seleccionar..."}</option>
-                    {[...grados]
-                      .sort((a, b) => a.id - b.id)
-                      .map((grado) => (
-                        <option key={grado.id} value={grado.id}>
-                          {grado.name}
-                        </option>
-                      ))}
-                  </CFormSelect>
-                </CCol>
-                <CCol md={3}>
-                  <CFormLabel htmlFor="seccion">Sección</CFormLabel>
-                  <CFormSelect
-                    id="seccion"
-                    name="seccion"
-                    value={formData.seccion}
-                    onChange={handleChange}
-                    disabled={!formData.grado}
-                  >
-                    <option value="">Seleccionar...</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                  </CFormSelect>
-                </CCol>
-              </CRow>
-
-              <CRow className="mb-3">
-                <CCol md={6}>
-                  <CFormLabel htmlFor="fechaInscripcion">Fecha de Inscripción *</CFormLabel>
-                  <CFormInput
-                    type="date"
-                    id="fechaInscripcion"
-                    name="fechaInscripcion"
-                    value={formData.fechaInscripcion}
-                    onChange={handleChange}
-                    required
-                  />
-                </CCol>
-                <CCol md={6}>
-                  <CFormLabel htmlFor="plantelProcedencia">Plantel de Procedencia</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    id="plantelProcedencia"
-                    name="plantelProcedencia"
-                    value={formData.plantelProcedencia}
-                    onChange={handleChange}
-                    placeholder="Nombre del plantel anterior"
-                  />
-                </CCol>
-              </CRow>
-
-              <CCol xs={12} className="d-flex justify-content-end">
-                <CButton color="info" onClick={nextStep}>
-                  Siguiente
-                </CButton>
-              </CCol>
-            </CForm>
-          </CCardBody>
-        </CCard>
-      )}
-
-      {/* Paso 2: Datos del estudiante */}
-      {step === 2 && (
-        <CCard className="mb-4">
-          <CCardHeader className="bg-info text-white">
-            <h5 className="mb-0">
-              <CIcon icon={cilUser} className="me-2" />
-              A. DATOS DEL ESTUDIANTE
-            </h5>
-          </CCardHeader>
-          <CCardBody>
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel htmlFor="cedulaEscolar">Cédula de Identidad o Escolar *</CFormLabel>
-                <CInputGroup>
-                  <CFormInput
-                    type="text"
-                    id="cedulaEscolar"
-                    name="cedulaEscolar"
-                    value={formData.cedulaEscolar}
-                    onChange={handleChange}
-                    placeholder="Ej: V-11223344"
-                    required
-                  />
-                </CInputGroup>
-              </CCol>
-              <CCol md={6}>
-                <CRow>
-                  <CCol md={6}>
-                    <CFormLabel htmlFor="apellidos">Apellidos *</CFormLabel>
-                    <CFormInput
-                      type="text"
-                      id="apellidos"
-                      name="apellidos"
-                      value={formData.apellidos}
-                      onChange={handleChange}
-                      placeholder="Apellidos del estudiante"
-                      required
-                    />
-                  </CCol>
-                  <CCol md={6}>
-                    <CFormLabel htmlFor="nombres">Nombres *</CFormLabel>
-                    <CFormInput
-                      type="text"
-                      id="nombres"
-                      name="nombres"
-                      value={formData.nombres}
-                      onChange={handleChange}
-                      placeholder="Nombres del estudiante"
-                      required
-                    />
-                  </CCol>
-                </CRow>
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={3}>
-                <CFormLabel htmlFor="fechaNacimiento">Fecha de Nacimiento *</CFormLabel>
-                <CFormInput
-                  type="date"
-                  id="fechaNacimiento"
-                  name="fechaNacimiento"
-                  value={formData.fechaNacimiento}
-                  onChange={handleChange}
-                  required
-                />
-              </CCol>
-              <CCol md={3}>
-                <CFormLabel htmlFor="sexo">Sexo *</CFormLabel>
-                <CFormSelect id="sexo" name="sexo" value={formData.sexo} onChange={handleChange} required>
-                  <option value="">Seleccionar...</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Femenino</option>
-                </CFormSelect>
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel htmlFor="lugarNacimiento">Lugar de Nacimiento</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="lugarNacimiento"
-                  name="lugarNacimiento"
-                  value={formData.lugarNacimiento}
-                  onChange={handleChange}
-                  placeholder="Ej: Hospital Central, San Cristóbal"
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel htmlFor="entidadFederal">Entidad Federal</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="entidadFederal"
-                  name="entidadFederal"
-                  value={formData.entidadFederal}
-                  onChange={handleChange}
-                  placeholder="Ej: Táchira"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="municipio">Municipio</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="municipio"
-                  name="municipio"
-                  value={formData.municipio}
-                  onChange={handleChange}
-                  placeholder="Ej: San Cristóbal"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="parroquia">Parroquia</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="parroquia"
-                  name="parroquia"
-                  value={formData.parroquia}
-                  onChange={handleChange}
-                  placeholder="Ej: Pedro María Morantes"
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>Apreciación Cualitativa Año Anterior</CFormLabel>
-                <div>
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="apreciacionCualitativa"
-                    id="apreciacionSi"
-                    value="si"
-                    label="Si"
-                    checked={formData.apreciacionCualitativa === "si"}
-                    onChange={handleChange}
-                  />
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="apreciacionCualitativa"
-                    id="apreciacionNo"
-                    value="no"
-                    label="No"
-                    checked={formData.apreciacionCualitativa === "no"}
-                    onChange={handleChange}
-                  />
-                </div>
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Repitiente</CFormLabel>
-                <div>
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="repitiente"
-                    id="repitienteSi"
-                    value="si"
-                    label="Si"
-                    checked={formData.repitiente === "si"}
-                    onChange={handleChange}
-                  />
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="repitiente"
-                    id="repitienteNo"
-                    value="no"
-                    label="No"
-                    checked={formData.repitiente === "no"}
-                    onChange={handleChange}
-                  />
-                </div>
-              </CCol>
-            </CRow>
-
-            <CCol xs={12} className="d-flex justify-content-between">
-              <CButton color="warning" onClick={prevStep}>
-                Atrás
-              </CButton>
-              <CButton color="info" onClick={nextStep}>
-                Siguiente
-              </CButton>
-            </CCol>
-          </CCardBody>
-        </CCard>
-      )}
-
-      {/* Paso 3: Datos de los padres */}
-      {step === 3 && (
-        <CCard className="mb-4">
-          <CCardHeader className="bg-info text-white">
-            <h5 className="mb-0">
-              <CIcon icon={cilPeople} className="me-2" />
-              B. DATOS DE LOS PADRES
-            </h5>
-          </CCardHeader>
-          <CCardBody>
-            <CRow className="mb-3">
-              <CCol md={5}>
-                <CFormLabel htmlFor="nombrePadre">Nombre del Padre</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="nombrePadre"
-                  name="nombrePadre"
-                  value={formData.nombrePadre}
-                  onChange={handleChange}
-                  placeholder="Nombre completo del padre"
-                />
-              </CCol>
-              <CCol md={3}>
-                <CFormLabel htmlFor="cedulaPadre">Cédula</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="cedulaPadre"
-                  name="cedulaPadre"
-                  value={formData.cedulaPadre}
-                  onChange={handleChange}
-                  placeholder="Ej: V-12345678"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="telefonoPadre">Teléfono</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>
-                    <CIcon icon={cilPhone} />
-                  </CInputGroupText>
-                  <CFormInput
-                    type="tel"
-                    id="telefonoPadre"
-                    name="telefonoPadre"
-                    value={formData.telefonoPadre}
-                    onChange={handleChange}
-                    placeholder="Ej: 0414-1234567"
-                  />
-                </CInputGroup>
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={5}>
-                <CFormLabel htmlFor="nombreMadre">Nombre de la Madre</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="nombreMadre"
-                  name="nombreMadre"
-                  value={formData.nombreMadre}
-                  onChange={handleChange}
-                  placeholder="Nombre completo de la madre"
-                />
-              </CCol>
-              <CCol md={3}>
-                <CFormLabel htmlFor="cedulaMadre">Cédula</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="cedulaMadre"
-                  name="cedulaMadre"
-                  value={formData.cedulaMadre}
-                  onChange={handleChange}
-                  placeholder="Ej: V-12345678"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="telefonoMadre">Teléfono</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>
-                    <CIcon icon={cilPhone} />
-                  </CInputGroupText>
-                  <CFormInput
-                    type="tel"
-                    id="telefonoMadre"
-                    name="telefonoMadre"
-                    value={formData.telefonoMadre}
-                    onChange={handleChange}
-                    placeholder="Ej: 0414-1234567"
-                  />
-                </CInputGroup>
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={12}>
-                <CFormLabel>El estudiante vive con:</CFormLabel>
-                <div>
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="viveCon"
-                    id="viveConPadre"
-                    value="padre"
-                    label="Solo con el padre"
-                    checked={formData.viveCon === "padre"}
-                    onChange={handleChange}
-                  />
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="viveCon"
-                    id="viveConMadre"
-                    value="madre"
-                    label="Solo con la madre"
-                    checked={formData.viveCon === "madre"}
-                    onChange={handleChange}
-                  />
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="viveCon"
-                    id="viveConAmbos"
-                    value="ambos"
-                    label="Ambos padres"
-                    checked={formData.viveCon === "ambos"}
-                    onChange={handleChange}
-                  />
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="viveCon"
-                    id="viveConOtros"
-                    value="otros"
-                    label="Con otros familiares"
-                    checked={formData.viveCon === "otros"}
-                    onChange={handleChange}
-                  />
-                </div>
-              </CCol>
-            </CRow>
-
-            <CCol xs={12} className="d-flex justify-content-between">
-              <CButton color="warning" onClick={prevStep}>
-                Atrás
-              </CButton>
-              <CButton color="info" onClick={nextStep}>
-                Siguiente
-              </CButton>
-            </CCol>
-          </CCardBody>
-        </CCard>
-      )}
-
-      {/* Paso 4: Datos del representante */}
-      {step === 4 && (
-        <CCard className="mb-4">
-          <CCardHeader className="bg-info text-white">
-            <h5 className="mb-0">
-              <CIcon icon={cilPeople} className="me-2" />
-              C. DATOS DEL REPRESENTANTE
-            </h5>
-          </CCardHeader>
-          <CCardBody>
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel htmlFor="apellidosRepresentante">Apellidos *</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="apellidosRepresentante"
-                  name="apellidosRepresentante"
-                  value={formData.apellidosRepresentante}
-                  onChange={handleChange}
-                  placeholder="Apellidos del representante"
-                  required
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="nombresRepresentante">Nombres *</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="nombresRepresentante"
-                  name="nombresRepresentante"
-                  value={formData.nombresRepresentante}
-                  onChange={handleChange}
-                  placeholder="Nombres del representante"
-                  required
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="cedulaRepresentante">Cédula *</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="cedulaRepresentante"
-                  name="cedulaRepresentante"
-                  value={formData.cedulaRepresentante}
-                  onChange={handleChange}
-                  placeholder="Ej: V-12345678"
-                  required
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel htmlFor="fechaNacimientoRepresentante">Fecha de Nacimiento</CFormLabel>
-                <CFormInput
-                  type="date"
-                  id="fechaNacimientoRepresentante"
-                  name="fechaNacimientoRepresentante"
-                  value={formData.fechaNacimientoRepresentante}
-                  onChange={handleChange}
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="estadoCivilRepresentante">Estado Civil</CFormLabel>
-                <CFormSelect
-                  id="estadoCivilRepresentante"
-                  name="estadoCivilRepresentante"
-                  value={formData.estadoCivilRepresentante}
-                  onChange={handleChange}
+          {/* Step Indicators */}
+          <div className="d-flex justify-content-between mb-4">
+            {[1, 2, 3, 4, 5, 6].map((step) => (
+              <div key={step} className="text-center">
+                <CBadge
+                  color={currentStep >= step ? "primary" : "secondary"}
+                  className="rounded-circle p-2 mb-1"
+                  style={{ width: "30px", height: "30px" }}
                 >
-                  <option value="">Seleccionar...</option>
-                  <option value="Soltero">Soltero(a)</option>
-                  <option value="Casado">Casado(a)</option>
-                  <option value="Divorciado">Divorciado(a)</option>
-                  <option value="Viudo">Viudo(a)</option>
-                  <option value="Concubinato">Concubinato</option>
-                </CFormSelect>
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="nexoEstudiante">Parentesco con el Estudiante</CFormLabel>
-                <CFormSelect
-                  id="nexoEstudiante"
-                  name="nexoEstudiante"
-                  value={formData.nexoEstudiante}
-                  onChange={handleChange}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="Padre">Padre</option>
-                  <option value="Madre">Madre</option>
-                  <option value="Abuelo">Abuelo(a)</option>
-                  <option value="Tío">Tío(a)</option>
-                  <option value="Hermano">Hermano(a)</option>
-                  <option value="Otro">Otro</option>
-                </CFormSelect>
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel htmlFor="direccionHabitacion">Dirección de Habitación</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>
-                    <CIcon icon={cilHome} />
-                  </CInputGroupText>
-                  <CFormInput
-                    type="text"
-                    id="direccionHabitacion"
-                    name="direccionHabitacion"
-                    value={formData.direccionHabitacion}
-                    onChange={handleChange}
-                    placeholder="Dirección completa"
-                  />
-                </CInputGroup>
-              </CCol>
-              <CCol md={3}>
-                <CFormLabel htmlFor="telefonoCasa">Teléfono Casa</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>
-                    <CIcon icon={cilPhone} />
-                  </CInputGroupText>
-                  <CFormInput
-                    type="tel"
-                    id="telefonoCasa"
-                    name="telefonoCasa"
-                    value={formData.telefonoCasa}
-                    onChange={handleChange}
-                    placeholder="Ej: 0276-1234567"
-                  />
-                </CInputGroup>
-              </CCol>
-              <CCol md={3}>
-                <CFormLabel htmlFor="telefonoCelular">Teléfono Celular *</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>
-                    <CIcon icon={cilPhone} />
-                  </CInputGroupText>
-                  <CFormInput
-                    type="tel"
-                    id="telefonoCelular"
-                    name="telefonoCelular"
-                    value={formData.telefonoCelular}
-                    onChange={handleChange}
-                    placeholder="Ej: 0414-1234567"
-                    required
-                  />
-                </CInputGroup>
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel htmlFor="emailRepresentante">Email</CFormLabel>
-                <CFormInput
-                  type="email"
-                  id="emailRepresentante"
-                  name="emailRepresentante"
-                  value={formData.emailRepresentante}
-                  onChange={handleChange}
-                  placeholder="correo@ejemplo.com"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="profesion">Profesión</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="profesion"
-                  name="profesion"
-                  value={formData.profesion}
-                  onChange={handleChange}
-                  placeholder="Ej: Docente, Ingeniero, etc."
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="lugarTrabajo">Lugar de Trabajo</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="lugarTrabajo"
-                  name="lugarTrabajo"
-                  value={formData.lugarTrabajo}
-                  onChange={handleChange}
-                  placeholder="Nombre de la empresa o institución"
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel htmlFor="telefonoTrabajo">Teléfono Trabajo</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>
-                    <CIcon icon={cilPhone} />
-                  </CInputGroupText>
-                  <CFormInput
-                    type="tel"
-                    id="telefonoTrabajo"
-                    name="telefonoTrabajo"
-                    value={formData.telefonoTrabajo}
-                    onChange={handleChange}
-                    placeholder="Ej: 0276-1234567"
-                  />
-                </CInputGroup>
-              </CCol>
-            </CRow>
-
-            <CCol xs={12} className="d-flex justify-content-between">
-              <CButton color="warning" onClick={prevStep}>
-                Atrás
-              </CButton>
-              <CButton color="info" onClick={nextStep}>
-                Siguiente
-              </CButton>
-            </CCol>
-          </CCardBody>
-        </CCard>
-      )}
-
-      {/* Paso 5: Información adicional del estudiante */}
-      {step === 5 && (
-        <CCard className="mb-4">
-          <CCardHeader className="bg-info text-white">
-            <h5 className="mb-0">
-              <CIcon icon={cilMedicalCross} className="me-2" />
-              D. INFORMACIÓN ADICIONAL DEL ESTUDIANTE
-            </h5>
-          </CCardHeader>
-          <CCardBody>
-            <CRow className="mb-3">
-              <CCol md={2}>
-                <CFormLabel htmlFor="peso">Peso (kg)</CFormLabel>
-                <CFormInput
-                  type="number"
-                  id="peso"
-                  name="peso"
-                  value={formData.peso}
-                  onChange={handleChange}
-                  placeholder="Ej: 25.5"
-                  step="0.1"
-                  min="0"
-                />
-              </CCol>
-              <CCol md={2}>
-                <CFormLabel htmlFor="estatura">Estatura (m)</CFormLabel>
-                <CFormInput
-                  type="number"
-                  id="estatura"
-                  name="estatura"
-                  value={formData.estatura}
-                  onChange={handleChange}
-                  placeholder="Ej: 1.20"
-                  step="0.01"
-                  min="0"
-                  max="3"
-                />
-              </CCol>
-              <CCol md={2}>
-                <CFormLabel htmlFor="tallaCamisa">Talla Camisa</CFormLabel>
-                <CFormSelect id="tallaCamisa" name="tallaCamisa" value={formData.tallaCamisa} onChange={handleChange}>
-                  <option value="">Seleccionar...</option>
-                  <option value="4">4</option>
-                  <option value="6">6</option>
-                  <option value="8">8</option>
-                  <option value="10">10</option>
-                  <option value="12">12</option>
-                  <option value="14">14</option>
-                  <option value="16">16</option>
-                  <option value="XS">XS</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                </CFormSelect>
-              </CCol>
-              <CCol md={2}>
-                <CFormLabel htmlFor="tallaPantalon">Talla Pantalón</CFormLabel>
-                <CFormSelect
-                  id="tallaPantalon"
-                  name="tallaPantalon"
-                  value={formData.tallaPantalon}
-                  onChange={handleChange}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="4">4</option>
-                  <option value="6">6</option>
-                  <option value="8">8</option>
-                  <option value="10">10</option>
-                  <option value="12">12</option>
-                  <option value="14">14</option>
-                  <option value="16">16</option>
-                  <option value="XS">XS</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                </CFormSelect>
-              </CCol>
-              <CCol md={2}>
-                <CFormLabel htmlFor="tallaZapato">Talla Zapato</CFormLabel>
-                <CFormInput
-                  type="number"
-                  id="tallaZapato"
-                  name="tallaZapato"
-                  value={formData.tallaZapato}
-                  onChange={handleChange}
-                  placeholder="Ej: 28"
-                  min="15"
-                  max="50"
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={12}>
-                <CFormLabel htmlFor="enfermedad">Enfermedades o Condiciones Médicas</CFormLabel>
-                <CFormTextarea
-                  id="enfermedad"
-                  name="enfermedad"
-                  value={formData.enfermedad}
-                  onChange={handleChange}
-                  rows={2}
-                  placeholder="Describa cualquier enfermedad, alergia o condición médica relevante..."
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel>¿Tiene hermanos en la escuela?</CFormLabel>
-                <div>
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="tieneHermanos"
-                    id="tieneHermanosSi"
-                    value="si"
-                    label="Si"
-                    checked={formData.tieneHermanos === "si"}
-                    onChange={handleChange}
-                  />
-                  <CFormCheck
-                    inline
-                    type="radio"
-                    name="tieneHermanos"
-                    id="tieneHermanosNo"
-                    value="no"
-                    label="No"
-                    checked={formData.tieneHermanos === "no"}
-                    onChange={handleChange}
-                  />
+                  {step}
+                </CBadge>
+                <div className="small">
+                  {step === 1 && "Académica"}
+                  {step === 2 && "Estudiante"}
+                  {step === 3 && "Representante"}
+                  {step === 4 && "Médica"}
+                  {step === 5 && "Adicional"}
+                  {step === 6 && "Confirmación"}
                 </div>
-              </CCol>
-              {formData.tieneHermanos === "si" && (
-                <>
-                  <CCol md={4}>
-                    <CFormLabel htmlFor="cuantosHermanos">¿Cuántos hermanos?</CFormLabel>
-                    <CFormInput
-                      type="number"
-                      id="cuantosHermanos"
-                      name="cuantosHermanos"
-                      value={formData.cuantosHermanos}
-                      onChange={handleChange}
-                      min="1"
-                      max="20"
-                    />
-                  </CCol>
-                  <CCol md={4}>
-                    <CFormLabel htmlFor="gradosHermanos">Grados de los hermanos</CFormLabel>
-                    <CFormInput
-                      type="text"
-                      id="gradosHermanos"
-                      name="gradosHermanos"
-                      value={formData.gradosHermanos}
-                      onChange={handleChange}
-                      placeholder="Ej: 3er grado, 5to grado"
-                    />
-                  </CCol>
-                </>
-              )}
-            </CRow>
+              </div>
+            ))}
+          </div>
+        </CCol>
+      </CRow>
 
-            <hr className="my-4" />
-            <h6 className="mb-3">Personas Autorizadas para Retirar al Estudiante</h6>
+      <CRow>
+        <CCol>
+          {renderStep()}
 
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel htmlFor="personaAutorizada1">Persona Autorizada 1</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="personaAutorizada1"
-                  name="personaAutorizada1"
-                  value={formData.personaAutorizada1}
-                  onChange={handleChange}
-                  placeholder="Nombre completo"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="cedulaAutorizada1">Cédula</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="cedulaAutorizada1"
-                  name="cedulaAutorizada1"
-                  value={formData.cedulaAutorizada1}
-                  onChange={handleChange}
-                  placeholder="Ej: V-12345678"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="parentescoAutorizada1">Parentesco</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="parentescoAutorizada1"
-                  name="parentescoAutorizada1"
-                  value={formData.parentescoAutorizada1}
-                  onChange={handleChange}
-                  placeholder="Ej: Tía, Abuela"
-                />
-              </CCol>
-            </CRow>
+          {/* Navigation Buttons */}
+          <div className="d-flex justify-content-between mt-4">
+            <CButton color="secondary" onClick={prevStep} disabled={currentStep === 1}>
+              <CIcon icon={cilArrowLeft} className="me-1" />
+              Anterior
+            </CButton>
 
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormLabel htmlFor="personaAutorizada2">Persona Autorizada 2</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="personaAutorizada2"
-                  name="personaAutorizada2"
-                  value={formData.personaAutorizada2}
-                  onChange={handleChange}
-                  placeholder="Nombre completo"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="cedulaAutorizada2">Cédula</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="cedulaAutorizada2"
-                  name="cedulaAutorizada2"
-                  value={formData.cedulaAutorizada2}
-                  onChange={handleChange}
-                  placeholder="Ej: V-12345678"
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormLabel htmlFor="parentescoAutorizada2">Parentesco</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="parentescoAutorizada2"
-                  name="parentescoAutorizada2"
-                  value={formData.parentescoAutorizada2}
-                  onChange={handleChange}
-                  placeholder="Ej: Tío, Primo"
-                />
-              </CCol>
-            </CRow>
-
-            <CCol xs={12} className="d-flex justify-content-between">
-              <CButton color="warning" onClick={prevStep}>
-                Atrás
-              </CButton>
-              <CButton color="info" onClick={nextStep}>
+            {currentStep < 6 ? (
+              <CButton color="primary" onClick={nextStep}>
                 Siguiente
+                <CIcon icon={cilArrowRight} className="ms-1" />
               </CButton>
-            </CCol>
-          </CCardBody>
-        </CCard>
-      )}
+            ) : (
+              <CButton color="success" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <CSpinner size="sm" className="me-2" />
+                    Registrando...
+                  </>
+                ) : (
+                  <>
+                    <CIcon icon={cilSave} className="me-1" />
+                    Registrar Estudiante
+                  </>
+                )}
+              </CButton>
+            )}
+          </div>
+        </CCol>
+      </CRow>
 
-      {/* Paso 6: Requisitos y envío final */}
-      {step === 6 && (
-        <CCard className="mb-4">
-          <CCardHeader className="bg-info text-white">
-            <h5 className="mb-0">
-              <CIcon icon={cilNotes} className="me-2" />
-              E. REQUISITOS DE INSCRIPCIÓN ENTREGADOS
-            </h5>
-          </CCardHeader>
-          <CCardBody>
-            <CForm onSubmit={handleSubmit} className="needs-validation" noValidate validated={validated}>
-              <CRow className="mb-3">
-                <CCol md={12}>
-                  <div className="table-responsive">
-                    <table className="table table-bordered">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Requisito</th>
-                          <th className="text-center" style={{ width: "100px" }}>
-                            Entregado
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>Acta de Nacimiento</td>
-                          <td className="text-center">
-                            <CFormCheck
-                              id="actaNacimiento"
-                              name="actaNacimiento"
-                              checked={formData.actaNacimiento}
-                              onChange={handleChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Tarjeta de Vacunas</td>
-                          <td className="text-center">
-                            <CFormCheck
-                              id="tarjetaVacunas"
-                              name="tarjetaVacunas"
-                              checked={formData.tarjetaVacunas}
-                              onChange={handleChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Fotos del Estudiante (3x4)</td>
-                          <td className="text-center">
-                            <CFormCheck
-                              id="fotosEstudiante"
-                              name="fotosEstudiante"
-                              checked={formData.fotosEstudiante}
-                              onChange={handleChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Fotos del Representante (3x4)</td>
-                          <td className="text-center">
-                            <CFormCheck
-                              id="fotosRepresentante"
-                              name="fotosRepresentante"
-                              checked={formData.fotosRepresentante}
-                              onChange={handleChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Copia de la Cédula de Identidad del Representante</td>
-                          <td className="text-center">
-                            <CFormCheck
-                              id="copiaCedulaRepresentante"
-                              name="copiaCedulaRepresentante"
-                              checked={formData.copiaCedulaRepresentante}
-                              onChange={handleChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>RIF del Representante</td>
-                          <td className="text-center">
-                            <CFormCheck
-                              id="rifRepresentante"
-                              name="rifRepresentante"
-                              checked={formData.rifRepresentante}
-                              onChange={handleChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Copia de la Cédula de Identidad de Personas Autorizadas</td>
-                          <td className="text-center">
-                            <CFormCheck
-                              id="copiaCedulaAutorizados"
-                              name="copiaCedulaAutorizados"
-                              checked={formData.copiaCedulaAutorizados}
-                              onChange={handleChange}
-                            />
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </CCol>
-              </CRow>
-
-              <CRow className="mb-3">
-                <CCol md={12}>
-                  <CFormLabel htmlFor="observaciones">Observaciones</CFormLabel>
-                  <CFormTextarea
-                    id="observaciones"
-                    name="observaciones"
-                    value={formData.observaciones}
-                    onChange={handleChange}
-                    rows={3}
-                    placeholder="Ingrese cualquier observación relevante..."
-                  />
-                </CCol>
-              </CRow>
-
-              <CCol xs={12} className="d-flex justify-content-between">
-                <CButton color="warning" onClick={prevStep}>
-                  Atrás
-                </CButton>
-                <CButton color="danger" type="button" onClick={resetForm}>
-                  Cancelar
-                </CButton>
-                <CButton color="success" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <CSpinner size="sm" className="me-2" />
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <CIcon icon={cilSave} className="me-2" />
-                      Guardar Inscripción
-                    </>
-                  )}
-                </CButton>
-              </CCol>
-            </CForm>
-          </CCardBody>
-        </CCard>
-      )}
-    </div>
+      {/* Toast Container */}
+      <CToaster ref={toasterRef} placement="top-end" />
+    </CContainer>
   )
 }
 

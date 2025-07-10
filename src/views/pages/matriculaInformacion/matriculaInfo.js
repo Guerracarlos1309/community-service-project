@@ -1,106 +1,229 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
 import {
   CCard,
   CCardBody,
   CCardHeader,
-  CTable,
-  CTableHead,
-  CTableRow,
-  CTableHeaderCell,
-  CTableBody,
-  CTableDataCell,
-  CBadge,
   CContainer,
   CSpinner,
   CAlert,
   CButton,
-  CFormSelect,
   CRow,
   CCol,
-  CInputGroup,
-  CInputGroupText,
-  CFormInput,
-  CNav,
-  CNavItem,
-  CNavLink,
-  CTabContent,
-  CTabPane,
+  CBadge,
+  CListGroup,
+  CListGroupItem,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CForm,
+  CFormLabel,
+  CFormSelect,
+  CFormTextarea,
+  CToast,
+  CToastHeader,
+  CToastBody,
+  CToaster,
 } from "@coreui/react"
 import CIcon from "@coreui/icons-react"
-import { cilSearch, cilPeople, cilSchool, cilUser, cilReload } from "@coreui/icons"
+import {
+  cilUser,
+  cilSchool,
+  cilPhone,
+  cilLocationPin,
+  cilCalendar,
+  cilPeople,
+  cilArrowLeft,
+  cilPencil,
+  cilTrash,
+  cilCheckCircle,
+  cilWarning,
+  cilReload,
+  cilPrint,
+} from "@coreui/icons"
 import { helpFetch } from "../../../api/helpFetch.js"
 
 const api = helpFetch()
 
-const MatriculasPorGrado = () => {
-  const [activeTab, setActiveTab] = useState("todos")
-  const [matriculas, setMatriculas] = useState([])
-  const [grados, setGrados] = useState([])
+const MatriculaInfo = () => {
+  const { id } = useParams()
+  const navigate = useNavigate()
+
+  // Estados principales
+  const [matricula, setMatricula] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [filtroGrado, setFiltroGrado] = useState("")
-  const [busqueda, setBusqueda] = useState("")
-  const [estadisticas, setEstadisticas] = useState({})
+
+  // Estados para modales
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [editLoading, setEditLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+
+  // Estados para formulario de edición
+  const [editForm, setEditForm] = useState({
+    repeater: false,
+    observation: "",
+    status: "active",
+  })
+
+  // Estados para datos auxiliares
+  const [grados, setGrados] = useState([])
+  const [secciones, setSecciones] = useState([])
+
+  // Toast system
+  const [toasts, setToasts] = useState([])
 
   useEffect(() => {
-    loadData()
-  }, [])
+    if (id) {
+      loadMatriculaInfo()
+      loadAuxiliaryData()
+    }
+  }, [id])
 
-  const loadData = async () => {
+  const loadMatriculaInfo = async () => {
     try {
       setLoading(true)
       setError(null)
-      console.log("🔄 Cargando datos de matrículas...")
+      console.log("🔄 Cargando información de matrícula:", id)
 
-      // Cargar matrículas y grados en paralelo
-      const [matriculasResponse, gradosResponse] = await Promise.all([
-        api.get("/api/matriculas"),
-        api.get("/api/matriculas/utils/grados"),
-      ])
+      const response = await api.get(`/api/matriculas/${id}`)
+      console.log("📥 Respuesta matrícula:", response)
 
-      console.log("📥 Respuesta matrículas:", matriculasResponse)
-      console.log("📥 Respuesta grados:", gradosResponse)
-
-      if (!matriculasResponse.error) {
-        setMatriculas(matriculasResponse.matriculas || [])
-        calcularEstadisticas(matriculasResponse.matriculas || [])
-        console.log("✅ Matrículas cargadas:", matriculasResponse.matriculas?.length || 0)
+      if (!response.error) {
+        setMatricula(response.matricula)
+        setEditForm({
+          repeater: response.matricula.repeater || false,
+          observation: response.matricula.observation || "",
+          status: response.matricula.status || "active",
+        })
+        console.log("✅ Matrícula cargada:", response.matricula)
       } else {
-        setError(matriculasResponse.msg || "Error al cargar matrículas")
-      }
-
-      if (!gradosResponse.error) {
-        setGrados(gradosResponse.grados || [])
-        console.log("✅ Grados cargados:", gradosResponse.grados?.length || 0)
+        setError(response.msg || "Error al cargar la información de la matrícula")
       }
     } catch (error) {
-      console.error("❌ Error cargando datos:", error)
-      setError("Error al cargar los datos")
+      console.error("❌ Error cargando matrícula:", error)
+      setError("Error al cargar la información de la matrícula")
     } finally {
       setLoading(false)
     }
   }
 
-  const calcularEstadisticas = (matriculasData) => {
-    const stats = {}
-    matriculasData.forEach((matricula) => {
-      const grado = matricula.grade_name || "Sin grado"
-      if (!stats[grado]) {
-        stats[grado] = {
-          total: 0,
-          masculino: 0,
-          femenino: 0,
-          repitientes: 0,
-        }
+  const loadAuxiliaryData = async () => {
+    try {
+      const [gradosResponse, seccionesResponse] = await Promise.all([
+        api.get("/api/matriculas/utils/grados"),
+        api.get("/api/matriculas/utils/docente-grados"),
+      ])
+
+      if (!gradosResponse.error) {
+        setGrados(gradosResponse.grados || [])
       }
-      stats[grado].total++
-      if (matricula.student_sex === "Masculino") stats[grado].masculino++
-      if (matricula.student_sex === "Femenino") stats[grado].femenino++
-      if (matricula.repeater) stats[grado].repitientes++
-    })
-    setEstadisticas(stats)
+
+      if (!seccionesResponse.error) {
+        setSecciones(seccionesResponse.docente_grados || [])
+      }
+    } catch (error) {
+      console.error("❌ Error cargando datos auxiliares:", error)
+    }
+  }
+
+  const showToast = (message, color = "success") => {
+    const newToast = {
+      id: Date.now(),
+      message,
+      color,
+    }
+    setToasts((prev) => [...prev, newToast])
+
+    // Auto remove toast after 3 seconds
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== newToast.id))
+    }, 3000)
+  }
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault()
+
+    try {
+      setEditLoading(true)
+      console.log("📝 Actualizando matrícula:", editForm)
+
+      const response = await api.put(
+        `/api/matriculas`,
+        {
+          body: editForm,
+        },
+        id,
+      )
+
+      console.log("📥 Respuesta actualización:", response)
+
+      if (!response.error) {
+        showToast("Matrícula actualizada exitosamente")
+        setShowEditModal(false)
+        loadMatriculaInfo() // Recargar datos
+      } else {
+        showToast(response.msg || "Error al actualizar la matrícula", "danger")
+      }
+    } catch (error) {
+      console.error("❌ Error actualizando matrícula:", error)
+      showToast("Error al actualizar la matrícula", "danger")
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      setDeleteLoading(true)
+      console.log("🗑️ Eliminando matrícula:", id)
+
+      const response = await api.delet("/api/matriculas", id)
+      console.log("📥 Respuesta eliminación:", response)
+
+      if (!response.error) {
+        showToast("Matrícula eliminada exitosamente")
+        setTimeout(() => {
+          navigate("/matriculas")
+        }, 1500)
+      } else {
+        showToast(response.msg || "Error al eliminar la matrícula", "danger")
+      }
+    } catch (error) {
+      console.error("❌ Error eliminando matrícula:", error)
+      showToast("Error al eliminar la matrícula", "danger")
+    } finally {
+      setDeleteLoading(false)
+      setShowDeleteModal(false)
+    }
+  }
+
+  const handlePrint = async () => {
+    try {
+      console.log("🖨️ Generando PDF de matrícula:", id)
+
+      const blob = await api.downloadFile(`/api/pdf/matricula/${id}`)
+
+      // Crear URL del blob y descargar
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `matricula_${matricula?.student_ci || id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      showToast("PDF generado exitosamente")
+    } catch (error) {
+      console.error("❌ Error generando PDF:", error)
+      showToast("Error al generar el PDF", "danger")
+    }
   }
 
   const formatDate = (dateString) => {
@@ -117,34 +240,26 @@ const MatriculasPorGrado = () => {
     return phone
   }
 
-  // Filtrar matrículas
-  const matriculasFiltradas = matriculas.filter((matricula) => {
-    const cumpleFiltroGrado = !filtroGrado || matricula.grade_name === filtroGrado
-    const cumpleBusqueda =
-      !busqueda ||
-      matricula.student_name?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      matricula.student_lastName?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      matricula.student_ci?.toLowerCase().includes(busqueda.toLowerCase())
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return "-"
+    const today = new Date()
+    const birth = new Date(birthDate)
+    let age = today.getFullYear() - birth.getFullYear()
+    const monthDiff = today.getMonth() - birth.getMonth()
 
-    return cumpleFiltroGrado && cumpleBusqueda
-  })
-
-  // Agrupar por grado
-  const matriculasPorGrado = matriculasFiltradas.reduce((acc, matricula) => {
-    const grado = matricula.grade_name || "Sin grado"
-    if (!acc[grado]) {
-      acc[grado] = []
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--
     }
-    acc[grado].push(matricula)
-    return acc
-  }, {})
+
+    return `${age} años`
+  }
 
   if (loading) {
     return (
       <CContainer>
         <div className="d-flex justify-content-center align-items-center" style={{ height: "400px" }}>
-          <CSpinner color="primary" size="lg" />
-          <span className="ms-2">Cargando matrículas...</span>
+          <CSpinner color="primary" />
+          <span className="ms-2">Cargando información de la matrícula...</span>
         </div>
       </CContainer>
     )
@@ -155,7 +270,7 @@ const MatriculasPorGrado = () => {
       <CContainer>
         <CAlert color="danger">
           <strong>Error:</strong> {error}
-          <CButton color="danger" variant="outline" size="sm" className="ms-2" onClick={loadData}>
+          <CButton color="danger" variant="outline" size="sm" className="ms-2" onClick={loadMatriculaInfo}>
             <CIcon icon={cilReload} className="me-1" />
             Reintentar
           </CButton>
@@ -164,225 +279,341 @@ const MatriculasPorGrado = () => {
     )
   }
 
+  if (!matricula) {
+    return (
+      <CContainer>
+        <CAlert color="warning">
+          <strong>Advertencia:</strong> No se encontró la matrícula solicitada.
+          <CButton color="primary" variant="outline" size="sm" className="ms-2" onClick={() => navigate("/matriculas")}>
+            <CIcon icon={cilArrowLeft} className="me-1" />
+            Volver a Matrículas
+          </CButton>
+        </CAlert>
+      </CContainer>
+    )
+  }
+
   return (
     <CContainer fluid>
-      <CCard>
-        <CCardHeader>
+      {/* Header */}
+      <CRow className="mb-4">
+        <CCol>
           <div className="d-flex justify-content-between align-items-center">
-            <h2 className="mb-0">
-              <CIcon icon={cilSchool} className="me-2" />
-              Matrículas por Grado - Año Escolar {new Date().getFullYear()}
-            </h2>
-            <CBadge color="info" size="lg">
-              Total: {matriculas.length} estudiantes
-            </CBadge>
-          </div>
-        </CCardHeader>
-        <CCardBody>
-          {/* Filtros */}
-          <CRow className="mb-4">
-            <CCol md={4}>
-              <CFormSelect
-                value={filtroGrado}
-                onChange={(e) => setFiltroGrado(e.target.value)}
-                aria-label="Filtrar por grado"
+            <div className="d-flex align-items-center">
+              <CButton
+                color="secondary"
+                variant="outline"
+                size="sm"
+                className="me-3"
+                onClick={() => navigate("/matriculas")}
               >
-                <option value="">Todos los grados</option>
-                {grados.map((grado) => (
-                  <option key={grado.id} value={grado.name}>
-                    {grado.name}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCol>
-            <CCol md={6}>
-              <CInputGroup>
-                <CInputGroupText>
-                  <CIcon icon={cilSearch} />
-                </CInputGroupText>
-                <CFormInput
-                  placeholder="Buscar por nombre, apellido o cédula..."
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                />
-              </CInputGroup>
-            </CCol>
-            <CCol md={2}>
-              <CButton color="primary" onClick={loadData} className="w-100">
-                <CIcon icon={cilReload} className="me-1" />
-                Actualizar
+                <CIcon icon={cilArrowLeft} className="me-1" />
+                Volver
               </CButton>
-            </CCol>
-          </CRow>
+              <h2 className="mb-0">
+                <CIcon icon={cilSchool} className="me-2" />
+                Información de Matrícula
+              </h2>
+            </div>
+            <div>
+              <CButton color="info" size="sm" className="me-2" onClick={handlePrint}>
+                <CIcon icon={cilPrint} className="me-1" />
+                Imprimir
+              </CButton>
+              <CButton color="warning" size="sm" className="me-2" onClick={() => setShowEditModal(true)}>
+                <CIcon icon={cilPencil} className="me-1" />
+                Editar
+              </CButton>
+              <CButton color="danger" size="sm" onClick={() => setShowDeleteModal(true)}>
+                <CIcon icon={cilTrash} className="me-1" />
+                Eliminar
+              </CButton>
+            </div>
+          </div>
+        </CCol>
+      </CRow>
 
-          {/* Pestañas */}
-          <CNav variant="tabs" role="tablist" className="mb-4">
-            <CNavItem>
-              <CNavLink
-                href="#"
-                active={activeTab === "todos"}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setActiveTab("todos")
-                }}
-              >
-                <CIcon icon={cilPeople} className="me-1" />
-                Todos los Estudiantes
-              </CNavLink>
-            </CNavItem>
-            <CNavItem>
-              <CNavLink
-                href="#"
-                active={activeTab === "estadisticas"}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setActiveTab("estadisticas")
-                }}
-              >
-                📊 Estadísticas
-              </CNavLink>
-            </CNavItem>
-          </CNav>
+      <CRow>
+        {/* Información del Estudiante */}
+        <CCol lg={6} className="mb-4">
+          <CCard>
+            <CCardHeader className="bg-primary text-white">
+              <h5 className="mb-0">
+                <CIcon icon={cilUser} className="me-2" />
+                Información del Estudiante
+              </h5>
+            </CCardHeader>
+            <CCardBody>
+              <CListGroup flush>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Cédula:</strong>
+                  <span>{matricula.student_ci || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Nombres:</strong>
+                  <span>{matricula.student_name || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Apellidos:</strong>
+                  <span>{matricula.student_lastName || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Fecha de Nacimiento:</strong>
+                  <span>{formatDate(matricula.student_birthday)}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Edad:</strong>
+                  <span>{calculateAge(matricula.student_birthday)}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Sexo:</strong>
+                  <CBadge color={matricula.student_sex === "Masculino" ? "primary" : "danger"}>
+                    {matricula.student_sex || "-"}
+                  </CBadge>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Lugar de Nacimiento:</strong>
+                  <span>{matricula.student_birthPlace || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Dirección:</strong>
+                  <span>{matricula.student_address || "-"}</span>
+                </CListGroupItem>
+              </CListGroup>
+            </CCardBody>
+          </CCard>
+        </CCol>
 
-          <CTabContent>
-            {/* Pestaña: Todos los estudiantes */}
-            <CTabPane visible={activeTab === "todos"}>
-              {Object.keys(matriculasPorGrado).length === 0 ? (
-                <CAlert color="info">
-                  <CIcon icon={cilUser} className="me-2" />
-                  No se encontraron matrículas con los filtros aplicados.
-                </CAlert>
-              ) : (
-                Object.entries(matriculasPorGrado)
-                  .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([grado, matriculasGrado]) => (
-                    <CCard key={grado} className="mb-4">
-                      <CCardHeader className="bg-info text-white">
-                        <h4 className="mb-0">
-                          {grado} ({matriculasGrado.length} estudiantes)
-                        </h4>
-                      </CCardHeader>
-                      <CCardBody className="p-0">
-                        <CTable striped hover responsive>
-                          <CTableHead>
-                            <CTableRow>
-                              <CTableHeaderCell>Cédula</CTableHeaderCell>
-                              <CTableHeaderCell>Apellidos y Nombres</CTableHeaderCell>
-                              <CTableHeaderCell>Sexo</CTableHeaderCell>
-                              <CTableHeaderCell>Sección</CTableHeaderCell>
-                              <CTableHeaderCell>Docente</CTableHeaderCell>
-                              <CTableHeaderCell>Representante</CTableHeaderCell>
-                              <CTableHeaderCell>Teléfono</CTableHeaderCell>
-                              <CTableHeaderCell>Estado</CTableHeaderCell>
-                              <CTableHeaderCell>Fecha Inscripción</CTableHeaderCell>
-                              <CTableHeaderCell>Acciones</CTableHeaderCell>
-                            </CTableRow>
-                          </CTableHead>
-                          <CTableBody>
-                            {matriculasGrado
-                              .sort((a, b) => {
-                                const apellidoA = a.student_lastName || ""
-                                const apellidoB = b.student_lastName || ""
-                                return apellidoA.localeCompare(apellidoB)
-                              })
-                              .map((matricula) => (
-                                <CTableRow key={matricula.id}>
-                                  <CTableDataCell>
-                                    <strong>{matricula.student_ci || "-"}</strong>
-                                  </CTableDataCell>
-                                  <CTableDataCell>
-                                    <div>
-                                      <strong>
-                                        {matricula.student_lastName}, {matricula.student_name}
-                                      </strong>
-                                      <br />
-                                      <small className="text-muted">{formatDate(matricula.student_birthday)}</small>
-                                    </div>
-                                  </CTableDataCell>
-                                  <CTableDataCell>
-                                    <CBadge color={matricula.student_sex === "Masculino" ? "primary" : "danger"}>
-                                      {matricula.student_sex === "Masculino" ? "M" : "F"}
-                                    </CBadge>
-                                  </CTableDataCell>
-                                  <CTableDataCell>{matricula.section_name || "-"}</CTableDataCell>
-                                  <CTableDataCell>
-                                    {matricula.teacher_name && matricula.teacher_lastName
-                                      ? `${matricula.teacher_name} ${matricula.teacher_lastName}`
-                                      : "-"}
-                                  </CTableDataCell>
-                                  <CTableDataCell>
-                                    {matricula.representative_name && matricula.representative_lastName
-                                      ? `${matricula.representative_name} ${matricula.representative_lastName}`
-                                      : "-"}
-                                  </CTableDataCell>
-                                  <CTableDataCell>{formatPhone(matricula.representative_phone)}</CTableDataCell>
-                                  <CTableDataCell>
-                                    <CBadge color={matricula.repeater ? "warning" : "success"}>
-                                      {matricula.repeater ? "Repitiente" : "Regular"}
-                                    </CBadge>
-                                  </CTableDataCell>
-                                  <CTableDataCell>{formatDate(matricula.registrationDate)}</CTableDataCell>
-                                  <CTableDataCell>
-                                    <CButton
-                                      color="info"
-                                      size="sm"
-                                      onClick={() => {
-                                        console.log("Ver detalles de matrícula:", matricula.id)
-                                        // Aquí puedes abrir un modal o navegar a la vista de detalles
-                                      }}
-                                    >
-                                      Ver
-                                    </CButton>
-                                  </CTableDataCell>
-                                </CTableRow>
-                              ))}
-                          </CTableBody>
-                        </CTable>
-                      </CCardBody>
-                    </CCard>
-                  ))
-              )}
-            </CTabPane>
+        {/* Información del Representante */}
+        <CCol lg={6} className="mb-4">
+          <CCard>
+            <CCardHeader className="bg-success text-white">
+              <h5 className="mb-0">
+                <CIcon icon={cilPeople} className="me-2" />
+                Información del Representante
+              </h5>
+            </CCardHeader>
+            <CCardBody>
+              <CListGroup flush>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Cédula:</strong>
+                  <span>{matricula.representative_ci || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Nombres:</strong>
+                  <span>{matricula.representative_name || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Apellidos:</strong>
+                  <span>{matricula.representative_lastName || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Teléfono:</strong>
+                  <span>
+                    <CIcon icon={cilPhone} className="me-1" />
+                    {formatPhone(matricula.representative_phone)}
+                  </span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Email:</strong>
+                  <span>{matricula.representative_email || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Dirección:</strong>
+                  <span>
+                    <CIcon icon={cilLocationPin} className="me-1" />
+                    {matricula.representative_address || "-"}
+                  </span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Lugar de Trabajo:</strong>
+                  <span>{matricula.representative_workplace || "-"}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Profesión:</strong>
+                  <span>{matricula.representative_profesion || "-"}</span>
+                </CListGroupItem>
+              </CListGroup>
+            </CCardBody>
+          </CCard>
+        </CCol>
 
-            {/* Pestaña: Estadísticas */}
-            <CTabPane visible={activeTab === "estadisticas"}>
-              <CRow>
-                {Object.entries(estadisticas).map(([grado, stats]) => (
-                  <CCol md={6} lg={4} key={grado} className="mb-4">
-                    <CCard>
-                      <CCardHeader className="bg-primary text-white">
-                        <h5 className="mb-0">{grado}</h5>
-                      </CCardHeader>
-                      <CCardBody>
-                        <div className="d-flex justify-content-between mb-2">
-                          <span>Total estudiantes:</span>
-                          <CBadge color="info" size="lg">
-                            {stats.total}
-                          </CBadge>
-                        </div>
-                        <div className="d-flex justify-content-between mb-2">
-                          <span>Masculino:</span>
-                          <CBadge color="primary">{stats.masculino}</CBadge>
-                        </div>
-                        <div className="d-flex justify-content-between mb-2">
-                          <span>Femenino:</span>
-                          <CBadge color="danger">{stats.femenino}</CBadge>
-                        </div>
-                        <div className="d-flex justify-content-between">
-                          <span>Repitientes:</span>
-                          <CBadge color="warning">{stats.repitientes}</CBadge>
-                        </div>
-                      </CCardBody>
-                    </CCard>
-                  </CCol>
-                ))}
-              </CRow>
-            </CTabPane>
-          </CTabContent>
-        </CCardBody>
-      </CCard>
+        {/* Información Académica */}
+        <CCol lg={6} className="mb-4">
+          <CCard>
+            <CCardHeader className="bg-info text-white">
+              <h5 className="mb-0">
+                <CIcon icon={cilSchool} className="me-2" />
+                Información Académica
+              </h5>
+            </CCardHeader>
+            <CCardBody>
+              <CListGroup flush>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Grado:</strong>
+                  <CBadge color="info" size="lg">
+                    {matricula.grade_name || "-"}
+                  </CBadge>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Sección:</strong>
+                  <CBadge color="secondary">{matricula.section_name || "-"}</CBadge>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Docente:</strong>
+                  <span>
+                    {matricula.teacher_name && matricula.teacher_lastName
+                      ? `${matricula.teacher_name} ${matricula.teacher_lastName}`
+                      : "-"}
+                  </span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Año Escolar:</strong>
+                  <span>{matricula.school_year || new Date().getFullYear()}</span>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Estado:</strong>
+                  <CBadge color={matricula.repeater ? "warning" : "success"}>
+                    {matricula.repeater ? "Repitiente" : "Regular"}
+                  </CBadge>
+                </CListGroupItem>
+                <CListGroupItem className="d-flex justify-content-between align-items-center">
+                  <strong>Fecha de Inscripción:</strong>
+                  <span>
+                    <CIcon icon={cilCalendar} className="me-1" />
+                    {formatDate(matricula.registrationDate)}
+                  </span>
+                </CListGroupItem>
+              </CListGroup>
+            </CCardBody>
+          </CCard>
+        </CCol>
+
+        {/* Observaciones */}
+        <CCol lg={6} className="mb-4">
+          <CCard>
+            <CCardHeader className="bg-warning text-dark">
+              <h5 className="mb-0">Observaciones</h5>
+            </CCardHeader>
+            <CCardBody>
+              <p className="mb-0">{matricula.observation || "Sin observaciones registradas."}</p>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
+      {/* Modal de Edición */}
+      <CModal visible={showEditModal} onClose={() => setShowEditModal(false)} size="lg">
+        <CModalHeader>
+          <CModalTitle>Editar Matrícula</CModalTitle>
+        </CModalHeader>
+        <CForm onSubmit={handleEditSubmit}>
+          <CModalBody>
+            <CRow>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Estado del Estudiante</CFormLabel>
+                <CFormSelect
+                  value={editForm.repeater ? "repeater" : "regular"}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      repeater: e.target.value === "repeater",
+                    }))
+                  }
+                  required
+                >
+                  <option value="regular">Regular</option>
+                  <option value="repeater">Repitiente</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={6} className="mb-3">
+                <CFormLabel>Estado de la Matrícula</CFormLabel>
+                <CFormSelect
+                  value={editForm.status}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      status: e.target.value,
+                    }))
+                  }
+                  required
+                >
+                  <option value="active">Activa</option>
+                  <option value="inactive">Inactiva</option>
+                  <option value="transferred">Trasladado</option>
+                  <option value="withdrawn">Retirado</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={12} className="mb-3">
+                <CFormLabel>Observaciones</CFormLabel>
+                <CFormTextarea
+                  rows={4}
+                  value={editForm.observation}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      observation: e.target.value,
+                    }))
+                  }
+                  placeholder="Ingrese observaciones sobre la matrícula..."
+                />
+              </CCol>
+            </CRow>
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setShowEditModal(false)}>
+              Cancelar
+            </CButton>
+            <CButton color="primary" type="submit" disabled={editLoading}>
+              {editLoading ? <CSpinner size="sm" className="me-2" /> : null}
+              Guardar Cambios
+            </CButton>
+          </CModalFooter>
+        </CForm>
+      </CModal>
+
+      {/* Modal de Confirmación de Eliminación */}
+      <CModal visible={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
+        <CModalHeader>
+          <CModalTitle>Confirmar Eliminación</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <p>
+            ¿Está seguro que desea eliminar la matrícula de{" "}
+            <strong>
+              {matricula.student_name} {matricula.student_lastName}
+            </strong>
+            ?
+          </p>
+          <CAlert color="danger">
+            <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+          </CAlert>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancelar
+          </CButton>
+          <CButton color="danger" onClick={handleDelete} disabled={deleteLoading}>
+            {deleteLoading ? <CSpinner size="sm" className="me-2" /> : null}
+            Eliminar
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      {/* Toast Container */}
+      <CToaster placement="top-end">
+        {toasts.map((toast) => (
+          <CToast key={toast.id} autohide delay={3000} visible>
+            <CToastHeader closeButton>
+              <CIcon icon={toast.color === "success" ? cilCheckCircle : cilWarning} className="me-2" />
+              <strong className="me-auto">{toast.color === "success" ? "Éxito" : "Error"}</strong>
+            </CToastHeader>
+            <CToastBody>{toast.message}</CToastBody>
+          </CToast>
+        ))}
+      </CToaster>
     </CContainer>
   )
 }
 
-export default MatriculasPorGrado
+export default MatriculaInfo
