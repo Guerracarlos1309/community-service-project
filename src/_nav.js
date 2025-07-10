@@ -29,8 +29,14 @@ const _nav = [
 
   {
     component: CNavItem,
-    name: 'Registro Estudiantil',
+    name: 'Registro',
     to: '/registro',
+    icon: <CIcon icon={cibVerizon} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Registro Estudiante',
+    to: '/registroEstudiante',
     icon: <CIcon icon={cibVerizon} customClassName="nav-icon" />,
   },
   {
