@@ -37,6 +37,7 @@ const Docente = () => {
   const [docenteToDelete, setDocenteToDelete] = useState(null)
   const [visibleDeleteConfirm, setVisibleDeleteConfirm] = useState(false)
   const [data, setData] = useState([])
+  const [selectedAction, setSelectedAction] = useState('')
 
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [downloadingPersonalPdf, setDownloadingPersonalPdf] = useState({})
@@ -54,21 +55,14 @@ const Docente = () => {
         setLoadingData(true)
         setError(null)
 
-        console.log('🔄 Iniciando carga de todos los datos...')
-
         // Cargar parroquias y cargos PRIMERO
         const [parroquiasData, cargosData] = await Promise.all([getParroquias(), getCargos()])
-
-        console.log('📍 Parroquias obtenidas:', parroquiasData)
-        console.log('👔 Cargos obtenidos:', cargosData)
 
         setParroquias(parroquiasData)
         setCargos(cargosData)
 
         // LUEGO cargar docentes
         await fetchDocentes()
-
-        console.log('✅ Todos los datos cargados correctamente')
       } catch (error) {
         console.error('❌ Error cargando datos:', error)
         setError('Error al cargar los datos iniciales')
@@ -82,11 +76,9 @@ const Docente = () => {
 
   const fetchDocentes = async () => {
     try {
-      console.log('🔄 Cargando docentes...')
       const response = await api.get('/api/personal')
 
       if (!response.error) {
-        console.log('✅ Docentes cargados:', response.personal)
         setData(response.personal)
       } else {
         console.error('❌ Error al obtener docentes:', response)
@@ -100,14 +92,9 @@ const Docente = () => {
 
   const getParroquias = async () => {
     try {
-      console.log('🔄 Obteniendo parroquias...')
       const response = await api.get('/api/personal/utils/parroquias')
 
-      console.log('📍 Response RAW de parroquias:', response)
-
       if (!response.error && response.parroquias) {
-        console.log('📍 Array de parroquias recibido:', response.parroquias)
-
         if (Array.isArray(response.parroquias)) {
           const parroquiasFormateadas = response.parroquias.map((parroquia, index) => {
             console.log(`📍 Procesando parroquia ${index}:`, parroquia)
@@ -119,7 +106,6 @@ const Docente = () => {
             }
           })
 
-          console.log('✅ Parroquias formateadas:', parroquiasFormateadas)
           setParroquias(parroquiasFormateadas)
           return parroquiasFormateadas
         } else {
@@ -141,10 +127,7 @@ const Docente = () => {
 
   const getCargos = async () => {
     try {
-      console.log('🔄 Obteniendo cargos...')
       const response = await api.get('/api/personal/utils/roles')
-
-      console.log('👔 Response completo de cargos:', response)
 
       if (!response.error && Array.isArray(response.roles)) {
         const cargosFormateados = response.roles.map((cargo) => {
@@ -156,7 +139,6 @@ const Docente = () => {
           }
         })
 
-        console.log('✅ Cargos formateados:', cargosFormateados)
         return cargosFormateados
       } else {
         console.error('❌ Error en respuesta de cargos:', response)
@@ -184,18 +166,11 @@ const Docente = () => {
 
   // FUNCIÓN MEJORADA PARA OBTENER NOMBRE DE CARGO
   const getCargoName = (cargoId) => {
-    console.log('🔍 === DEBUGGING CARGO ===')
-    console.log('🔍 ID recibido:', cargoId)
-    console.log('🔍 Tipo del ID:', typeof cargoId)
-    console.log('🔍 Cargos disponibles:', cargos)
-
     if (!cargoId && cargoId !== 0) {
-      console.log('❌ No hay ID de cargo')
       return 'No especificado'
     }
 
     if (!cargos || cargos.length === 0) {
-      console.log('❌ No hay cargos cargados')
       return 'Cargando...'
     }
 
@@ -205,9 +180,6 @@ const Docente = () => {
       cargos.find((c) => c.value == cargoId) ||
       cargos.find((c) => String(c.value) === String(cargoId)) ||
       cargos.find((c) => Number(c.value) === Number(cargoId))
-
-    console.log('✅ Cargo encontrado:', cargoEncontrado)
-    console.log('🔍 === FIN DEBUGGING CARGO ===')
 
     return cargoEncontrado ? cargoEncontrado.label : `No encontrado (ID: ${cargoId})`
   }
@@ -226,7 +198,7 @@ const Docente = () => {
 
   const handleNewDocenteChange = (e) => {
     const { name, value } = e.target
-    console.log(`📝 Cambiando ${name}:`, value)
+
     setNewDocente((prev) => ({
       ...prev,
       [name]: value,
@@ -250,9 +222,6 @@ const Docente = () => {
     }
 
     try {
-      console.log('📤 === CREANDO DOCENTE ===')
-      console.log('📤 Datos del formulario:', newDocente)
-
       const dataToSend = {
         name: newDocente.name.trim(),
         lastName: newDocente.lastName.trim(),
@@ -265,14 +234,9 @@ const Docente = () => {
         parish: Number(newDocente.parish),
       }
 
-      console.log('📤 Datos a enviar:', dataToSend)
-      console.log('📤 Tipo de parish:', typeof dataToSend.parish)
-
       const response = await api.post('/api/personal/', {
         body: dataToSend,
       })
-
-      console.log('📥 Response del servidor:', response)
 
       if (response.error) {
         console.error('❌ Error del servidor:', response.msg || response)
@@ -314,9 +278,7 @@ const Docente = () => {
         String(p.value) === String(docente.parish),
     )
 
-    console.log('👁️ ¿Parroquia existe en array?', !!parroquiaExiste)
     if (parroquiaExiste) {
-      console.log('👁️ Parroquia encontrada:', parroquiaExiste)
     }
 
     setDocenteToView(docente)
@@ -362,14 +324,20 @@ const Docente = () => {
 
   const handleUpdateDocente = async () => {
     try {
-      const response = await api.put(`/api/personal/${docenteToEdit.id}`, {
-        body: {
-          ...editDocente,
-          idRole: Number(editDocente.idRole),
-          parish: Number(newDocente.parish),
-        },
-      })
+      const bodyPayload = {
+        ...editDocente,
+        idRole: Number(editDocente.idRole),
+        parishID: Number(editDocente.parish),
+      }
+      delete bodyPayload.parish
+
+      console.log('Payload a enviar:', bodyPayload)
+
+      const response = await api.put('/api/personal', { body: bodyPayload }, docenteToEdit.id)
+      console.log('Respuesta backend:', response)
+
       if (response.error) {
+        console.error('Error en respuesta:', response.error)
         return
       }
 
@@ -425,7 +393,7 @@ const Docente = () => {
 
   const handleDownloadPdf = async () => {
     try {
-      const blob = await api.downloadFile('/api/pdf/personal/teachers/list') // <- tu endpoint
+      const blob = await api.downloadFile('/api/pdf/personal/list/role/1') // <- tu endpoint
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -438,10 +406,55 @@ const Docente = () => {
       console.error('Error descargando PDF:', error)
     }
   }
+  const handleDownloadPdfAll = async () => {
+    try {
+      const blob = await api.downloadFile('/api/pdf/personal/list/all') // <- tu endpoint
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'Listado_Personal.pdf')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF:', error)
+    }
+  }
+  const handleDownloadPdf2 = async () => {
+    try {
+      const blob = await api.downloadFile('/api/pdf/personal/list/role/2') // <- tu endpoint
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'Listado_Administradores.pdf')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF:', error)
+    }
+  }
+  const handleDownloadPdf3 = async () => {
+    try {
+      const blob = await api.downloadFile('/api/pdf/personal/list/role/3') // <- tu endpoint
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'Listado_Mantenimiento.pdf')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF:', error)
+    }
+  }
 
   const handleDownloadDocentePdf = async (id, nombre) => {
     try {
-      const blob = await api.downloadFile(`/api/pdf/personal/teacher/${id}/details`)
+      const blob = await api.downloadFile(`/api/pdf/personal/${id}/details`)
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -455,6 +468,25 @@ const Docente = () => {
     }
   }
 
+  const handleSelectAction = () => {
+    switch (selectedAction) {
+      case 'docentes':
+        handleDownloadPdf()
+        break
+      case 'personal':
+        handleDownloadPdfAll()
+        break
+      case 'mantenimiento':
+        handleDownloadPdf3()
+        break
+      case 'administradores':
+        handleDownloadPdf2()
+        break
+      default:
+        break
+    }
+  }
+
   return (
     <div className="mp-4">
       {error && (
@@ -463,25 +495,37 @@ const Docente = () => {
         </CAlert>
       )}
 
-      <div className="mb-4 position-relative">
-        <h2
-          className="text-center position-relative pb-3"
-          style={{
-            fontFamily: 'Arial, sans-serif',
-            borderBottom: '3px solid',
-            borderImage: 'linear-gradient(to right, transparent, #4a4a4a, transparent) 1',
-          }}
-        >
-          Docentes
-        </h2>
-      </div>
+      <div className="d-flex justify-content-between align-items-center flex-wrap mb-4 gap-3">
+        {/* Botón izquierdo */}
+        <CButton color="info" className="text-white" onClick={() => setVisibleNewDocente(true)}>
+          Crear docente
+        </CButton>
 
-      <CButton color="info text-white" className="mb-3" onClick={() => setVisibleNewDocente(true)}>
-        Crear docente
-      </CButton>
-      <CButton color="success text-white" className="mb-3 ms-2" onClick={handleDownloadPdf}>
-        Imprimir Lista docentes
-      </CButton>
+        {/* Select + Botón derecho */}
+        <div className="d-flex align-items-center gap-2">
+          <CFormSelect
+            value={selectedAction}
+            onChange={(e) => setSelectedAction(e.target.value)}
+            className="text-capitalize bg-info text-white border-0 rounded-2 shadow-sm"
+            style={{ minWidth: '250px' }}
+          >
+            <option value="">Seleccionar acción</option>
+            <option value="docentes">Imprimir Lista docentes</option>
+            <option value="personal">Imprimir Lista personal</option>
+            <option value="mantenimiento">Imprimir personal de Mantenimiento</option>
+            <option value="administradores">Imprimir Lista administradores</option>
+          </CFormSelect>
+
+          <CButton
+            color="success"
+            className="text-white"
+            disabled={!selectedAction}
+            onClick={handleSelectAction}
+          >
+            Ejecutar
+          </CButton>
+        </div>
+      </div>
 
       <CCard>
         <CCardHeader className="bg-info text-white">
