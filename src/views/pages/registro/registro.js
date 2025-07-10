@@ -77,7 +77,7 @@ const RegistroEstudiantil = () => {
 
   const showToast = (message, color = "success") => {
     const toast = (
-      <CToast autohide delay={3000}>
+      <CToast autohide delay={5000}>
         <CToastHeader closeButton>
           <CIcon icon={color === "success" ? cilCheckCircle : cilWarning} className="me-2" />
           <strong className="me-auto">{color === "success" ? "Éxito" : "Error"}</strong>
@@ -121,8 +121,6 @@ const RegistroEstudiantil = () => {
       if (!formData.student.sex) newErrors["student.sex"] = "El sexo es requerido"
       if (!formData.student.birthday) newErrors["student.birthday"] = "La fecha de nacimiento es requerida"
       if (!formData.student.placeBirth) newErrors["student.placeBirth"] = "El lugar de nacimiento es requerido"
-      //if (!formData.student.address) newErrors["student.address"] = "La dirección es requerida"
-      //if (!formData.student.livesWith) newErrors["student.livesWith"] = "Con quién vive es requerido"
     }
 
     if (step === 2) {
@@ -134,7 +132,6 @@ const RegistroEstudiantil = () => {
       if (!formData.representative.telephoneNumber)
         newErrors["representative.telephoneNumber"] = "El teléfono es requerido"
       if (!formData.representative.roomAdress) newErrors["representative.roomAdress"] = "La dirección es requerida"
-      if (!formData.representative.relationship) newErrors["representative.relationship"] = "El parentesco es requerido"
     }
 
     setErrors(newErrors)
@@ -158,13 +155,14 @@ const RegistroEstudiantil = () => {
       setSubmitting(true)
       console.log("📝 Enviando registro estudiantil:", formData)
 
-      const response = await api.post("/api/student/registry", {
+      const response = await api.post("/api/students/registry", {
         body: formData,
       })
 
       console.log("📥 Respuesta registro:", response)
 
-      if (!response.error) {
+      // Si la respuesta es exitosa
+      if (response.ok !== false) {
         showToast("Estudiante registrado exitosamente")
 
         // Resetear formulario después de un delay
@@ -210,11 +208,22 @@ const RegistroEstudiantil = () => {
           setErrors({})
         }, 2000)
       } else {
+        // Si hay error en la respuesta
         showToast(response.msg || "Error al registrar el estudiante", "danger")
       }
     } catch (error) {
       console.error("❌ Error en registro:", error)
-      showToast("Error al registrar el estudiante", "danger")
+
+      // Manejar diferentes tipos de errores
+      let errorMessage = "Error al registrar el estudiante"
+
+      if (error.msg) {
+        errorMessage = error.msg
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      showToast(errorMessage, "danger")
     } finally {
       setSubmitting(false)
     }
@@ -535,10 +544,10 @@ const RegistroEstudiantil = () => {
                     onChange={(e) => handleInputChange("representative", "maritalStat", e.target.value)}
                   >
                     <option value="">Seleccione</option>
-                    <option value="Soltero/a">Soltero/a</option>
-                    <option value="Casado/a">Casado/a</option>
-                    <option value="Divorciado/a">Divorciado/a</option>
-                    <option value="Viudo/a">Viudo/a</option>
+                    <option value="Soltero">Soltero/a</option>
+                    <option value="Casado">Casado/a</option>
+                    <option value="Divorciado">Divorciado/a</option>
+                    <option value="Viudo">Viudo/a</option>
                     <option value="Unión Libre">Unión Libre</option>
                   </CFormSelect>
                 </CCol>
@@ -573,27 +582,6 @@ const RegistroEstudiantil = () => {
                 </CCol>
 
                 <CCol md={6} className="mb-3">
-                  <CFormLabel>Parentesco *</CFormLabel>
-                  <CFormSelect
-                    value={formData.representative.relationship}
-                    onChange={(e) => handleInputChange("representative", "relationship", e.target.value)}
-                    invalid={!!errors["representative.relationship"]}
-                  >
-                    <option value="">Seleccione</option>
-                    <option value="Padre">Padre</option>
-                    <option value="Madre">Madre</option>
-                    <option value="Abuelo/a">Abuelo/a</option>
-                    <option value="Tío/a">Tío/a</option>
-                    <option value="Hermano/a">Hermano/a</option>
-                    <option value="Tutor Legal">Tutor Legal</option>
-                    <option value="Otro">Otro</option>
-                  </CFormSelect>
-                  {errors["representative.relationship"] && (
-                    <div className="invalid-feedback">{errors["representative.relationship"]}</div>
-                  )}
-                </CCol>
-
-                <CCol md={6} className="mb-3">
                   <CFormLabel>Ocupación</CFormLabel>
                   <CFormInput
                     type="text"
@@ -610,16 +598,6 @@ const RegistroEstudiantil = () => {
                     value={formData.representative.workPlace}
                     onChange={(e) => handleInputChange("representative", "workPlace", e.target.value)}
                     placeholder="Lugar de trabajo"
-                  />
-                </CCol>
-
-                <CCol md={6} className="mb-3">
-                  <CFormLabel>Teléfono del Trabajo</CFormLabel>
-                  <CFormInput
-                    type="tel"
-                    value={formData.representative.jobNumber}
-                    onChange={(e) => handleInputChange("representative", "jobNumber", e.target.value)}
-                    placeholder="Teléfono del trabajo"
                   />
                 </CCol>
 
