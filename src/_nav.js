@@ -9,6 +9,8 @@ import {
   cilMedicalCross,
   cilNotes,
   cilThumbUp,
+  cilUserX,
+  cilUser,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -44,7 +46,7 @@ const _nav = [
     component: CNavItem,
     name: 'Estudiantes',
     to: '/estudiantes',
-    icon: <CIcon icon={cilThumbUp} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
   },
   {
     component: CNavTitle,
@@ -58,7 +60,7 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Docentes',
+    name: 'Personal ',
     to: '/docentes ',
     icon: <CIcon icon={cilEducation} customClassName="nav-icon" />,
   },

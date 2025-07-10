@@ -292,7 +292,7 @@ const EstudianteList = () => {
   }
 
   // Función para actualizar estudiante - CORREGIDA
-  const handleUpdateEstudiante = async () => {
+  const handleUpdateEstudiante = async (student) => {
     try {
       setUpdateLoading(true)
       setError(null)
@@ -364,6 +364,9 @@ const EstudianteList = () => {
         setError('No hay cambios para guardar')
         return
       }
+
+      if (student.sex === 'Femenino') student.sex = 'F'
+      if (student.sex === 'Masculino') student.sex = 'M'
 
       console.log('📤 Datos a enviar:', dataToUpdate)
 
@@ -458,6 +461,10 @@ const EstudianteList = () => {
               <CIcon icon={cilReload} className="me-1" />
               Actualizar
             </CButton>
+            <CButton color="success" variant="outline">
+              <CIcon icon={cilReload} className="me-1" />
+              Imprimir PDF estudiantes
+            </CButton>
           </div>
         </CCardHeader>
 
@@ -476,29 +483,7 @@ const EstudianteList = () => {
                 />
               </CInputGroup>
             </CCol>
-            <CCol md={2}>
-              <CFormSelect value={selectedGrado} onChange={(e) => setSelectedGrado(e.target.value)}>
-                <option value="">Todos los grados</option>
-                {grados.map((grado) => (
-                  <option key={grado} value={grado}>
-                    {grado}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCol>
-            <CCol md={2}>
-              <CFormSelect
-                value={selectedSeccion}
-                onChange={(e) => setSelectedSeccion(e.target.value)}
-              >
-                <option value="">Todas las secciones</option>
-                {secciones.map((seccion) => (
-                  <option key={seccion} value={seccion}>
-                    {seccion}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCol>
+
             <CCol md={4} className="text-end">
               <small className="text-muted">
                 {currentEstudiantes.length} de {filteredEstudiantes.length} estudiantes
