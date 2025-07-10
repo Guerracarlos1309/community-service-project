@@ -25,7 +25,7 @@ import {
   CPaginationItem,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilSearch, cilPencil, cilTrash, cilReload, cilPlus } from '@coreui/icons'
+import { cilSearch, cilPencil, cilTrash, cilReload } from '@coreui/icons'
 import { helpFetch } from '../../../api/helpFetch.js'
 import MatriculaInfo from '../../pages/matriculaInformacion/matriculaInfo.js'
 
@@ -53,6 +53,42 @@ const MatriculaList = () => {
   // Estados para datos de utilidad
   const [periodos, setPeriodos] = useState([])
 
+  // Función para asignar colores a los grados
+  const getGradeColor = (gradeName) => {
+    if (!gradeName) return 'secondary'
+
+    const gradeColors = {
+      '1er': 'primary',
+      '2do': 'success',
+      '3er': 'info',
+      '4to': 'warning',
+      '5to': 'danger',
+      '6to': 'dark',
+      Preescolar: 'warning',
+      Inicial: 'light',
+      Primer: 'primary',
+      Segundo: 'success',
+      Tercer: 'info',
+      Cuarto: 'warning',
+      Quinto: 'danger',
+      Sexto: 'dark',
+    }
+
+    // Buscar coincidencia exacta primero
+    if (gradeColors[gradeName]) {
+      return gradeColors[gradeName]
+    }
+
+    // Buscar coincidencia parcial
+    for (const [key, color] of Object.entries(gradeColors)) {
+      if (gradeName.toLowerCase().includes(key.toLowerCase())) {
+        return color
+      }
+    }
+
+    // Color por defecto
+  }
+
   useEffect(() => {
     loadMatriculas()
     loadPeriodos()
@@ -66,14 +102,11 @@ const MatriculaList = () => {
     try {
       setLoading(true)
       setError(null)
-
       console.log('🔄 Cargando matrículas...')
-
-      const response = await api.get('/api/matriculas')
-
+      const response = await api.get('/api/matriculas/all')
       if (response.ok) {
         console.log('✅ Matrículas cargadas:', response.matriculas)
-        setMatriculas(response.matriculas || [])
+        setMatriculas(response.inscriptions || [])
       } else {
         console.error('❌ Error al cargar matrículas:', response)
         setError(response.msg || 'Error al cargar matrículas')
@@ -103,8 +136,8 @@ const MatriculaList = () => {
       filtered = filtered.filter(
         (matricula) =>
           matricula.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          matricula.estudent_lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          matricula.estudent_school_id?.toLowerCase().includes(searchTerm.toLowerCase()),
+          matricula.student_lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          matricula.student_ci?.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
 
@@ -130,9 +163,7 @@ const MatriculaList = () => {
     try {
       setError(null)
       setSuccess(null)
-
       const response = await api.delet('/api/matriculas', matriculaId)
-
       if (response.ok) {
         setSuccess('Matrícula eliminada exitosamente')
         await loadMatriculas()
@@ -177,7 +208,7 @@ const MatriculaList = () => {
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
-        <CSpinner color="primary" size="lg" />
+        <CSpinner color="primary" size="sm" />
         <span className="ms-2">Cargando matrículas...</span>
       </div>
     )
@@ -190,7 +221,6 @@ const MatriculaList = () => {
           <strong>Error:</strong> {error}
         </CAlert>
       )}
-
       {success && (
         <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
           <strong>Éxito:</strong> {success}
@@ -223,19 +253,7 @@ const MatriculaList = () => {
                 />
               </CInputGroup>
             </CCol>
-            <CCol md={4}>
-              <CFormSelect
-                value={selectedPeriodo}
-                onChange={(e) => setSelectedPeriodo(e.target.value)}
-              >
-                <option value="">Todos los períodos</option>
-                {periodos.map((period) => (
-                  <option key={period} value={period}>
-                    {period}
-                  </option>
-                ))}
-              </CFormSelect>
-            </CCol>
+
             <CCol md={2} className="text-end">
               <small className="text-muted">
                 {currentMatriculas.length} de {filteredMatriculas.length} matrículas
@@ -251,7 +269,6 @@ const MatriculaList = () => {
                 <CTableHeaderCell>Cédula Escolar</CTableHeaderCell>
                 <CTableHeaderCell>Grado</CTableHeaderCell>
                 <CTableHeaderCell>Sección</CTableHeaderCell>
-                <CTableHeaderCell>Período</CTableHeaderCell>
                 <CTableHeaderCell>Fecha Inscripción</CTableHeaderCell>
                 <CTableHeaderCell>Acciones</CTableHeaderCell>
               </CTableRow>
@@ -265,11 +282,27 @@ const MatriculaList = () => {
                         {matricula.student_name} {matricula.student_lastname}
                       </strong>
                     </CTableDataCell>
-                    <CTableDataCell>{matricula.student_school_id || '-'}</CTableDataCell>
-                    <CTableDataCell>{matricula.grade_name || '-'}</CTableDataCell>
-                    <CTableDataCell>{matricula.section_name || '-'}</CTableDataCell>
+                    <CTableDataCell>{matricula.student_ci || '-'}</CTableDataCell>
                     <CTableDataCell>
-                      <CBadge color="info">{matricula.period}</CBadge>
+                      <CBadge
+                        color={getGradeColor(matricula.grade_name)}
+                        style={{
+                          border: '2px solid',
+                          borderColor: 'rgba(0,0,0,0.2)',
+                          fontWeight: 'bold',
+                          fontSize: '0.85em',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        }}
+                      >
+                        {matricula.grade_name || '-'}
+                      </CBadge>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <CBadge color="secondary" style={{ padding: '4px 8px' }}>
+                        {matricula.section_name || '-'}
+                      </CBadge>
                     </CTableDataCell>
                     <CTableDataCell>{formatDate(matricula.registrationDate)}</CTableDataCell>
                     <CTableDataCell>
@@ -282,7 +315,6 @@ const MatriculaList = () => {
                         >
                           <CIcon icon={cilPencil} />
                         </CButton>
-
                         <CButton
                           color="danger"
                           variant="outline"
@@ -297,7 +329,7 @@ const MatriculaList = () => {
                 ))
               ) : (
                 <CTableRow>
-                  <CTableDataCell colSpan={7} className="text-center text-muted">
+                  <CTableDataCell colSpan={6} className="text-center text-muted">
                     {searchTerm || selectedPeriodo
                       ? 'No se encontraron matrículas que coincidan con los filtros'
                       : 'No hay matrículas registradas'}
