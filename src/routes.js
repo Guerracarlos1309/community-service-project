@@ -12,6 +12,9 @@ const profile = React.lazy(() => import('./views/pages/profile/profile.js'))
 const infoMatricula = React.lazy(
   () => import('./views/pages/matriculaInformacion/matriculaInfo.js'),
 )
+const registroEstudiantil = React.lazy(
+  () => import('./views/pages/registroEstudiante/registroEstudiante.js'),
+)
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -25,6 +28,7 @@ const routes = [
   { path: '/register', name: 'Register', element: register },
   { path: '/profile', name: 'Profile', element: profile },
   { path: '/infoMatricula/:id', name: 'Información de estudiante', element: infoMatricula },
+  { path: '/registroEstudiantil', name: 'Registro Estudiantil', element: registroEstudiantil },
 ]
 
 export default routes
