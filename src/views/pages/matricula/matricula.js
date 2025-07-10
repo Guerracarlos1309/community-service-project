@@ -49,9 +49,27 @@ const MatriculaList = () => {
   // Estados para modales
   const [selectedMatricula, setSelectedMatricula] = useState(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [grades, setGrades] = useState([])
 
   // Estados para datos de utilidad
   const [periodos, setPeriodos] = useState([])
+
+  useEffect(() => {
+    // Extraemos grados únicos de las matrículas
+    const uniqueGrades = [...new Set(matriculas.map((m) => m.grade_id))]
+
+    // Luego mapeamos a objetos con id y nombre (busca el nombre del grado desde matricula)
+    const gradesList = uniqueGrades.map((gradeId) => {
+      // Busca la primera matricula con este gradeId para obtener el nombre
+      const matricula = matriculas.find((m) => m.grade_id === gradeId)
+      return {
+        id: gradeId,
+        name: matricula?.grade_name || `Grado ${gradeId}`,
+      }
+    })
+
+    setGrades(gradesList)
+  }, [matriculas])
 
   // Función para asignar colores a los grados
   const getGradeColor = (gradeName) => {
@@ -214,6 +232,26 @@ const MatriculaList = () => {
     )
   }
 
+  const handleDownloadPdfByGrade = async (gradeID, gradeName) => {
+    try {
+      if (!gradeID) throw new Error('ID del grado no proporcionado')
+
+      const blob = await api.downloadFile(`/api/pdf/student/list/grade/${gradeID}`)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+
+      link.setAttribute('download', `Grado_${gradeName || gradeID}.pdf`)
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF por grado:', error)
+    }
+  }
+
   return (
     <>
       {error && (
@@ -235,6 +273,22 @@ const MatriculaList = () => {
               <CIcon icon={cilReload} className="me-1" />
               Actualizar
             </CButton>
+            {grades.length > 0 ? (
+              grades.map((grade) => (
+                <CButton
+                  key={grade.gradeID}
+                  color="success"
+                  onClick={() => {
+                    console.log('Descargando PDF del grado:', grade)
+                    handleDownloadPdfByGrade(grade.gradeID, grade.name)
+                  }}
+                >
+                  Descargar PDF por Grado
+                </CButton>
+              ))
+            ) : (
+              <p>No hay grados para descargar.</p>
+            )}
           </div>
         </CCardHeader>
 

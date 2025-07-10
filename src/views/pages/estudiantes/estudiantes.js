@@ -47,6 +47,7 @@ import {
   cilX,
   cilSave,
   cilArrowLeft,
+  cilPrint,
 } from '@coreui/icons'
 import { helpFetch } from '../../../api/helpFetch.js'
 
@@ -440,6 +441,43 @@ const EstudianteList = () => {
     )
   }
 
+  const handleDownloadPdf = async () => {
+    try {
+      const blob = await api.downloadFile('/api/pdf/students/list/all') // <- tu endpoint
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'Listado_total_estudiantes.pdf')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF:', error)
+    }
+  }
+
+  const handleDownloadPdf1 = async (id, nombre) => {
+    try {
+      if (!id) throw new Error('ID del estudiante no proporcionado')
+
+      const blob = await api.downloadFile(`/api/pdf/student/${id}/details`)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+
+      // Usamos 'nombre' recibido para el nombre del archivo, o un valor por defecto
+      link.setAttribute('download', `Alumno_${nombre || id}.pdf`)
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error descargando PDF del docente:', error)
+    }
+  }
+
   return (
     <>
       {error && (
@@ -461,7 +499,7 @@ const EstudianteList = () => {
               <CIcon icon={cilReload} className="me-1" />
               Actualizar
             </CButton>
-            <CButton color="success" variant="outline">
+            <CButton color="success" variant="outline" onClick={handleDownloadPdf}>
               <CIcon icon={cilReload} className="me-1" />
               Imprimir PDF estudiantes
             </CButton>
@@ -1169,6 +1207,15 @@ const EstudianteList = () => {
                   <CButton color="secondary" onClick={handleCloseModal}>
                     <CIcon icon={cilX} className="me-1" />
                     Cerrar
+                  </CButton>
+                  <CButton
+                    color="success"
+                    onClick={() =>
+                      handleDownloadPdf1(selectedEstudiante.id, selectedEstudiante.name)
+                    }
+                  >
+                    <CIcon icon={cilPrint} className="me-1" />
+                    Imprimir PDF
                   </CButton>
                   <CButton color="primary" onClick={handleEditMode}>
                     <CIcon icon={cilPencil} className="me-1" />
