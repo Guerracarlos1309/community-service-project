@@ -1,5 +1,5 @@
-'use client'
-import { useState, useEffect } from 'react'
+"use client"
+import { useState, useEffect } from "react"
 import {
   CCard,
   CCardHeader,
@@ -36,8 +36,8 @@ import {
   CForm,
   CFormLabel,
   CFormCheck,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
+} from "@coreui/react"
+import CIcon from "@coreui/icons-react"
 import {
   cilSearch,
   cilTrash,
@@ -48,8 +48,8 @@ import {
   cilSave,
   cilArrowLeft,
   cilPrint,
-} from '@coreui/icons'
-import { helpFetch } from '../../../api/helpFetch.js'
+} from "@coreui/icons"
+import { helpFetch } from "../../../api/helpFetch.js"
 
 const api = helpFetch()
 
@@ -60,9 +60,7 @@ const EstudianteList = () => {
   const [success, setSuccess] = useState(null)
 
   // Estados para filtros y búsqueda
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedGrado, setSelectedGrado] = useState('')
-  const [selectedSeccion, setSelectedSeccion] = useState('')
+  const [searchTerm, setSearchTerm] = useState("")
   const [filteredEstudiantes, setFilteredEstudiantes] = useState([])
 
   // Estados para paginación
@@ -72,54 +70,23 @@ const EstudianteList = () => {
   // Estados para modal
   const [showModal, setShowModal] = useState(false)
   const [selectedEstudiante, setSelectedEstudiante] = useState(null)
-  const [activeTab, setActiveTab] = useState('personal')
+  const [activeTab, setActiveTab] = useState("personal")
   const [isEditing, setIsEditing] = useState(false)
   const [editingData, setEditingData] = useState({})
   const [updateLoading, setUpdateLoading] = useState(false)
 
-  // Estados para datos de utilidad
-  const [grados, setGrados] = useState([])
-  const [secciones, setSecciones] = useState([])
-
-  // Función para asignar colores a los grados
-  const getGradeColor = (gradeName) => {
-    if (!gradeName) return 'secondary'
-
-    const gradeColors = {
-      '1er': 'primary',
-      '2do': 'success',
-      '3er': 'info',
-      '4to': 'warning',
-      '5to': 'danger',
-      '6to': 'dark',
-      Preescolar: 'warning',
-      Inicial: 'light',
-      Primer: 'primary',
-      Segundo: 'success',
-      Tercer: 'info',
-      Cuarto: 'warning',
-      Quinto: 'danger',
-      Sexto: 'dark',
-    }
-
-    if (gradeColors[gradeName]) {
-      return gradeColors[gradeName]
-    }
-
-    for (const [key, color] of Object.entries(gradeColors)) {
-      if (gradeName.toLowerCase().includes(key.toLowerCase())) {
-        return color
-      }
-    }
-
-    return 'secondary'
-  }
-
   // Función para obtener color del sexo
   const getSexColor = (sex) => {
-    if (sex === 'Masculino' || sex === 'M') return 'primary'
-    if (sex === 'Femenino' || sex === 'F') return 'danger'
-    return 'secondary'
+    if (sex === "Masculino" || sex === "M") return "primary"
+    if (sex === "Femenino" || sex === "F") return "danger"
+    return "secondary"
+  }
+
+  // Función para obtener texto del sexo
+  const getSexText = (sex) => {
+    if (sex === "M") return "Masculino"
+    if (sex === "F") return "Femenino"
+    return sex || "No especificado"
   }
 
   useEffect(() => {
@@ -127,49 +94,28 @@ const EstudianteList = () => {
   }, [])
 
   useEffect(() => {
-    loadUtilityData()
-  }, [estudiantes])
-
-  useEffect(() => {
     filterEstudiantes()
-  }, [searchTerm, selectedGrado, selectedSeccion, estudiantes])
+  }, [searchTerm, estudiantes])
 
   const loadEstudiantes = async () => {
     try {
       setLoading(true)
       setError(null)
-      console.log('🔄 Cargando estudiantes...')
-      const response = await api.get('/api/students/list/all/')
+      console.log("🔄 Cargando estudiantes...")
+      const response = await api.get("/api/students/list/all/")
+
       if (response.ok) {
-        console.log('✅ Estudiantes cargados:', response.students)
+        console.log("✅ Estudiantes cargados:", response.students)
         setEstudiantes(response.students || [])
       } else {
-        console.error('❌ Error al cargar estudiantes:', response)
-        setError(response.msg || 'Error al cargar estudiantes')
+        console.error("❌ Error al cargar estudiantes:", response)
+        setError(response.msg || "Error al cargar estudiantes")
       }
     } catch (error) {
-      console.error('❌ Error en loadEstudiantes:', error)
-      setError('Error al cargar estudiantes')
+      console.error("❌ Error en loadEstudiantes:", error)
+      setError("Error al cargar estudiantes")
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadUtilityData = async () => {
-    try {
-      // Cargar grados únicos de los estudiantes
-      const gradosUnicos = [...new Set(estudiantes.map((e) => e.grado || e.grade_name))].filter(
-        Boolean,
-      )
-      setGrados(gradosUnicos)
-
-      // Cargar secciones únicas de los estudiantes
-      const seccionesUnicas = [
-        ...new Set(estudiantes.map((e) => e.seccion || e.section_name)),
-      ].filter(Boolean)
-      setSecciones(seccionesUnicas)
-    } catch (error) {
-      console.error('❌ Error cargando datos de utilidad:', error)
     }
   }
 
@@ -186,22 +132,6 @@ const EstudianteList = () => {
       )
     }
 
-    // Filtrar por grado
-    if (selectedGrado) {
-      filtered = filtered.filter(
-        (estudiante) =>
-          estudiante.grado === selectedGrado || estudiante.grade_name === selectedGrado,
-      )
-    }
-
-    // Filtrar por sección
-    if (selectedSeccion) {
-      filtered = filtered.filter(
-        (estudiante) =>
-          estudiante.seccion === selectedSeccion || estudiante.section_name === selectedSeccion,
-      )
-    }
-
     setFilteredEstudiantes(filtered)
     setCurrentPage(1)
   }
@@ -210,32 +140,30 @@ const EstudianteList = () => {
   const handleViewEstudiante = (estudiante) => {
     setSelectedEstudiante(estudiante)
     setEditingData({ ...estudiante })
-    setActiveTab('personal')
+    setActiveTab("personal")
     setIsEditing(false)
     setShowModal(true)
+    setError(null)
+    setSuccess(null)
   }
 
   const handleCloseModal = () => {
     setShowModal(false)
     setSelectedEstudiante(null)
     setEditingData({})
-    setActiveTab('personal')
+    setActiveTab("personal")
     setIsEditing(false)
+    setError(null)
+    setSuccess(null)
   }
 
-  // Función para eliminar estudiante - CORREGIDA
+  // Función para eliminar estudiante
   const handleDeleteEstudiante = async (estudianteId, fromModal = false) => {
-    const estudiante = fromModal
-      ? selectedEstudiante
-      : estudiantes.find((e) => e.id === estudianteId)
-    const nombreCompleto = estudiante
-      ? `${estudiante.name} ${estudiante.lastName}`
-      : 'este estudiante'
+    const estudiante = fromModal ? selectedEstudiante : estudiantes.find((e) => e.id === estudianteId)
+    const nombreCompleto = estudiante ? `${estudiante.name} ${estudiante.lastName}` : "este estudiante"
 
     if (
-      !window.confirm(
-        `¿Está seguro de que desea eliminar a ${nombreCompleto}?\n\nEsta acción no se puede deshacer.`,
-      )
+      !window.confirm(`¿Está seguro de que desea eliminar a ${nombreCompleto}?\n\nEsta acción no se puede deshacer.`)
     ) {
       return
     }
@@ -245,14 +173,14 @@ const EstudianteList = () => {
       setSuccess(null)
       setUpdateLoading(true)
 
-      console.log('🗑️ Eliminando estudiante:', estudianteId)
+      console.log("🗑️ Eliminando estudiante:", estudianteId)
 
-      // Usar el método delet del helpFetch correctamente
-      const response = await api.delet('/api/students', estudianteId)
+      const response = await api.delet("/api/students", estudianteId)
+
+      console.log("📥 Respuesta del servidor:", response)
 
       // Verificar si la respuesta es exitosa
-      if (response && !response.msg) {
-        // Si no hay mensaje de error, asumimos que fue exitoso
+      if (response && (response.message || response.student || !response.msg)) {
         setSuccess(`Estudiante ${nombreCompleto} eliminado exitosamente`)
         await loadEstudiantes()
 
@@ -261,12 +189,11 @@ const EstudianteList = () => {
           handleCloseModal()
         }
       } else {
-        // Si hay un mensaje, es un error
-        setError(response.msg || 'Error al eliminar estudiante')
+        setError(response?.msg || "Error al eliminar estudiante")
       }
     } catch (error) {
-      console.error('❌ Error eliminando estudiante:', error)
-      setError(error.msg || 'Error al eliminar estudiante')
+      console.error("❌ Error eliminando estudiante:", error)
+      setError(error.msg || "Error al eliminar estudiante")
     } finally {
       setUpdateLoading(false)
     }
@@ -276,12 +203,16 @@ const EstudianteList = () => {
   const handleEditMode = () => {
     setIsEditing(true)
     setEditingData({ ...selectedEstudiante })
+    setError(null)
+    setSuccess(null)
   }
 
   // Función para cancelar edición
   const handleCancelEdit = () => {
     setIsEditing(false)
     setEditingData({ ...selectedEstudiante })
+    setError(null)
+    setSuccess(null)
   }
 
   // Función para manejar cambios en el formulario
@@ -292,93 +223,50 @@ const EstudianteList = () => {
     }))
   }
 
-  // Función para actualizar estudiante - CORREGIDA
-  const handleUpdateEstudiante = async (student) => {
+  // Función para actualizar estudiante
+  const handleUpdateEstudiante = async () => {
     try {
       setUpdateLoading(true)
       setError(null)
       setSuccess(null)
 
-      console.log('💾 Actualizando estudiante:', editingData)
+      console.log("💾 Actualizando estudiante:", editingData)
 
-      // Preparar datos según el schema del validator
-      const dataToUpdate = {}
-
-      // Solo incluir campos que han cambiado y no están vacíos
-      if (editingData.ci && editingData.ci !== selectedEstudiante.ci) {
-        dataToUpdate.ci = editingData.ci
-      }
-      if (editingData.name && editingData.name !== selectedEstudiante.name) {
-        dataToUpdate.name = editingData.name
-      }
-      if (editingData.lastName && editingData.lastName !== selectedEstudiante.lastName) {
-        dataToUpdate.lastName = editingData.lastName
-      }
-      if (editingData.sex && editingData.sex !== selectedEstudiante.sex) {
-        dataToUpdate.sex = editingData.sex
-      }
-      if (editingData.birthday && editingData.birthday !== selectedEstudiante.birthday) {
-        dataToUpdate.birthday = editingData.birthday
-      }
-      if (editingData.placeBirth !== selectedEstudiante.placeBirth) {
-        dataToUpdate.placeBirth = editingData.placeBirth || null
-      }
-      if (editingData.quantityBrothers !== selectedEstudiante.quantityBrothers) {
-        dataToUpdate.quantityBrothers = Number.parseInt(editingData.quantityBrothers) || 0
-      }
-      if (editingData.motherName !== selectedEstudiante.motherName) {
-        dataToUpdate.motherName = editingData.motherName || null
-      }
-      if (editingData.motherCi !== selectedEstudiante.motherCi) {
-        dataToUpdate.motherCi = editingData.motherCi || null
-      }
-      if (editingData.motherTelephone !== selectedEstudiante.motherTelephone) {
-        dataToUpdate.motherTelephone = editingData.motherTelephone || null
-      }
-      if (editingData.fatherName !== selectedEstudiante.fatherName) {
-        dataToUpdate.fatherName = editingData.fatherName || null
-      }
-      if (editingData.fatherCi !== selectedEstudiante.fatherCi) {
-        dataToUpdate.fatherCi = editingData.fatherCi || null
-      }
-      if (editingData.fatherTelephone !== selectedEstudiante.fatherTelephone) {
-        dataToUpdate.fatherTelephone = editingData.fatherTelephone || null
-      }
-      if (editingData.livesMother !== selectedEstudiante.livesMother) {
-        dataToUpdate.livesMother = editingData.livesMother
-      }
-      if (editingData.livesFather !== selectedEstudiante.livesFather) {
-        dataToUpdate.livesFather = editingData.livesFather
-      }
-      if (editingData.livesBoth !== selectedEstudiante.livesBoth) {
-        dataToUpdate.livesBoth = editingData.livesBoth
-      }
-      if (editingData.livesRepresentative !== selectedEstudiante.livesRepresentative) {
-        dataToUpdate.livesRepresentative = editingData.livesRepresentative
-      }
-      if (editingData.rolRopresentative !== selectedEstudiante.rolRopresentative) {
-        dataToUpdate.rolRopresentative = editingData.rolRopresentative || null
+      // Preparar datos para actualización
+      const dataToUpdate = {
+        ci: editingData.ci,
+        name: editingData.name,
+        lastName: editingData.lastName,
+        sex: editingData.sex,
+        birthday: editingData.birthday,
+        placeBirth: editingData.placeBirth || null,
+        parishID: editingData.parishID || null,
+        quantityBrothers: Number.parseInt(editingData.quantityBrothers) || 0,
+        motherName: editingData.motherName || null,
+        motherCi: editingData.motherCi || null,
+        motherTelephone: editingData.motherTelephone || null,
+        fatherName: editingData.fatherName || null,
+        fatherCi: editingData.fatherCi || null,
+        fatherTelephone: editingData.fatherTelephone || null,
+        livesMother: editingData.livesMother || false,
+        livesFather: editingData.livesFather || false,
+        livesBoth: editingData.livesBoth || false,
+        livesRepresentative: editingData.livesRepresentative || false,
+        rolRopresentative: editingData.rolRopresentative || null,
+        representativeID: editingData.representativeID || null,
+        status_id: editingData.status_id || 1,
       }
 
-      // Verificar que hay al menos un campo para actualizar
-      if (Object.keys(dataToUpdate).length === 0) {
-        setError('No hay cambios para guardar')
-        return
-      }
-
-      if (student.sex === 'Femenino') student.sex = 'F'
-      if (student.sex === 'Masculino') student.sex = 'M'
-
-      console.log('📤 Datos a enviar:', dataToUpdate)
+      console.log("📤 Datos a enviar:", dataToUpdate)
 
       // Usar el método put del helpFetch con el ID
-      const response = await api.put('/api/students', { body: dataToUpdate }, editingData.id)
+      const response = await api.put("/api/students", { body: dataToUpdate }, editingData.id)
 
-      console.log('📥 Respuesta del servidor:', response)
+      console.log("📥 Respuesta del servidor:", response)
 
       // Verificar si la respuesta es exitosa
-      if (response && response.ok) {
-        setSuccess('Estudiante actualizado exitosamente')
+      if (response && (response.message || response.student || response.ok)) {
+        setSuccess("Estudiante actualizado exitosamente")
         setIsEditing(false)
 
         // Actualizar el estudiante seleccionado con los nuevos datos
@@ -387,32 +275,32 @@ const EstudianteList = () => {
         // Recargar la lista
         await loadEstudiantes()
       } else {
-        setError(response?.msg || 'Error al actualizar estudiante')
+        setError(response?.msg || response?.error || "Error al actualizar estudiante")
       }
     } catch (error) {
-      console.error('❌ Error actualizando estudiante:', error)
-      setError(error.msg || 'Error al actualizar estudiante')
+      console.error("❌ Error actualizando estudiante:", error)
+      setError(error.msg || error.error || "Error al actualizar estudiante")
     } finally {
       setUpdateLoading(false)
     }
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+    if (!dateString) return "-"
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     })
   }
 
   const formatDateForInput = (dateString) => {
-    if (!dateString) return ''
-    return new Date(dateString).toISOString().split('T')[0]
+    if (!dateString) return ""
+    return new Date(dateString).toISOString().split("T")[0]
   }
 
   const calcularEdad = (fechaNacimiento) => {
-    if (!fechaNacimiento) return '-'
+    if (!fechaNacimiento) return "-"
     const nacimiento = new Date(fechaNacimiento)
     const hoy = new Date()
     let edad = hoy.getFullYear() - nacimiento.getFullYear()
@@ -426,56 +314,52 @@ const EstudianteList = () => {
   // Calcular estudiantes para la página actual
   const indexOfLastEstudiante = currentPage * estudiantesPerPage
   const indexOfFirstEstudiante = indexOfLastEstudiante - estudiantesPerPage
-  const currentEstudiantes = filteredEstudiantes.slice(
-    indexOfFirstEstudiante,
-    indexOfLastEstudiante,
-  )
+  const currentEstudiantes = filteredEstudiantes.slice(indexOfFirstEstudiante, indexOfLastEstudiante)
   const totalPages = Math.ceil(filteredEstudiantes.length / estudiantesPerPage)
-
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
-        <CSpinner color="primary" size="sm" />
-        <span className="ms-2">Cargando estudiantes...</span>
-      </div>
-    )
-  }
 
   const handleDownloadPdf = async () => {
     try {
-      const blob = await api.downloadFile('/api/pdf/students/list/all') // <- tu endpoint
+      const blob = await api.downloadFile("/api/pdf/students/list/all")
       const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
+      const link = document.createElement("a")
       link.href = url
-      link.setAttribute('download', 'Listado_total_estudiantes.pdf')
+      link.setAttribute("download", "Listado_total_estudiantes.pdf")
       document.body.appendChild(link)
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('Error descargando PDF:', error)
+      console.error("Error descargando PDF:", error)
+      setError("Error al generar el PDF")
     }
   }
 
   const handleDownloadPdf1 = async (id, nombre) => {
     try {
-      if (!id) throw new Error('ID del estudiante no proporcionado')
+      if (!id) throw new Error("ID del estudiante no proporcionado")
 
       const blob = await api.downloadFile(`/api/pdf/student/${id}/details`)
       const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
+      const link = document.createElement("a")
       link.href = url
-
-      // Usamos 'nombre' recibido para el nombre del archivo, o un valor por defecto
-      link.setAttribute('download', `Alumno_${nombre || id}.pdf`)
-
+      link.setAttribute("download", `Alumno_${nombre || id}.pdf`)
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('Error descargando PDF del docente:', error)
+      console.error("Error descargando PDF del estudiante:", error)
+      setError("Error al generar el PDF del estudiante")
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "400px" }}>
+        <CSpinner color="primary" size="sm" />
+        <span className="ms-2">Cargando estudiantes...</span>
+      </div>
+    )
   }
 
   return (
@@ -495,13 +379,13 @@ const EstudianteList = () => {
         <CCardHeader className="d-flex justify-content-between align-items-center bg-primary text-white">
           <h5 className="mb-0">Gestión de Estudiantes</h5>
           <div className="d-flex gap-2">
-            <CButton color="primary" variant="outline" onClick={loadEstudiantes}>
+            <CButton color="light" variant="outline" onClick={loadEstudiantes} disabled={loading}>
               <CIcon icon={cilReload} className="me-1" />
               Actualizar
             </CButton>
-            <CButton color="success" variant="outline" onClick={handleDownloadPdf}>
-              <CIcon icon={cilReload} className="me-1" />
-              Imprimir PDF estudiantes
+            <CButton color="light" variant="outline" onClick={handleDownloadPdf}>
+              <CIcon icon={cilPrint} className="me-1" />
+              Imprimir PDF
             </CButton>
           </div>
         </CCardHeader>
@@ -509,7 +393,7 @@ const EstudianteList = () => {
         <CCardBody>
           {/* Filtros y búsqueda */}
           <CRow className="mb-3">
-            <CCol md={4}>
+            <CCol md={6}>
               <CInputGroup>
                 <CInputGroupText>
                   <CIcon icon={cilSearch} />
@@ -521,8 +405,7 @@ const EstudianteList = () => {
                 />
               </CInputGroup>
             </CCol>
-
-            <CCol md={4} className="text-end">
+            <CCol md={6} className="text-end">
               <small className="text-muted">
                 {currentEstudiantes.length} de {filteredEstudiantes.length} estudiantes
               </small>
@@ -550,14 +433,14 @@ const EstudianteList = () => {
                         {estudiante.name} {estudiante.lastName}
                       </strong>
                     </CTableDataCell>
-                    <CTableDataCell>{estudiante.ci || '-'}</CTableDataCell>
+                    <CTableDataCell>{estudiante.ci || "-"}</CTableDataCell>
                     <CTableDataCell>{calcularEdad(estudiante.birthday)}</CTableDataCell>
                     <CTableDataCell>
-                      <CBadge color={getSexColor(estudiante.sex)}>{estudiante.sex || '-'}</CBadge>
+                      <CBadge color={getSexColor(estudiante.sex)}>{getSexText(estudiante.sex)}</CBadge>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <CBadge color={estudiante.is_enrolled ? 'success' : 'secondary'}>
-                        {estudiante.is_enrolled ? 'Inscrito' : 'No inscrito'}
+                      <CBadge color={estudiante.is_enrolled ? "success" : "secondary"}>
+                        {estudiante.is_enrolled ? "Inscrito" : "No inscrito"}
                       </CBadge>
                     </CTableDataCell>
                     <CTableDataCell>
@@ -568,7 +451,7 @@ const EstudianteList = () => {
                           onClick={() => handleViewEstudiante(estudiante)}
                           title="Ver detalles completos"
                         >
-                          <CIcon icon={cilPencil} className="me-1" />
+                          <CIcon icon={cilUser} className="me-1" />
                           Ver más
                         </CButton>
                         <CButton
@@ -586,9 +469,9 @@ const EstudianteList = () => {
               ) : (
                 <CTableRow>
                   <CTableDataCell colSpan={6} className="text-center text-muted">
-                    {searchTerm || selectedGrado || selectedSeccion
-                      ? 'No se encontraron estudiantes que coincidan con los filtros'
-                      : 'No hay estudiantes registrados'}
+                    {searchTerm
+                      ? "No se encontraron estudiantes que coincidan con los filtros"
+                      : "No hay estudiantes registrados"}
                   </CTableDataCell>
                 </CTableRow>
               )}
@@ -599,10 +482,7 @@ const EstudianteList = () => {
           {totalPages > 1 && (
             <div className="d-flex justify-content-center mt-3">
               <CPagination>
-                <CPaginationItem
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                >
+                <CPaginationItem disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
                   Anterior
                 </CPaginationItem>
                 {[...Array(totalPages)].map((_, index) => (
@@ -614,10 +494,7 @@ const EstudianteList = () => {
                     {index + 1}
                   </CPaginationItem>
                 ))}
-                <CPaginationItem
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                >
+                <CPaginationItem disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
                   Siguiente
                 </CPaginationItem>
               </CPagination>
@@ -632,7 +509,7 @@ const EstudianteList = () => {
           <CModalTitle>
             <div className="d-flex align-items-center">
               <CIcon icon={cilUser} className="me-2" />
-              {isEditing ? 'Editar' : 'Detalles del'} Estudiante - {selectedEstudiante?.name}{' '}
+              {isEditing ? "Editar" : "Detalles del"} Estudiante - {selectedEstudiante?.name}{" "}
               {selectedEstudiante?.lastName}
             </div>
           </CModalTitle>
@@ -640,6 +517,17 @@ const EstudianteList = () => {
         <CModalBody>
           {selectedEstudiante && (
             <>
+              {error && (
+                <CAlert color="danger" dismissible onClose={() => setError(null)}>
+                  {error}
+                </CAlert>
+              )}
+              {success && (
+                <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
+                  {success}
+                </CAlert>
+              )}
+
               {/* Header con información básica */}
               <div className="mb-4 p-3 bg-light rounded">
                 <CRow>
@@ -650,15 +538,12 @@ const EstudianteList = () => {
                     <strong>Cédula:</strong> {isEditing ? editingData.ci : selectedEstudiante.ci}
                   </CCol>
                   <CCol md={3}>
-                    <strong>Edad:</strong>{' '}
+                    <strong>Edad:</strong>{" "}
                     {calcularEdad(isEditing ? editingData.birthday : selectedEstudiante.birthday)}
                   </CCol>
                   <CCol md={3}>
-                    <CBadge
-                      color={selectedEstudiante.is_enrolled ? 'success' : 'secondary'}
-                      size="lg"
-                    >
-                      {selectedEstudiante.is_enrolled ? 'Inscrito' : 'No inscrito'}
+                    <CBadge color={selectedEstudiante.is_enrolled ? "success" : "secondary"} size="lg">
+                      {selectedEstudiante.is_enrolled ? "Inscrito" : "No inscrito"}
                     </CBadge>
                   </CCol>
                 </CRow>
@@ -669,10 +554,10 @@ const EstudianteList = () => {
                 <CNavItem>
                   <CNavLink
                     href="#"
-                    active={activeTab === 'personal'}
+                    active={activeTab === "personal"}
                     onClick={(e) => {
                       e.preventDefault()
-                      setActiveTab('personal')
+                      setActiveTab("personal")
                     }}
                   >
                     Datos Personales
@@ -681,10 +566,10 @@ const EstudianteList = () => {
                 <CNavItem>
                   <CNavLink
                     href="#"
-                    active={activeTab === 'familiar'}
+                    active={activeTab === "familiar"}
                     onClick={(e) => {
                       e.preventDefault()
-                      setActiveTab('familiar')
+                      setActiveTab("familiar")
                     }}
                   >
                     Datos Familiares
@@ -693,10 +578,10 @@ const EstudianteList = () => {
                 <CNavItem>
                   <CNavLink
                     href="#"
-                    active={activeTab === 'representante'}
+                    active={activeTab === "representante"}
                     onClick={(e) => {
                       e.preventDefault()
-                      setActiveTab('representante')
+                      setActiveTab("representante")
                     }}
                   >
                     Representante
@@ -705,10 +590,10 @@ const EstudianteList = () => {
                 <CNavItem>
                   <CNavLink
                     href="#"
-                    active={activeTab === 'convivencia'}
+                    active={activeTab === "convivencia"}
                     onClick={(e) => {
                       e.preventDefault()
-                      setActiveTab('convivencia')
+                      setActiveTab("convivencia")
                     }}
                   >
                     Convivencia
@@ -718,23 +603,23 @@ const EstudianteList = () => {
 
               <CTabContent>
                 {/* Datos Personales */}
-                <CTabPane visible={activeTab === 'personal'}>
+                <CTabPane visible={activeTab === "personal"}>
                   {isEditing ? (
                     <CForm>
                       <CRow className="mb-3">
                         <CCol md={6}>
                           <CFormLabel>Nombres *</CFormLabel>
                           <CFormInput
-                            value={editingData.name || ''}
-                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            value={editingData.name || ""}
+                            onChange={(e) => handleInputChange("name", e.target.value)}
                             required
                           />
                         </CCol>
                         <CCol md={6}>
                           <CFormLabel>Apellidos *</CFormLabel>
                           <CFormInput
-                            value={editingData.lastName || ''}
-                            onChange={(e) => handleInputChange('lastName', e.target.value)}
+                            value={editingData.lastName || ""}
+                            onChange={(e) => handleInputChange("lastName", e.target.value)}
                             required
                           />
                         </CCol>
@@ -743,16 +628,16 @@ const EstudianteList = () => {
                         <CCol md={6}>
                           <CFormLabel>Cédula *</CFormLabel>
                           <CFormInput
-                            value={editingData.ci || ''}
-                            onChange={(e) => handleInputChange('ci', e.target.value)}
+                            value={editingData.ci || ""}
+                            onChange={(e) => handleInputChange("ci", e.target.value)}
                             required
                           />
                         </CCol>
                         <CCol md={6}>
                           <CFormLabel>Sexo *</CFormLabel>
                           <CFormSelect
-                            value={editingData.sex || ''}
-                            onChange={(e) => handleInputChange('sex', e.target.value)}
+                            value={editingData.sex || ""}
+                            onChange={(e) => handleInputChange("sex", e.target.value)}
                             required
                           >
                             <option value="">Seleccionar...</option>
@@ -767,14 +652,14 @@ const EstudianteList = () => {
                           <CFormInput
                             type="date"
                             value={formatDateForInput(editingData.birthday)}
-                            onChange={(e) => handleInputChange('birthday', e.target.value)}
+                            onChange={(e) => handleInputChange("birthday", e.target.value)}
                           />
                         </CCol>
                         <CCol md={6}>
                           <CFormLabel>Lugar de Nacimiento</CFormLabel>
                           <CFormInput
-                            value={editingData.placeBirth || ''}
-                            onChange={(e) => handleInputChange('placeBirth', e.target.value)}
+                            value={editingData.placeBirth || ""}
+                            onChange={(e) => handleInputChange("placeBirth", e.target.value)}
                           />
                         </CCol>
                       </CRow>
@@ -784,8 +669,16 @@ const EstudianteList = () => {
                           <CFormInput
                             type="number"
                             min="0"
-                            value={editingData.quantityBrothers || ''}
-                            onChange={(e) => handleInputChange('quantityBrothers', e.target.value)}
+                            value={editingData.quantityBrothers || ""}
+                            onChange={(e) => handleInputChange("quantityBrothers", e.target.value)}
+                          />
+                        </CCol>
+                        <CCol md={6}>
+                          <CFormLabel>Parroquia ID</CFormLabel>
+                          <CFormInput
+                            type="number"
+                            value={editingData.parishID || ""}
+                            onChange={(e) => handleInputChange("parishID", e.target.value)}
                           />
                         </CCol>
                       </CRow>
@@ -794,7 +687,7 @@ const EstudianteList = () => {
                     <CTable striped bordered>
                       <CTableBody>
                         <CTableRow>
-                          <CTableHeaderCell style={{ width: '30%' }}>Nombres</CTableHeaderCell>
+                          <CTableHeaderCell style={{ width: "30%" }}>Nombres</CTableHeaderCell>
                           <CTableDataCell>
                             <strong>{selectedEstudiante.name}</strong>
                           </CTableDataCell>
@@ -813,7 +706,7 @@ const EstudianteList = () => {
                           <CTableHeaderCell>Sexo</CTableHeaderCell>
                           <CTableDataCell>
                             <CBadge color={getSexColor(selectedEstudiante.sex)}>
-                              {selectedEstudiante.sex}
+                              {getSexText(selectedEstudiante.sex)}
                             </CBadge>
                           </CTableDataCell>
                         </CTableRow>
@@ -823,33 +716,29 @@ const EstudianteList = () => {
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Lugar de Nacimiento</CTableHeaderCell>
-                          <CTableDataCell>{selectedEstudiante.placeBirth || '-'}</CTableDataCell>
+                          <CTableDataCell>{selectedEstudiante.placeBirth || "-"}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Cantidad de Hermanos</CTableHeaderCell>
-                          <CTableDataCell>
-                            {selectedEstudiante.quantityBrothers || '0'}
-                          </CTableDataCell>
+                          <CTableDataCell>{selectedEstudiante.quantityBrothers || "0"}</CTableDataCell>
+                        </CTableRow>
+                        <CTableRow>
+                          <CTableHeaderCell>Parroquia ID</CTableHeaderCell>
+                          <CTableDataCell>{selectedEstudiante.parishID || "-"}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Estado</CTableHeaderCell>
                           <CTableDataCell>
-                            <CBadge color="success">
-                              {selectedEstudiante.status_description || 'Activo'}
-                            </CBadge>
+                            <CBadge color="success">{selectedEstudiante.status_description || "Activo"}</CBadge>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Fecha de Registro</CTableHeaderCell>
-                          <CTableDataCell>
-                            {formatDate(selectedEstudiante.created_at)}
-                          </CTableDataCell>
+                          <CTableDataCell>{formatDate(selectedEstudiante.created_at)}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Última Actualización</CTableHeaderCell>
-                          <CTableDataCell>
-                            {formatDate(selectedEstudiante.updated_at)}
-                          </CTableDataCell>
+                          <CTableDataCell>{formatDate(selectedEstudiante.updated_at)}</CTableDataCell>
                         </CTableRow>
                       </CTableBody>
                     </CTable>
@@ -857,7 +746,7 @@ const EstudianteList = () => {
                 </CTabPane>
 
                 {/* Datos Familiares */}
-                <CTabPane visible={activeTab === 'familiar'}>
+                <CTabPane visible={activeTab === "familiar"}>
                   {isEditing ? (
                     <CForm>
                       <h6 className="mb-3 text-primary">Datos de la Madre</h6>
@@ -865,22 +754,22 @@ const EstudianteList = () => {
                         <CCol md={4}>
                           <CFormLabel>Nombre de la Madre</CFormLabel>
                           <CFormInput
-                            value={editingData.motherName || ''}
-                            onChange={(e) => handleInputChange('motherName', e.target.value)}
+                            value={editingData.motherName || ""}
+                            onChange={(e) => handleInputChange("motherName", e.target.value)}
                           />
                         </CCol>
                         <CCol md={4}>
                           <CFormLabel>Cédula de la Madre</CFormLabel>
                           <CFormInput
-                            value={editingData.motherCi || ''}
-                            onChange={(e) => handleInputChange('motherCi', e.target.value)}
+                            value={editingData.motherCi || ""}
+                            onChange={(e) => handleInputChange("motherCi", e.target.value)}
                           />
                         </CCol>
                         <CCol md={4}>
                           <CFormLabel>Teléfono de la Madre</CFormLabel>
                           <CFormInput
-                            value={editingData.motherTelephone || ''}
-                            onChange={(e) => handleInputChange('motherTelephone', e.target.value)}
+                            value={editingData.motherTelephone || ""}
+                            onChange={(e) => handleInputChange("motherTelephone", e.target.value)}
                           />
                         </CCol>
                       </CRow>
@@ -890,22 +779,22 @@ const EstudianteList = () => {
                         <CCol md={4}>
                           <CFormLabel>Nombre del Padre</CFormLabel>
                           <CFormInput
-                            value={editingData.fatherName || ''}
-                            onChange={(e) => handleInputChange('fatherName', e.target.value)}
+                            value={editingData.fatherName || ""}
+                            onChange={(e) => handleInputChange("fatherName", e.target.value)}
                           />
                         </CCol>
                         <CCol md={4}>
                           <CFormLabel>Cédula del Padre</CFormLabel>
                           <CFormInput
-                            value={editingData.fatherCi || ''}
-                            onChange={(e) => handleInputChange('fatherCi', e.target.value)}
+                            value={editingData.fatherCi || ""}
+                            onChange={(e) => handleInputChange("fatherCi", e.target.value)}
                           />
                         </CCol>
                         <CCol md={4}>
                           <CFormLabel>Teléfono del Padre</CFormLabel>
                           <CFormInput
-                            value={editingData.fatherTelephone || ''}
-                            onChange={(e) => handleInputChange('fatherTelephone', e.target.value)}
+                            value={editingData.fatherTelephone || ""}
+                            onChange={(e) => handleInputChange("fatherTelephone", e.target.value)}
                           />
                         </CCol>
                       </CRow>
@@ -914,38 +803,32 @@ const EstudianteList = () => {
                     <CTable striped bordered>
                       <CTableBody>
                         <CTableRow>
-                          <CTableHeaderCell style={{ width: '30%' }}>
-                            Nombre de la Madre
-                          </CTableHeaderCell>
+                          <CTableHeaderCell style={{ width: "30%" }}>Nombre de la Madre</CTableHeaderCell>
                           <CTableDataCell>
-                            <strong>{selectedEstudiante.motherName || '-'}</strong>
+                            <strong>{selectedEstudiante.motherName || "-"}</strong>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Cédula de la Madre</CTableHeaderCell>
-                          <CTableDataCell>{selectedEstudiante.motherCi || '-'}</CTableDataCell>
+                          <CTableDataCell>{selectedEstudiante.motherCi || "-"}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Teléfono de la Madre</CTableHeaderCell>
-                          <CTableDataCell>
-                            {selectedEstudiante.motherTelephone || '-'}
-                          </CTableDataCell>
+                          <CTableDataCell>{selectedEstudiante.motherTelephone || "-"}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Nombre del Padre</CTableHeaderCell>
                           <CTableDataCell>
-                            <strong>{selectedEstudiante.fatherName || '-'}</strong>
+                            <strong>{selectedEstudiante.fatherName || "-"}</strong>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Cédula del Padre</CTableHeaderCell>
-                          <CTableDataCell>{selectedEstudiante.fatherCi || '-'}</CTableDataCell>
+                          <CTableDataCell>{selectedEstudiante.fatherCi || "-"}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Teléfono del Padre</CTableHeaderCell>
-                          <CTableDataCell>
-                            {selectedEstudiante.fatherTelephone || '-'}
-                          </CTableDataCell>
+                          <CTableDataCell>{selectedEstudiante.fatherTelephone || "-"}</CTableDataCell>
                         </CTableRow>
                       </CTableBody>
                     </CTable>
@@ -953,44 +836,22 @@ const EstudianteList = () => {
                 </CTabPane>
 
                 {/* Representante */}
-                <CTabPane visible={activeTab === 'representante'}>
+                <CTabPane visible={activeTab === "representante"}>
                   {isEditing ? (
                     <CForm>
                       <CRow className="mb-3">
                         <CCol md={6}>
-                          <CFormLabel>Nombres del Representante</CFormLabel>
+                          <CFormLabel>Cédula del Representante</CFormLabel>
                           <CFormInput
-                            value={editingData.representative_name || ''}
-                            onChange={(e) =>
-                              handleInputChange('representative_name', e.target.value)
-                            }
-                          />
-                        </CCol>
-                        <CCol md={6}>
-                          <CFormLabel>Apellidos del Representante</CFormLabel>
-                          <CFormInput
-                            value={editingData.representative_lastName || ''}
-                            onChange={(e) =>
-                              handleInputChange('representative_lastName', e.target.value)
-                            }
-                          />
-                        </CCol>
-                      </CRow>
-                      <CRow className="mb-3">
-                        <CCol md={6}>
-                          <CFormLabel>Teléfono del Representante</CFormLabel>
-                          <CFormInput
-                            value={editingData.representative_phone || ''}
-                            onChange={(e) =>
-                              handleInputChange('representative_phone', e.target.value)
-                            }
+                            value={editingData.representativeID || ""}
+                            onChange={(e) => handleInputChange("representativeID", e.target.value)}
                           />
                         </CCol>
                         <CCol md={6}>
                           <CFormLabel>Rol del Representante</CFormLabel>
                           <CFormSelect
-                            value={editingData.rolRopresentative || ''}
-                            onChange={(e) => handleInputChange('rolRopresentative', e.target.value)}
+                            value={editingData.rolRopresentative || ""}
+                            onChange={(e) => handleInputChange("rolRopresentative", e.target.value)}
                           >
                             <option value="">Seleccionar...</option>
                             <option value="Madre">Madre</option>
@@ -1007,37 +868,29 @@ const EstudianteList = () => {
                     <CTable striped bordered>
                       <CTableBody>
                         <CTableRow>
-                          <CTableHeaderCell style={{ width: '30%' }}>
-                            ID del Representante
-                          </CTableHeaderCell>
-                          <CTableDataCell>
-                            {selectedEstudiante.representativeID || '-'}
-                          </CTableDataCell>
+                          <CTableHeaderCell style={{ width: "30%" }}>ID del Representante</CTableHeaderCell>
+                          <CTableDataCell>{selectedEstudiante.representativeID || "-"}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Nombres del Representante</CTableHeaderCell>
                           <CTableDataCell>
-                            <strong>{selectedEstudiante.representative_name || '-'}</strong>
+                            <strong>{selectedEstudiante.representative_name || "-"}</strong>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Apellidos del Representante</CTableHeaderCell>
                           <CTableDataCell>
-                            <strong>{selectedEstudiante.representative_lastName || '-'}</strong>
+                            <strong>{selectedEstudiante.representative_lastName || "-"}</strong>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Teléfono del Representante</CTableHeaderCell>
-                          <CTableDataCell>
-                            {selectedEstudiante.representative_phone || '-'}
-                          </CTableDataCell>
+                          <CTableDataCell>{selectedEstudiante.representative_phone || "-"}</CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Rol del Representante</CTableHeaderCell>
                           <CTableDataCell>
-                            <CBadge color="info">
-                              {selectedEstudiante.rolRopresentative || '-'}
-                            </CBadge>
+                            <CBadge color="info">{selectedEstudiante.rolRopresentative || "-"}</CBadge>
                           </CTableDataCell>
                         </CTableRow>
                       </CTableBody>
@@ -1046,7 +899,7 @@ const EstudianteList = () => {
                 </CTabPane>
 
                 {/* Convivencia */}
-                <CTabPane visible={activeTab === 'convivencia'}>
+                <CTabPane visible={activeTab === "convivencia"}>
                   {isEditing ? (
                     <CForm>
                       <h6 className="mb-3 text-primary">Situación de Convivencia</h6>
@@ -1056,7 +909,7 @@ const EstudianteList = () => {
                             id="livesMother"
                             label="Vive con la Madre"
                             checked={editingData.livesMother || false}
-                            onChange={(e) => handleInputChange('livesMother', e.target.checked)}
+                            onChange={(e) => handleInputChange("livesMother", e.target.checked)}
                           />
                         </CCol>
                         <CCol md={3}>
@@ -1064,7 +917,7 @@ const EstudianteList = () => {
                             id="livesFather"
                             label="Vive con el Padre"
                             checked={editingData.livesFather || false}
-                            onChange={(e) => handleInputChange('livesFather', e.target.checked)}
+                            onChange={(e) => handleInputChange("livesFather", e.target.checked)}
                           />
                         </CCol>
                         <CCol md={3}>
@@ -1072,7 +925,7 @@ const EstudianteList = () => {
                             id="livesBoth"
                             label="Vive con Ambos Padres"
                             checked={editingData.livesBoth || false}
-                            onChange={(e) => handleInputChange('livesBoth', e.target.checked)}
+                            onChange={(e) => handleInputChange("livesBoth", e.target.checked)}
                           />
                         </CCol>
                         <CCol md={3}>
@@ -1080,9 +933,7 @@ const EstudianteList = () => {
                             id="livesRepresentative"
                             label="Vive con Representante"
                             checked={editingData.livesRepresentative || false}
-                            onChange={(e) =>
-                              handleInputChange('livesRepresentative', e.target.checked)
-                            }
+                            onChange={(e) => handleInputChange("livesRepresentative", e.target.checked)}
                           />
                         </CCol>
                       </CRow>
@@ -1091,44 +942,34 @@ const EstudianteList = () => {
                     <CTable striped bordered>
                       <CTableBody>
                         <CTableRow>
-                          <CTableHeaderCell style={{ width: '30%' }}>
-                            Vive con la Madre
-                          </CTableHeaderCell>
+                          <CTableHeaderCell style={{ width: "30%" }}>Vive con la Madre</CTableHeaderCell>
                           <CTableDataCell>
-                            <CBadge
-                              color={selectedEstudiante.livesMother ? 'success' : 'secondary'}
-                            >
-                              {selectedEstudiante.livesMother ? 'Sí' : 'No'}
+                            <CBadge color={selectedEstudiante.livesMother ? "success" : "secondary"}>
+                              {selectedEstudiante.livesMother ? "Sí" : "No"}
                             </CBadge>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Vive con el Padre</CTableHeaderCell>
                           <CTableDataCell>
-                            <CBadge
-                              color={selectedEstudiante.livesFather ? 'success' : 'secondary'}
-                            >
-                              {selectedEstudiante.livesFather ? 'Sí' : 'No'}
+                            <CBadge color={selectedEstudiante.livesFather ? "success" : "secondary"}>
+                              {selectedEstudiante.livesFather ? "Sí" : "No"}
                             </CBadge>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Vive con Ambos Padres</CTableHeaderCell>
                           <CTableDataCell>
-                            <CBadge color={selectedEstudiante.livesBoth ? 'success' : 'secondary'}>
-                              {selectedEstudiante.livesBoth ? 'Sí' : 'No'}
+                            <CBadge color={selectedEstudiante.livesBoth ? "success" : "secondary"}>
+                              {selectedEstudiante.livesBoth ? "Sí" : "No"}
                             </CBadge>
                           </CTableDataCell>
                         </CTableRow>
                         <CTableRow>
                           <CTableHeaderCell>Vive con Representante</CTableHeaderCell>
                           <CTableDataCell>
-                            <CBadge
-                              color={
-                                selectedEstudiante.livesRepresentative ? 'success' : 'secondary'
-                              }
-                            >
-                              {selectedEstudiante.livesRepresentative ? 'Sí' : 'No'}
+                            <CBadge color={selectedEstudiante.livesRepresentative ? "success" : "secondary"}>
+                              {selectedEstudiante.livesRepresentative ? "Sí" : "No"}
                             </CBadge>
                           </CTableDataCell>
                         </CTableRow>
@@ -1189,17 +1030,13 @@ const EstudianteList = () => {
                     <CIcon icon={cilArrowLeft} className="me-1" />
                     Cancelar
                   </CButton>
-                  <CButton
-                    color="success"
-                    onClick={handleUpdateEstudiante}
-                    disabled={updateLoading}
-                  >
+                  <CButton color="success" onClick={handleUpdateEstudiante} disabled={updateLoading}>
                     {updateLoading ? (
                       <CSpinner size="sm" className="me-1" />
                     ) : (
                       <CIcon icon={cilSave} className="me-1" />
                     )}
-                    {updateLoading ? 'Guardando...' : 'Guardar Cambios'}
+                    {updateLoading ? "Guardando..." : "Guardar Cambios"}
                   </CButton>
                 </>
               ) : (
@@ -1210,9 +1047,7 @@ const EstudianteList = () => {
                   </CButton>
                   <CButton
                     color="success"
-                    onClick={() =>
-                      handleDownloadPdf1(selectedEstudiante.id, selectedEstudiante.name)
-                    }
+                    onClick={() => handleDownloadPdf1(selectedEstudiante.id, selectedEstudiante.name)}
                   >
                     <CIcon icon={cilPrint} className="me-1" />
                     Imprimir PDF
