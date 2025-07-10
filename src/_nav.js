@@ -51,7 +51,7 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Matricula Estudiantil',
+    name: 'Asignación Estudiantil',
     to: '/matricula',
     icon: <CIcon icon={cilBook} customClassName="nav-icon" />,
   },
