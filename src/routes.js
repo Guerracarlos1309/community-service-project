@@ -2,8 +2,8 @@ import React from 'react'
 
 const dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const users = React.lazy(() => import('./views/pages/user/user.js'))
-const registro = React.lazy(() => import('./views/pages/registro/registro.js'))
-const matricula = React.lazy(() => import('./views/pages/matriculaInformacion/matriculaInfo.js'))
+const registro = React.lazy(() => import('./views/pages/registro/registro-estudiantil-main.js'))
+const matricula = React.lazy(() => import('./views/pages/matricula/matricula.js'))
 const brigadas = React.lazy(() => import('./views/pages/brigada/brigada.js'))
 const docente = React.lazy(() => import('./views/pages/docente/docente.js'))
 const login = React.lazy(() => import('./views/pages/login/Login.js'))
