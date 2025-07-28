@@ -5,14 +5,11 @@ const users = React.lazy(() => import('./views/pages/user/user.js'))
 const registro = React.lazy(() => import('./views/pages/registro/registro-estudiantil-main.js'))
 const matricula = React.lazy(() => import('./views/pages/matricula/matricula.js'))
 const brigadas = React.lazy(() => import('./views/pages/brigada/brigada.js'))
-const docente = React.lazy(() => import('./views/pages/docente/docente.js'))
+const personal = React.lazy(() => import('./views/pages/personal/personal.js'))
 const login = React.lazy(() => import('./views/pages/login/Login.js'))
 const register = React.lazy(() => import('./views/pages/register/Register.js'))
 const profile = React.lazy(() => import('./views/pages/profile/profile.js'))
-const infoMatricula = React.lazy(
-  () => import('./views/pages/matriculaInformacion/matriculaInfo.js'),
-)
-
+const infoMatricula = React.lazy(() => import('./views/pages/matriculaInformacion/matriculaInfo.js'))
 const estudiantes = React.lazy(() => import('./views/pages/estudiantes/estudiantes.js'))
 
 const routes = [
@@ -22,7 +19,7 @@ const routes = [
   { path: '/registro', name: 'Registro', element: registro },
   { path: '/matricula', name: 'Matricula', element: matricula },
   { path: '/brigadas', name: 'Brigadas', element: brigadas },
-  { path: '/docentes', name: 'Docentes', element: docente },
+  { path: '/personal', name: 'Personal', element: personal },
   { path: '/login', name: 'Login', element: login },
   { path: '/register', name: 'Register', element: register },
   { path: '/profile', name: 'Profile', element: profile },
