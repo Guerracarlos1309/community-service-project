@@ -5,7 +5,6 @@ import {
   CCard,
   CCardBody,
   CCardHeader,
-  CFormInput,
   CFormLabel,
   CButton,
   CRow,
@@ -13,18 +12,19 @@ import {
   CContainer,
   CAlert,
   CSpinner,
-  CInputGroup,
-  CInputGroupText,
   CBadge,
 } from "@coreui/react"
 import CIcon from "@coreui/icons-react"
-import { cilSearch, cilUser, cilPhone, cilHome } from "@coreui/icons"
+import { cilSearch, cilUser, cilPhone, cilHome, cilWarning, cilCheckCircle } from "@coreui/icons"
 import { helpFetch } from "../../../../api/helpFetch"
+import ErrorModal from "../../../../components/error-modal"
+import { useErrorHandler } from "../../../hooks/use-error-handler"
+import CedulaInput from "../../../../components/cedula-input"
 
-export default function BuscarEstudiante({ tipoInscripcion, onStudentFound, onBack }) {
+export default function BuscarEstudianteEnhanced({ tipoInscripcion, onStudentFound, onBack }) {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  const { error, showErrorModal, handleError, clearError } = useErrorHandler()
   const [studentCi, setStudentCi] = useState("")
   const [studentFound, setStudentFound] = useState(null)
 
@@ -32,47 +32,65 @@ export default function BuscarEstudiante({ tipoInscripcion, onStudentFound, onBa
 
   const buscarEstudiante = async () => {
     if (!studentCi.trim()) {
-      setError("Ingrese la cédula del estudiante")
+      handleError(
+        {
+          type: "validation",
+          message: "Ingrese la cédula del estudiante",
+        },
+        "Validación de cédula",
+      )
       return
     }
 
     setLoading(true)
-    setError(null)
     setSuccess(null)
 
     try {
-      const data = await api.get(`/api/students/${studentCi}`)
+      console.log("🔍 Buscando estudiante con CI:", studentCi)
+      const response = await api.get(`/api/students/${studentCi}`)
 
-      if (data && data.ok) {
-        setStudentFound(data.student)
+      if (response && response.ok) {
+        setStudentFound(response.student)
         setSuccess("Estudiante encontrado exitosamente")
+        console.log("✅ Estudiante encontrado:", response.student)
       } else {
         setStudentFound(null)
-        setError("Estudiante no encontrado en el sistema")
+        throw new Error("Estudiante no encontrado en el sistema")
       }
     } catch (err) {
+      console.error("❌ Error buscando estudiante:", err)
       setStudentFound(null)
-      setError("Estudiante no encontrado en el sistema")
+      handleError(err, "Búsqueda de estudiante")
     } finally {
       setLoading(false)
     }
   }
 
   const handleContinue = () => {
-    if (studentFound) {
-      onStudentFound(studentFound)
+    try {
+      if (studentFound) {
+        onStudentFound(studentFound)
+      }
+    } catch (err) {
+      handleError(err, "Continuar con estudiante")
     }
   }
 
   const getStatusColor = (statusId) => {
     switch (statusId) {
-      case 1:
+      case "1":
         return "success" // Activo
-      case 2:
+      case "2":
         return "info" // Inscrito
-      case 3:
-        return "warning" // Suspendido
-      case 4:
+      case "3":
+        return "warning" // Graduado
+      case "4":
+        return "secondary" // Egresado
+      case "5":
+        return "danger" // Inactivo
+      case "6":
+        return "dark" // Retirado
+      case "7":
         return "danger" // Expulsado
       default:
         return "secondary"
@@ -90,32 +108,69 @@ export default function BuscarEstudiante({ tipoInscripcion, onStudentFound, onBa
     }
   }
 
+  const canContinue = () => {
+    if (!studentFound) return false
+
+    // Para reintegro: estudiantes inactivos, retirados o egresados pueden reintegrarse
+    if (tipoInscripcion === "reintegro") {
+      return ["5", "6", "4"].includes(studentFound.status_id) // Inactivo, Retirado, Egresado
+    }
+
+    // Para regular: solo estudiantes activos
+    if (tipoInscripcion === "regular") {
+      return studentFound.status_id === "1" // Solo activos
+    }
+
+    return false
+  }
+
+  const getStatusMessage = () => {
+    if (!studentFound) return ""
+
+    if (tipoInscripcion === "reintegro") {
+      if (["5", "6", "4"].includes(studentFound.status_id)) {
+        return "Este estudiante puede ser reintegrado al sistema."
+      } else {
+        return "Este estudiante no requiere reintegro. Su estado actual no permite esta acción."
+      }
+    }
+
+    if (tipoInscripcion === "regular") {
+      if (studentFound.status_id === "1") {
+        return "Este estudiante está disponible para inscripción regular."
+      } else {
+        return "Este estudiante no está en estado activo para inscripción regular."
+      }
+    }
+
+    return ""
+  }
+
   return (
-    <div className="min-vh-100 bg-dark py-4">
+    <div className="min-vh-100 bg-body-tertiary py-4">
       <CContainer>
         <div className="mb-4">
-          <h2 className="text-center text-white">Buscar Estudiante - {getTipoTitle()}</h2>
-          <p className="text-center text-light">
+          <h2 className="text-center text-body-emphasis">Buscar Estudiante - {getTipoTitle()}</h2>
+          <p className="text-center text-body-secondary">
             {tipoInscripcion === "reintegro"
               ? "Busque al estudiante que desea reintegrar al sistema"
               : "Busque al estudiante regular para su inscripción"}
           </p>
         </div>
 
-        {error && (
-          <CAlert color="danger" dismissible onClose={() => setError(null)}>
-            {error}
-          </CAlert>
-        )}
         {success && (
           <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
+            <CIcon icon={cilCheckCircle} className="me-2" />
             {success}
           </CAlert>
         )}
 
-        <CCard>
-          <CCardHeader>
-            <h4>
+        {/* Modal de Error */}
+        <ErrorModal visible={showErrorModal} onClose={clearError} error={error} />
+
+        <CCard className="shadow">
+          <CCardHeader className="bg-primary text-white">
+            <h4 className="mb-0">
               <CIcon icon={cilSearch} className="me-2" />
               Búsqueda de Estudiante
             </h4>
@@ -123,30 +178,28 @@ export default function BuscarEstudiante({ tipoInscripcion, onStudentFound, onBa
           <CCardBody>
             <CRow className="mb-4">
               <CCol md={8}>
-                <CFormLabel>Cédula del Estudiante</CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>
-                    <CIcon icon={cilUser} />
-                  </CInputGroupText>
-                  <CFormInput
-                    type="text"
-                    placeholder="V-12345678 o E-12345678"
-                    value={studentCi}
-                    onChange={(e) => setStudentCi(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && buscarEstudiante()}
-                  />
-                </CInputGroup>
+                <CFormLabel className="fw-semibold">Cédula del Estudiante</CFormLabel>
+                <CedulaInput value={studentCi} onChange={setStudentCi} placeholder="12345678" />
               </CCol>
               <CCol md={4} className="d-flex align-items-end">
-                <CButton color="info" onClick={buscarEstudiante} disabled={loading} className="w-100">
-                  {loading ? <CSpinner size="sm" /> : <CIcon icon={cilSearch} />}
-                  {loading ? " Buscando..." : " Buscar"}
+                <CButton color="info" size="lg" onClick={buscarEstudiante} disabled={loading} className="w-100">
+                  {loading ? (
+                    <>
+                      <CSpinner size="sm" className="me-2" />
+                      Buscando...
+                    </>
+                  ) : (
+                    <>
+                      <CIcon icon={cilSearch} className="me-2" />
+                      Buscar
+                    </>
+                  )}
                 </CButton>
               </CCol>
             </CRow>
 
             {studentFound && (
-              <CCard className="mt-4">
+              <CCard className="mt-4 border-success">
                 <CCardHeader className="bg-success text-white">
                   <h5 className="mb-0">
                     <CIcon icon={cilUser} className="me-2" />
@@ -156,52 +209,53 @@ export default function BuscarEstudiante({ tipoInscripcion, onStudentFound, onBa
                 <CCardBody>
                   <CRow>
                     <CCol md={6}>
-                      <h6 className="text-primary">Datos Personales</h6>
-                      <p>
+                      <h6 className="text-primary mb-3">Datos Personales</h6>
+                      <div className="mb-2">
                         <strong>Nombre Completo:</strong> {studentFound.name} {studentFound.lastName}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Cédula:</strong> {studentFound.ci}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Sexo:</strong> {studentFound.sex === "M" ? "Masculino" : "Femenino"}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Fecha de Nacimiento:</strong>{" "}
                         {new Date(studentFound.birthday).toLocaleDateString("es-VE")}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Lugar de Nacimiento:</strong> {studentFound.placeBirth || "No especificado"}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Estado:</strong>{" "}
-                        <CBadge color={getStatusColor(studentFound.status_id)}>
+                        <CBadge color={getStatusColor(studentFound.status_id)} className="ms-1">
                           {studentFound.status_description}
                         </CBadge>
-                      </p>
+                      </div>
                     </CCol>
                     <CCol md={6}>
-                      <h6 className="text-primary">Información Familiar</h6>
-                      <p>
+                      <h6 className="text-primary mb-3">Información Familiar</h6>
+                      <div className="mb-2">
                         <strong>Representante:</strong> {studentFound.representative_name}{" "}
                         {studentFound.representative_lastName}
-                      </p>
-                      <p>
-                        <strong>Teléfono Representante:</strong> <CIcon icon={cilPhone} size="sm" className="me-1" />
+                      </div>
+                      <div className="mb-2">
+                        <strong>Teléfono Representante:</strong>
+                        <CIcon icon={cilPhone} size="sm" className="ms-2 me-1" />
                         {studentFound.representative_phone}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Email Representante:</strong> {studentFound.representative_email || "No registrado"}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Madre:</strong> {studentFound.motherName || "No especificado"}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Padre:</strong> {studentFound.fatherName || "No especificado"}
-                      </p>
-                      <p>
+                      </div>
+                      <div className="mb-2">
                         <strong>Cantidad de Hermanos:</strong> {studentFound.quantityBrothers || 0}
-                      </p>
+                      </div>
                     </CCol>
                   </CRow>
 
@@ -209,36 +263,32 @@ export default function BuscarEstudiante({ tipoInscripcion, onStudentFound, onBa
                     <CRow className="mt-3">
                       <CCol md={12}>
                         <h6 className="text-primary">Dirección</h6>
-                        <p>
-                          <CIcon icon={cilHome} size="sm" className="me-1" />
+                        <div>
+                          <CIcon icon={cilHome} size="sm" className="me-2" />
                           {studentFound.representative_address}
-                        </p>
+                        </div>
                       </CCol>
                     </CRow>
                   )}
+
+                  <CAlert color={canContinue() ? "success" : "warning"} className="mt-4">
+                    <CIcon icon={canContinue() ? cilCheckCircle : cilWarning} className="me-2" />
+                    <strong>{canContinue() ? "Disponible:" : "Atención:"}</strong> {getStatusMessage()}
+                  </CAlert>
 
                   <div className="mt-4 d-flex justify-content-between">
                     <CButton color="secondary" onClick={onBack}>
                       Volver
                     </CButton>
                     <CButton
-                      color="success"
+                      color={canContinue() ? "success" : "secondary"}
                       size="lg"
                       onClick={handleContinue}
-                      disabled={
-                        tipoInscripcion === "regular" && studentFound.status_id === 1 // Solo estudiantes activos pueden inscribirse
-                      }
+                      disabled={!canContinue()}
                     >
                       {tipoInscripcion === "reintegro" ? "Continuar con Reintegro" : "Continuar con Inscripción"}
                     </CButton>
                   </div>
-
-                  {tipoInscripcion === "regular" && studentFound.status_id === 1 && (
-                    <CAlert color="warning" className="mt-3">
-                      <strong>Atención:</strong> Este estudiante no está en estado activo para inscripción regular.
-                      Estado actual: {studentFound.status_description}
-                    </CAlert>
-                  )}
                 </CCardBody>
               </CCard>
             )}

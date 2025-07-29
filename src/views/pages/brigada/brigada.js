@@ -669,10 +669,8 @@ const BrigadeManagement = () => {
                 {academicPeriods.map((period) => (
                   <option key={period.id} value={period.id}>
                     {period.name}
-                    {period.is_current && " (ACTUAL)"}
                     {" - "}
-                    {new Date(period.start_date).toLocaleDateString()} a{" "}
-                    {new Date(period.end_date).toLocaleDateString()}
+                    {period.is_current && " (ACTUAL)"}
                   </option>
                 ))}
               </CFormSelect>
@@ -777,7 +775,7 @@ const BrigadeManagement = () => {
           </CRow>
 
           <CCard className="shadow">
-            <CCardHeader className="bg-light d-flex justify-content-between align-items-center">
+            <CCardHeader className=" d-flex justify-content-between align-items-center">
               <div>
                 <h5 className="mb-1">
                   <CIcon icon={cilGroup} className="me-2" />

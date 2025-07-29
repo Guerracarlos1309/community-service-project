@@ -21,14 +21,17 @@ import {
   CFormTextarea,
 } from "@coreui/react"
 import CIcon from "@coreui/icons-react"
-import { cilUser, cilSearch, cilUserPlus, cilPhone, cilHome, cilCalendar } from "@coreui/icons"
+import { cilUser, cilSearch, cilUserPlus, cilPhone, cilHome, cilCalendar, cilCheckCircle } from "@coreui/icons"
 import { helpFetch } from "../../../../api/helpFetch"
+import ErrorModal from "../../../../components/error-modal"
+import { useErrorHandler } from "../../../hooks/use-error-handler"
+import CedulaInput from "../../../../components/cedula-input"
 
-export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack }) {
+export default function CrearAlumnoEnhanced({ tipoInscripcion, onStudentCreated, onBack }) {
   const [step, setStep] = useState(1) // 1: Buscar/Crear Representante, 2: Crear Estudiante
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  const { error, showErrorModal, handleError, clearError } = useErrorHandler()
 
   // Estados para representante
   const [representanteCi, setRepresentanteCi] = useState("")
@@ -77,12 +80,17 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
   // Buscar representante por CI
   const buscarRepresentante = async () => {
     if (!representanteCi.trim()) {
-      setError("Ingrese la cédula del representante")
+      handleError(
+        {
+          type: "validation",
+          message: "Ingrese la cédula del representante",
+        },
+        "Validación de cédula",
+      )
       return
     }
 
     setLoading(true)
-    setError(null)
 
     try {
       const data = await api.get(`/api/representatives/${representanteCi}`)
@@ -94,12 +102,13 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
       } else {
         setRepresentanteFound(null)
         setRepresentanteData((prev) => ({ ...prev, ci: representanteCi }))
-        setError("Representante no encontrado. Complete los datos para crear uno nuevo.")
+        setSuccess("Representante no encontrado. Complete los datos para crear uno nuevo.")
       }
     } catch (err) {
+      console.error("Error buscando representante:", err)
       setRepresentanteFound(null)
       setRepresentanteData((prev) => ({ ...prev, ci: representanteCi }))
-      setError("Representante no encontrado. Complete los datos para crear uno nuevo.")
+      setSuccess("Representante no encontrado. Complete los datos para crear uno nuevo.")
     } finally {
       setLoading(false)
     }
@@ -107,8 +116,19 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
 
   // Crear representante
   const crearRepresentante = async () => {
+    // Validaciones
+    if (!representanteData.name || !representanteData.lastName || !representanteData.telephoneNumber) {
+      handleError(
+        {
+          type: "validation",
+          message: "Complete todos los campos obligatorios del representante (Nombres, Apellidos, Teléfono)",
+        },
+        "Validación de campos obligatorios",
+      )
+      return
+    }
+
     setLoading(true)
-    setError(null)
 
     try {
       const data = await api.post("/api/representatives", { body: representanteData })
@@ -119,10 +139,11 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
         setSuccess("Representante creado exitosamente")
         setStep(2)
       } else {
-        setError(data.msg || "Error al crear el representante")
+        throw new Error(data.msg || "Error al crear el representante")
       }
     } catch (err) {
-      setError(err.msg || "Error al crear el representante")
+      console.error("Error creando representante:", err)
+      handleError(err, "Crear representante")
     } finally {
       setLoading(false)
     }
@@ -130,20 +151,35 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
 
   // Crear estudiante
   const crearEstudiante = async () => {
+    // Validaciones
+    if (!studentData.ci || !studentData.name || !studentData.lastName || !studentData.birthday) {
+      handleError(
+        {
+          type: "validation",
+          message:
+            "Complete todos los campos obligatorios del estudiante (Cédula, Nombres, Apellidos, Fecha de Nacimiento)",
+        },
+        "Validación de campos obligatorios",
+      )
+      return
+    }
+
     setLoading(true)
-    setError(null)
 
     try {
       const data = await api.post("/api/students/registry", { body: { student: studentData } })
 
       if (data && data.ok) {
         setSuccess("Estudiante creado exitosamente")
-        onStudentCreated(data.student)
+        setTimeout(() => {
+          onStudentCreated(data.student)
+        }, 1500)
       } else {
-        setError(data.msg || "Error al crear el estudiante")
+        throw new Error(data.msg || "Error al crear el estudiante")
       }
     } catch (err) {
-      setError(err.msg || "Error al crear el estudiante")
+      console.error("Error creando estudiante:", err)
+      handleError(err, "Crear estudiante")
     } finally {
       setLoading(false)
     }
@@ -156,16 +192,15 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
           <h2 className="text-center text-white">Crear Alumno - Nuevo Ingreso</h2>
         </div>
 
-        {error && (
-          <CAlert color="danger" dismissible onClose={() => setError(null)}>
-            {error}
-          </CAlert>
-        )}
         {success && (
           <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
+            <CIcon icon={cilCheckCircle} className="me-2" />
             {success}
           </CAlert>
         )}
+
+        {/* Modal de Error */}
+        <ErrorModal visible={showErrorModal} onClose={clearError} error={error} />
 
         {step === 1 && (
           <CCard>
@@ -179,12 +214,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
               <CRow className="mb-4">
                 <CCol md={8}>
                   <CFormLabel>Cédula del Representante</CFormLabel>
-                  <CFormInput
-                    type="text"
-                    placeholder="V-12345678 o E-12345678"
-                    value={representanteCi}
-                    onChange={(e) => setRepresentanteCi(e.target.value)}
-                  />
+                  <CedulaInput value={representanteCi} onChange={setRepresentanteCi} placeholder="12345678" />
                 </CCol>
                 <CCol md={4} className="d-flex align-items-end">
                   <CButton color="info" onClick={buscarRepresentante} disabled={loading} className="w-100">
@@ -225,6 +255,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                         <CCol md={6}>
                           <CFormLabel>Nombres *</CFormLabel>
                           <CFormInput
+                            type="text"
                             value={representanteData.name}
                             onChange={(e) => setRepresentanteData((prev) => ({ ...prev, name: e.target.value }))}
                             required
@@ -233,6 +264,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                         <CCol md={6}>
                           <CFormLabel>Apellidos *</CFormLabel>
                           <CFormInput
+                            type="text"
                             value={representanteData.lastName}
                             onChange={(e) => setRepresentanteData((prev) => ({ ...prev, lastName: e.target.value }))}
                             required
@@ -248,6 +280,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                               <CIcon icon={cilPhone} />
                             </CInputGroupText>
                             <CFormInput
+                              type="tel"
                               value={representanteData.telephoneNumber}
                               onChange={(e) =>
                                 setRepresentanteData((prev) => ({ ...prev, telephoneNumber: e.target.value }))
@@ -264,6 +297,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                               <CIcon icon={cilPhone} />
                             </CInputGroupText>
                             <CFormInput
+                              type="tel"
                               value={representanteData.telephoneHouse}
                               onChange={(e) =>
                                 setRepresentanteData((prev) => ({ ...prev, telephoneHouse: e.target.value }))
@@ -316,6 +350,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                         <CCol md={6}>
                           <CFormLabel>Profesión</CFormLabel>
                           <CFormInput
+                            type="text"
                             value={representanteData.profesion}
                             onChange={(e) => setRepresentanteData((prev) => ({ ...prev, profesion: e.target.value }))}
                           />
@@ -326,6 +361,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                         <CCol md={6}>
                           <CFormLabel>Lugar de Trabajo</CFormLabel>
                           <CFormInput
+                            type="text"
                             value={representanteData.workPlace}
                             onChange={(e) => setRepresentanteData((prev) => ({ ...prev, workPlace: e.target.value }))}
                           />
@@ -337,6 +373,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                               <CIcon icon={cilPhone} />
                             </CInputGroupText>
                             <CFormInput
+                              type="tel"
                               value={representanteData.jobNumber}
                               onChange={(e) => setRepresentanteData((prev) => ({ ...prev, jobNumber: e.target.value }))}
                               placeholder="0212-1234567"
@@ -368,16 +405,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                         <CButton color="secondary" onClick={onBack}>
                           Volver
                         </CButton>
-                        <CButton
-                          color="success"
-                          onClick={crearRepresentante}
-                          disabled={
-                            loading ||
-                            !representanteData.name ||
-                            !representanteData.lastName ||
-                            !representanteData.telephoneNumber
-                          }
-                        >
+                        <CButton color="success" onClick={crearRepresentante} disabled={loading}>
                           {loading ? <CSpinner size="sm" /> : <CIcon icon={cilUserPlus} />}
                           {loading ? " Creando..." : " Crear Representante"}
                         </CButton>
@@ -403,16 +431,17 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                 <CRow className="mb-3">
                   <CCol md={4}>
                     <CFormLabel>Cédula del Estudiante *</CFormLabel>
-                    <CFormInput
+                    <CedulaInput
                       value={studentData.ci}
-                      onChange={(e) => setStudentData((prev) => ({ ...prev, ci: e.target.value }))}
-                      placeholder="V-12345678 o E-12345678"
+                      onChange={(value) => setStudentData((prev) => ({ ...prev, ci: value }))}
+                      placeholder="12345678"
                       required
                     />
                   </CCol>
                   <CCol md={4}>
                     <CFormLabel>Nombres *</CFormLabel>
                     <CFormInput
+                      type="text"
                       value={studentData.name}
                       onChange={(e) => setStudentData((prev) => ({ ...prev, name: e.target.value }))}
                       required
@@ -421,6 +450,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                   <CCol md={4}>
                     <CFormLabel>Apellidos *</CFormLabel>
                     <CFormInput
+                      type="text"
                       value={studentData.lastName}
                       onChange={(e) => setStudentData((prev) => ({ ...prev, lastName: e.target.value }))}
                       required
@@ -452,6 +482,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                   <CCol md={3}>
                     <CFormLabel>Lugar de Nacimiento</CFormLabel>
                     <CFormInput
+                      type="text"
                       value={studentData.placeBirth}
                       onChange={(e) => setStudentData((prev) => ({ ...prev, placeBirth: e.target.value }))}
                     />
@@ -473,21 +504,23 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                   <CCol md={4}>
                     <CFormLabel>Nombre de la Madre</CFormLabel>
                     <CFormInput
+                      type="text"
                       value={studentData.motherName}
                       onChange={(e) => setStudentData((prev) => ({ ...prev, motherName: e.target.value }))}
                     />
                   </CCol>
                   <CCol md={4}>
                     <CFormLabel>Cédula de la Madre</CFormLabel>
-                    <CFormInput
+                    <CedulaInput
                       value={studentData.motherCi}
-                      onChange={(e) => setStudentData((prev) => ({ ...prev, motherCi: e.target.value }))}
-                      placeholder="V-12345678"
+                      onChange={(value) => setStudentData((prev) => ({ ...prev, motherCi: value }))}
+                      placeholder="12345678"
                     />
                   </CCol>
                   <CCol md={4}>
                     <CFormLabel>Teléfono de la Madre</CFormLabel>
                     <CFormInput
+                      type="tel"
                       value={studentData.motherTelephone}
                       onChange={(e) => setStudentData((prev) => ({ ...prev, motherTelephone: e.target.value }))}
                       placeholder="0414-1234567"
@@ -499,21 +532,23 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                   <CCol md={4}>
                     <CFormLabel>Nombre del Padre</CFormLabel>
                     <CFormInput
+                      type="text"
                       value={studentData.fatherName}
                       onChange={(e) => setStudentData((prev) => ({ ...prev, fatherName: e.target.value }))}
                     />
                   </CCol>
                   <CCol md={4}>
                     <CFormLabel>Cédula del Padre</CFormLabel>
-                    <CFormInput
+                    <CedulaInput
                       value={studentData.fatherCi}
-                      onChange={(e) => setStudentData((prev) => ({ ...prev, fatherCi: e.target.value }))}
-                      placeholder="V-12345678"
+                      onChange={(value) => setStudentData((prev) => ({ ...prev, fatherCi: value }))}
+                      placeholder="12345678"
                     />
                   </CCol>
                   <CCol md={4}>
                     <CFormLabel>Teléfono del Padre</CFormLabel>
                     <CFormInput
+                      type="tel"
                       value={studentData.fatherTelephone}
                       onChange={(e) => setStudentData((prev) => ({ ...prev, fatherTelephone: e.target.value }))}
                       placeholder="0414-1234567"
@@ -616,13 +651,7 @@ export default function CrearAlumno({ tipoInscripcion, onStudentCreated, onBack 
                   <CButton color="secondary" onClick={() => setStep(1)}>
                     Volver
                   </CButton>
-                  <CButton
-                    color="success"
-                    onClick={crearEstudiante}
-                    disabled={
-                      loading || !studentData.ci || !studentData.name || !studentData.lastName || !studentData.birthday
-                    }
-                  >
+                  <CButton color="success" onClick={crearEstudiante} disabled={loading}>
                     {loading ? <CSpinner size="sm" /> : <CIcon icon={cilUserPlus} />}
                     {loading ? " Creando..." : " Crear Estudiante"}
                   </CButton>
