@@ -29,6 +29,10 @@ import {
   CTableDataCell,
   CBadge,
   CFormCheck,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownMenu,
+  CDropdownItem,
 } from "@coreui/react"
 import { CChart } from "@coreui/react-chartjs"
 import CIcon from "@coreui/icons-react"
@@ -46,6 +50,9 @@ import {
   cilCheckCircle,
   cilXCircle,
   cilReload,
+  cilWarning,
+  cilSettings,
+  cilClock,
 } from "@coreui/icons"
 
 const Dashboard = () => {
@@ -55,6 +62,14 @@ const Dashboard = () => {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [chartData, setChartData] = useState(null)
+
+  // Estados para períodos académicos
+  const [currentPeriod, setCurrentPeriod] = useState(null)
+  const [allPeriods, setAllPeriods] = useState([])
+
+  // Estados para el modal de finalizar período
+  const [showFinalizePeriodModal, setShowFinalizePeriodModal] = useState(false)
+  const [finalizingPeriod, setFinalizingPeriod] = useState(false)
 
   // Estados para el modal de asistencia
   const [showAttendanceModal, setShowAttendanceModal] = useState(false)
@@ -78,6 +93,7 @@ const Dashboard = () => {
   useEffect(() => {
     loadDashboardData()
     loadAvailableSections()
+    loadAcademicPeriods()
   }, [])
 
   const loadDashboardData = async () => {
@@ -107,6 +123,28 @@ const Dashboard = () => {
     }
   }
 
+  const loadAcademicPeriods = async () => {
+    try {
+      console.log("📅 Cargando períodos académicos...")
+
+      // Cargar período actual
+      const currentResponse = await api.get("/api/matriculas/academic-periods/current")
+      if (currentResponse.ok) {
+        setCurrentPeriod(currentResponse.period)
+        console.log("✅ Período actual cargado:", currentResponse.period?.name)
+      }
+
+      // Cargar todos los períodos
+      const allResponse = await api.get("/api/matriculas/academic-periods")
+      if (allResponse.ok) {
+        setAllPeriods(allResponse.periods || [])
+        console.log("✅ Todos los períodos cargados:", allResponse.periods?.length || 0)
+      }
+    } catch (error) {
+      console.error("❌ Error cargando períodos académicos:", error)
+    }
+  }
+
   const loadAvailableSections = async () => {
     try {
       console.log("📚 Cargando secciones disponibles...")
@@ -125,6 +163,60 @@ const Dashboard = () => {
     }
   }
 
+  const handleFinalizePeriod = async () => {
+    try {
+      if (!currentPeriod) {
+        setError("No hay período académico actual para finalizar")
+        return
+      }
+
+      if (
+        !window.confirm(
+          `¿Está seguro de que desea finalizar el período académico "${currentPeriod.name}"?\n\n` +
+            "Esta acción:\n" +
+            "• Creará un nuevo período académico\n" +
+            "• Cambiará el estado de estudiantes inscritos a activos\n" +
+            "• Marcará el período actual como finalizado\n\n" +
+            "Esta acción NO se puede deshacer.",
+        )
+      ) {
+        return
+      }
+
+      setFinalizingPeriod(true)
+      setError(null)
+      setSuccess(null)
+
+      console.log("🔄 Finalizando período académico...")
+
+      const response = await api.post("/api/matriculas/academic-periods", {
+        body: {},
+      })
+
+      if (response.ok) {
+        setSuccess(
+          `Período académico finalizado exitosamente. ` +
+            `Nuevo período "${response.newPeriod?.name}" creado. ` +
+            `${response.studentsUpdated || 0} estudiantes actualizados a estado activo.`,
+        )
+        setShowFinalizePeriodModal(false)
+
+        // Recargar datos
+        await loadDashboardData()
+        await loadAcademicPeriods()
+
+        console.log("✅ Período finalizado exitosamente")
+      } else {
+        throw new Error(response.msg || "Error al finalizar período")
+      }
+    } catch (error) {
+      console.error("❌ Error finalizando período:", error)
+      setError(`Error al finalizar período: ${error.msg || error.message}`)
+    } finally {
+      setFinalizingPeriod(false)
+    }
+  }
+
   const loadExampleData = () => {
     console.log("📝 Cargando datos de ejemplo...")
     const exampleData = {
@@ -133,25 +225,25 @@ const Dashboard = () => {
         total_students: 465,
         total_teachers: 25,
         total_staff: 35,
-        total_sections: 12,
+        total_sections_current_period: 12,
         total_grades: 9,
         total_brigades: 5,
-        repeating_students: 15,
-        new_students: 450,
+        repeating_students_current_period: 15,
+        new_students_current_period: 450,
         male_students: 234,
         female_students: 231,
         total_representatives: 380,
       },
       gradeDistribution: [
-        { grade_name: "Nivel Preescolar I", student_count: 25, male_count: 12, female_count: 13, section_count: 1 },
-        { grade_name: "Nivel Preescolar II", student_count: 28, male_count: 14, female_count: 14, section_count: 1 },
-        { grade_name: "Nivel Preescolar III", student_count: 30, male_count: 15, female_count: 15, section_count: 1 },
-        { grade_name: "Primer Grado", student_count: 85, male_count: 42, female_count: 43, section_count: 2 },
-        { grade_name: "Segundo Grado", student_count: 78, male_count: 38, female_count: 40, section_count: 2 },
-        { grade_name: "Tercer Grado", student_count: 82, male_count: 41, female_count: 41, section_count: 2 },
-        { grade_name: "Cuarto Grado", student_count: 75, male_count: 37, female_count: 38, section_count: 2 },
-        { grade_name: "Quinto Grado", student_count: 70, male_count: 35, female_count: 35, section_count: 2 },
-        { grade_name: "Sexto Grado", student_count: 65, male_count: 32, female_count: 33, section_count: 2 },
+        { grade_name: "1er Nivel", student_count: 25, male_count: 12, female_count: 13, section_count: 1 },
+        { grade_name: "2do Nivel", student_count: 28, male_count: 14, female_count: 14, section_count: 1 },
+        { grade_name: "3er Nivel", student_count: 30, male_count: 15, female_count: 15, section_count: 1 },
+        { grade_name: "1er Grado", student_count: 85, male_count: 42, female_count: 43, section_count: 2 },
+        { grade_name: "2do Grado", student_count: 78, male_count: 38, female_count: 40, section_count: 2 },
+        { grade_name: "3er Grado", student_count: 82, male_count: 41, female_count: 41, section_count: 2 },
+        { grade_name: "4to Grado", student_count: 75, male_count: 37, female_count: 38, section_count: 2 },
+        { grade_name: "5to Grado", student_count: 70, male_count: 35, female_count: 35, section_count: 2 },
+        { grade_name: "6to Grado", student_count: 65, male_count: 32, female_count: 33, section_count: 2 },
       ],
       academicPerformance: [
         { subject: "Matemáticas", total_notes: 156, average_grade: 16.75, passing_grades: 142, failing_grades: 14 },
@@ -169,7 +261,7 @@ const Dashboard = () => {
       attendanceStats: [
         {
           date_a: "2025-01-10",
-          grade_name: "Primer Grado",
+          grade_name: "1er Grado",
           seccion: "A",
           total_registered: 28,
           present_students: 26,
@@ -178,7 +270,7 @@ const Dashboard = () => {
         },
         {
           date_a: "2025-01-10",
-          grade_name: "Segundo Grado",
+          grade_name: "2do Grado",
           seccion: "A",
           total_registered: 25,
           present_students: 24,
@@ -201,12 +293,13 @@ const Dashboard = () => {
       ],
       studentsByStatus: [
         { status_description: "Activo", student_count: 450, male_count: 234, female_count: 216 },
+        { status_description: "Inscrito", student_count: 15, male_count: 8, female_count: 7 },
         { status_description: "Inactivo", student_count: 10, male_count: 5, female_count: 5 },
         { status_description: "Graduado", student_count: 5, male_count: 2, female_count: 3 },
       ],
       enrollmentStats: [
         {
-          grade_name: "Primer Grado",
+          grade_name: "1er Grado",
           section_name: "A",
           total_enrolled: 28,
           repeaters: 2,
@@ -215,7 +308,7 @@ const Dashboard = () => {
           teacher_lastName: "García",
         },
         {
-          grade_name: "Primer Grado",
+          grade_name: "1er Grado",
           section_name: "B",
           total_enrolled: 27,
           repeaters: 1,
@@ -306,8 +399,8 @@ const Dashboard = () => {
         datasets: [
           {
             data: data.studentsByStatus?.map((item) => Number.parseInt(item.student_count) || 0) || [],
-            backgroundColor: ["#28a745", "#ffc107", "#17a2b8", "#dc3545"],
-            hoverBackgroundColor: ["#28a745", "#ffc107", "#17a2b8", "#dc3545"],
+            backgroundColor: ["#28a745", "#17a2b8", "#ffc107", "#dc3545"],
+            hoverBackgroundColor: ["#28a745", "#17a2b8", "#ffc107", "#dc3545"],
           },
         ],
       },
@@ -438,7 +531,7 @@ const Dashboard = () => {
       },
       {
         title: "Secciones",
-        value: `${stats.total_sections} Secciones`,
+        value: `${stats.total_sections_current_period} Secciones`,
         percent: 100,
         color: "warning",
       },
@@ -474,6 +567,43 @@ const Dashboard = () => {
         <CAlert color="success" dismissible onClose={() => setSuccess(null)}>
           <strong>✅ Éxito:</strong> {success}
         </CAlert>
+      )}
+
+      {/* Información del período académico actual */}
+      {currentPeriod && (
+        <CCard className="mb-4 border-primary">
+          <CCardHeader className="bg-primary text-white">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 className="mb-1">
+                  <CIcon icon={cilCalendar} className="me-2" />
+                  Período Académico Actual: {currentPeriod.name}
+                </h6>
+                <small>
+                  {new Date(currentPeriod.start_date).toLocaleDateString()} -{" "}
+                  {new Date(currentPeriod.end_date).toLocaleDateString()}
+                </small>
+              </div>
+              <div className="d-flex gap-2">
+                <CBadge color="light" className="text-primary">
+                  PERÍODO ACTIVO
+                </CBadge>
+                <CDropdown>
+                  <CDropdownToggle color="light" size="sm" className="text-primary">
+                    <CIcon icon={cilSettings} className="me-1" />
+                    Gestión de Período
+                  </CDropdownToggle>
+                  <CDropdownMenu>
+                    <CDropdownItem onClick={() => setShowFinalizePeriodModal(true)} disabled={finalizingPeriod}>
+                      <CIcon icon={cilClock} className="me-2" />
+                      Finalizar Período Actual
+                    </CDropdownItem>
+                  </CDropdownMenu>
+                </CDropdown>
+              </div>
+            </div>
+          </CCardHeader>
+        </CCard>
       )}
 
       {/* Botón de actualización */}
@@ -526,7 +656,9 @@ const Dashboard = () => {
           <CCard className="mb-4" color="warning" textColor="white">
             <CCardBody className="pb-0 d-flex justify-content-between align-items-start">
               <div>
-                <div className="fs-4 fw-semibold">{dashboardData?.generalStats?.total_sections || "12"}</div>
+                <div className="fs-4 fw-semibold">
+                  {dashboardData?.generalStats?.total_sections_current_period || "12"}
+                </div>
                 <div>Secciones</div>
                 <small className="text-white-50">{dashboardData?.generalStats?.total_grades || "9"} grados</small>
               </div>
@@ -827,6 +959,62 @@ const Dashboard = () => {
           </CCard>
         </CCol>
       </CRow>
+
+      {/* Modal para finalizar período académico */}
+      <CModal visible={showFinalizePeriodModal} onClose={() => setShowFinalizePeriodModal(false)} backdrop="static">
+        <CModalHeader className="bg-warning text-white">
+          <CModalTitle>
+            <CIcon icon={cilWarning} className="me-2" />
+            Finalizar Período Académico
+          </CModalTitle>
+        </CModalHeader>
+        <CModalBody className="p-4">
+          <div className="text-center">
+            <CIcon icon={cilClock} size="3xl" className="text-warning mb-3" />
+            <h5>¿Finalizar período académico actual?</h5>
+            {currentPeriod && (
+              <p className="mb-3">
+                Se finalizará el período <strong>"{currentPeriod.name}"</strong>
+                <br />
+                <small className="text-muted">
+                  ({new Date(currentPeriod.start_date).toLocaleDateString()} -{" "}
+                  {new Date(currentPeriod.end_date).toLocaleDateString()})
+                </small>
+              </p>
+            )}
+            <div className="alert alert-warning">
+              <strong>⚠️ Esta acción realizará los siguientes cambios:</strong>
+              <ul className="mt-2 mb-0 text-start">
+                <li>Creará un nuevo período académico automáticamente</li>
+                <li>Cambiará el estado de estudiantes "Inscritos" a "Activos"</li>
+                <li>Marcará el período actual como finalizado</li>
+                <li>Los datos históricos se mantendrán intactos</li>
+              </ul>
+            </div>
+            <div className="alert alert-danger">
+              <strong>🚨 Importante:</strong> Esta acción NO se puede deshacer.
+            </div>
+          </div>
+        </CModalBody>
+        <CModalFooter className="bg-light">
+          <CButton color="secondary" onClick={() => setShowFinalizePeriodModal(false)} disabled={finalizingPeriod}>
+            Cancelar
+          </CButton>
+          <CButton color="warning" onClick={handleFinalizePeriod} disabled={finalizingPeriod}>
+            {finalizingPeriod ? (
+              <>
+                <CSpinner size="sm" className="me-2" />
+                Finalizando...
+              </>
+            ) : (
+              <>
+                <CIcon icon={cilClock} className="me-2" />
+                Finalizar Período
+              </>
+            )}
+          </CButton>
+        </CModalFooter>
+      </CModal>
 
       {/* Modal de registro de asistencia */}
       <CModal visible={showAttendanceModal} size="xl" onClose={closeAttendanceModal}>
